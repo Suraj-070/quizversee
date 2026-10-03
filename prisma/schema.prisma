@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema for Dynamic MCQ Learning Platform
+// Portable to PostgreSQL by changing `provider = "postgresql"` and the connection URL.
 
 generator client {
   provider = "prisma-client-js"
@@ -13,20 +10,156 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------------------------------------------------------------------------
+// Users & Auth
+// ---------------------------------------------------------------------------
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  role          String   @default("user") // "user" | "admin"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  attempts      QuizAttempt[]
+  answers       UserAnswer[]
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ---------------------------------------------------------------------------
+// Academic hierarchy (fully dynamic, no hardcoded content)
+// ---------------------------------------------------------------------------
+model Class {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  isActive      Boolean   @default(true)
+  displayOrder  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  subjects      Subject[]
+}
+
+model Subject {
+  id            String    @id @default(cuid())
+  classId       String
+  name          String
+  description   String?
+  icon          String? // lucide icon name, optional
+  isActive      Boolean   @default(true)
+  displayOrder  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  class         Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  topics        Topic[]
+}
+
+model Topic {
+  id            String    @id @default(cuid())
+  subjectId     String
+  name          String
+  description   String?
+  isActive      Boolean   @default(true)
+  displayOrder  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  subject       Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questions     Question[]
+  attempts      QuizAttempt[]
+}
+
+// ---------------------------------------------------------------------------
+// Questions
+// ---------------------------------------------------------------------------
+model Question {
+  id             String    @id @default(cuid())
+  topicId        String
+  questionText   String
+  optionA        String
+  optionB        String
+  optionC        String
+  optionD        String
+  correctOption  String    // "A" | "B" | "C" | "D"
+  explanation    String?
+  status         String    @default("draft") // "draft" | "published"
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  topic          Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  quizSetLinks   QuizSetQuestion[]
+  answers        UserAnswer[]
+}
+
+// ---------------------------------------------------------------------------
+// Quiz Sets (optional grouping)
+// ---------------------------------------------------------------------------
+model QuizSet {
+  id            String    @id @default(cuid())
+  name          String
+  classId       String
+  subjectId     String?
+  description   String?
+  status        String    @default("draft") // "draft" | "published"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  questions     QuizSetQuestion[]
+  attempts      QuizAttempt[]
+}
+
+model QuizSetQuestion {
+  id           String   @id @default(cuid())
+  quizSetId    String
+  questionId   String
+
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  quizSet      QuizSet  @relation(fields: [quizSetId], references: [id], onDelete: Cascade)
+
+  @@unique([quizSetId, questionId])
+}
+
+// ---------------------------------------------------------------------------
+// Quiz attempts & history
+// ---------------------------------------------------------------------------
+model QuizAttempt {
+  id                String    @id @default(cuid())
+  userId            String
+  topicId           String?
+  quizSetId         String?
+  totalQuestions    Int
+  correctAnswers    Int       @default(0)
+  scorePercentage   Float     @default(0)
+  startedAt         DateTime  @default(now())
+  completedAt       DateTime?
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic             Topic?    @relation(fields: [topicId], references: [id])
+  quizSet           QuizSet?  @relation(fields: [quizSetId], references: [id])
+  answers           UserAnswer[]
+}
+
+model UserAnswer {
+  id              String    @id @default(cuid())
+  attemptId       String
+  userId          String
+  questionId      String
+  selectedOption  String    // "A".."D"
+  isCorrect       Boolean
+  answeredAt      DateTime  @default(now())
+
+  attempt         QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question        Question    @relation(fields: [questionId], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// Settings (key/value store; values are JSON-encoded strings)
+// ---------------------------------------------------------------------------
+model Setting {
+  id     String @id @default(cuid())
+  key    String @unique
+  value  String // JSON-encoded, e.g. "[10,20,30,40,50]"
 }
