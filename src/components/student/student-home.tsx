@@ -1,70 +1,65 @@
 "use client";
 
-import { signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  GraduationCap,
-  LogOut,
-  Settings,
-  Sparkles,
-  PlayCircle,
-} from "lucide-react";
+import { Sparkles, GraduationCap, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
+import { StudentHeader } from "@/components/student/student-header";
+import { ClassCard, type StudentClass } from "@/components/student/class-card";
+import { EmptyState } from "@/components/shared/empty-state";
 
 /**
- * Phase 1 placeholder for the student home.
- * Phase 4 will replace the body with the real "available classes" grid
- * that loads from /api/student/academic.
+ * StudentHome — the polished landing/dashboard for students.
+ *
+ * Shows a "Ready to practice?" hero plus a grid of available classes
+ * (only active classes, loaded from /api/student/academic).
+ *
+ * Clicking a class navigates the student into the academic drill-down:
+ *   Class → Subjects → Topics → Quiz setup
  */
 export function StudentHome({ user }: { user: PublicUser }) {
   const setView = useViewStore((s) => s.setView);
+  const [classes, setClasses] = useState<StudentClass[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch("/api/student/academic", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to load classes");
+        const data = (await res.json()) as { classes: StudentClass[] };
+        if (cancelled) return;
+        setClasses(data.classes);
+      } catch (e) {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Failed to load classes");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white">
-      <header className="border-b border-slate-200/60 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="size-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center">
-              <GraduationCap className="size-5" />
-            </div>
-            <span className="font-semibold text-slate-900">Quizverse</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-600 hidden sm:inline">
-              {user.name}
-            </span>
-            {user.role === "admin" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setView({ name: "admin-dashboard" })}
-                className="text-slate-600"
-              >
-                <Settings className="size-4" />
-                <span className="hidden sm:inline">Admin</span>
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="text-slate-600"
-            >
-              <LogOut className="size-4" />
-              <span className="hidden sm:inline">Sign out</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white flex flex-col">
+      <StudentHeader user={user} />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+        {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="text-center max-w-2xl mx-auto"
+          className="text-center max-w-2xl mx-auto mb-10"
         >
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-medium mb-4">
             <Sparkles className="size-3" />
@@ -74,49 +69,86 @@ export function StudentHome({ user }: { user: PublicUser }) {
             Ready to practice?
           </h1>
           <p className="mt-4 text-lg text-slate-600">
-            Pick a class, choose a subject, master the topic. Phase 1 is live —
-            the academic browser arrives in Phase 4.
+            Pick a class to start. Choose your subject, drill into a topic,
+            and we&apos;ll handle the rest.
           </p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto"
-        >
-          <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-            <PlayCircle className="size-6 text-emerald-500 mb-3" />
-            <h3 className="font-semibold text-slate-900">Browse classes</h3>
-            <p className="text-sm text-slate-600 mt-1">
-              Coming in Phase 4 — class cards will load dynamically from the
-              database.
-            </p>
+        {/* Content */}
+        {loading ? (
+          <ClassesSkeleton />
+        ) : error ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+            <AlertTriangle className="size-6 text-red-500 mx-auto mb-2" />
+            <p className="text-sm font-medium text-red-700">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => window.location.reload()}
+            >
+              Try again
+            </Button>
           </div>
-          <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-            <Sparkles className="size-6 text-emerald-500 mb-3" />
-            <h3 className="font-semibold text-slate-900">Take quizzes</h3>
-            <p className="text-sm text-slate-600 mt-1">
-              One question at a time, with smooth animations and instant
-              feedback. Phase 5.
-            </p>
+        ) : !classes || classes.length === 0 ? (
+          <EmptyState
+            icon={GraduationCap}
+            title="No classes available yet"
+            description="Your administrator hasn't published any classes. Check back soon!"
+          />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {classes.map((klass, idx) => (
+              <ClassCard
+                key={klass.id}
+                klass={klass}
+                index={idx}
+                onClick={() =>
+                  setView({
+                    name: "student-subjects",
+                    classId: klass.id,
+                  })
+                }
+              />
+            ))}
           </div>
-          <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-            <GraduationCap className="size-6 text-emerald-500 mb-3" />
-            <h3 className="font-semibold text-slate-900">Track progress</h3>
-            <p className="text-sm text-slate-600 mt-1">
-              Review past attempts and see your scores. Phase 6.
-            </p>
-          </div>
-        </motion.div>
-
-        <div className="mt-16 text-center text-xs text-slate-400">
-          <p>
-            Phase 1 — Foundation complete. Authentication, role system, and
-            database schema are live.
-          </p>
-        </div>
+        )}
       </main>
+
+      <footer className="border-t border-slate-200/60 py-6 mt-auto">
+        <p className="text-center text-xs text-slate-400">
+          Quizverse — practice MCQs the modern way
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+function ClassesSkeleton() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm"
+        >
+          <div className="flex items-start gap-3">
+            <div className="size-11 rounded-xl bg-slate-200 animate-pulse" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
+              <div className="h-3 w-40 bg-slate-200 rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="h-3 w-16 bg-slate-200 rounded animate-pulse" />
+            <div className="h-3 w-20 bg-slate-200 rounded animate-pulse" />
+          </div>
+        </div>
+      ))}
+      <div className="col-span-full flex items-center justify-center text-xs text-slate-400 gap-2">
+        <Loader2 className="size-3 animate-spin" />
+        Loading available classes…
+      </div>
     </div>
   );
 }

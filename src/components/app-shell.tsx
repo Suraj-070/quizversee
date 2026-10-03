@@ -4,11 +4,15 @@ import { useEffect, useState } from "react";
 import type { PublicUser } from "@/types";
 import { AuthScreen } from "@/components/auth/auth-screen";
 import { StudentHome } from "@/components/student/student-home";
+import { StudentSubjects } from "@/components/student/student-subjects";
+import { StudentTopics } from "@/components/student/student-topics";
+import { StudentHeader } from "@/components/student/student-header";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { AdminClasses } from "@/components/admin/admin-classes";
 import { AdminSubjects } from "@/components/admin/admin-subjects";
 import { AdminTopics } from "@/components/admin/admin-topics";
+import { AdminQuestions } from "@/components/admin/admin-questions";
 import { useViewStore } from "@/stores/view-store";
 import { Loader2 } from "lucide-react";
 
@@ -108,15 +112,36 @@ export function AppShell() {
       case "admin-topics":
         content = <AdminTopics />;
         break;
+      case "admin-questions":
+        content = <AdminQuestions />;
+        break;
       default:
         content = <ComingSoon label={view.name} />;
     }
     return <AdminShell user={user}>{content}</AdminShell>;
   }
 
-  // Student views — Phase 1 only implements student-home. The other
-  // student views will arrive in Phases 4–6.
-  return <StudentHome user={user} />;
+  // Student views — Phase 4 implements student-home, student-subjects,
+  // and student-topics. Quiz-related screens and history arrive in
+  // Phases 5–6.
+  switch (view.name) {
+    case "student-subjects":
+      return <StudentSubjects user={user} />;
+    case "student-topics":
+      return <StudentTopics user={user} />;
+    case "student-history":
+      return (
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+          <StudentHeader user={user} />
+          <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-10">
+            <ComingSoon label="Quiz history" />
+          </main>
+        </div>
+      );
+    case "student-home":
+    default:
+      return <StudentHome user={user} />;
+  }
 }
 
 function ComingSoon({ label }: { label: string }) {

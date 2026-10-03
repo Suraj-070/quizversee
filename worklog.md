@@ -116,3 +116,70 @@ Stage Summary:
 - Note on agent-browser: direct `click` on shadcn Dialog submit buttons sometimes triggers Radix's pointer-outside handler before the click event fires (a known Playwright/Radix interaction). Workaround used during testing: focus the button then press Enter. This does NOT affect real users — clicking the button with a real mouse works fine.
 - Screenshot captured: /home/z/my-project/download/phase2-topics-screen.png
 - Awaiting user confirmation to proceed to Phase 3 (Question Management: question table with filters, create/edit form with dependent selectors, publish/draft, publish/unpublish actions).
+
+---
+Task ID: phase-3-4
+Agent: main
+Task: Phase 3 (Question Management) + Phase 4 (Student Academic Navigation) — built together since Phase 4's question-count display depends on Phase 3's published-question status.
+
+Work Log:
+- Phase 3 — Question Management:
+  - Created `/api/admin/questions` route: GET (with filters: classId, subjectId, topicId, status, search) and POST (zod-validated: questionText, optionA-D, correctOption A/B/C/D, explanation, status draft/published, topicId).
+  - Created `/api/admin/questions/[id]` route: GET (fetch one), PATCH (partial update, supports status flip), DELETE.
+  - All routes admin-guarded via `requireAdmin()`.
+  - Built `src/components/admin/admin-questions.tsx`:
+    - Table columns: Question | Class | Subject | Topic | Status | Created | Actions
+    - 5 filters: search (question text) + Class + dependent Subject + dependent Topic + Status (All/Published/Draft)
+    - Subject filter only enabled after Class picked; Topic filter only enabled after Subject picked (PRD §9 dependent selectors at the filter level)
+    - Publish/Unpublish button on each row (eye icon) — uses PATCH with `{status: "published"|"draft"}`
+    - Edit dialog pre-fills all fields including parent class/subject/topic chain
+    - Delete confirmation dialog (questions have no children so no cascade counts shown)
+    - Empty state when no questions exist; warning banner when no classes exist
+    - Create/Edit dialog features:
+      - 3-LEVEL DEPENDENT SELECTORS: Class → Subject → Topic. Each level loads its options from the previous level's selection via /api/admin/subjects?classId= and /api/admin/topics?subjectId=. Topic dropdown is disabled until subject is picked (PRD §11).
+      - 4 large option cards (A/B/C/D) with a circular radio-button-style "correct answer" selector on each. Selected option highlighted in emerald. (PRD §11: "One correct answer is selected".)
+      - Optional explanation field (PRD §11: "Explanation — optional")
+      - Status radio group: Draft / Published
+      - Validates: question not empty, all 4 options exist, one correct selected, topic selected (PRD §11)
+  - Wired AdminQuestions into AppShell view-router.
+
+- Phase 4 — Student Academic Navigation:
+  - Created `/api/student/academic` route: GET returns the full active academic tree (active classes → active subjects → published-question counts). User-guarded.
+  - Created `/api/student/subjects?classId=` route: returns active subjects for a class with topic count + published-question count. Verifies parent class is active (students can't peek at disabled classes by guessing IDs).
+  - Created `/api/student/topics?subjectId=` route: returns active topics for a subject with published-question count per topic AND the user's last completed quiz attempt (best-effort — Phase 6 will wire full history).
+  - Built reusable student cards:
+    - `ClassCard` — gradient emerald icon, class name + description, subject count + total questions count, hover lift + chevron animation. Clicking navigates to subjects screen.
+    - `SubjectCard` — gradient violet icon, subject name + description, topic count + published-questions count. (Note: dynamic lucide icon resolution deferred to Phase 8 polish — currently shows consistent BookOpen icon to satisfy `react-hooks/static-components` ESLint rule.)
+    - `TopicCard` — gradient emerald icon, topic name + description, published-questions count, last attempt score (if any) shown as "Last: 24/30 (80%)". Disabled (greyed, non-clickable) when publishedQuestions === 0 with "available soon" hint (PRD §40: "This topic currently has no published questions").
+  - Built `StudentHeader` — shared light-emerald header with back arrow (visible on sub-screens), Quizverse logo home button, History button, Admin button (only for admins), Sign out.
+  - Built `StudentSubjects` screen: hero header showing class name + description, grid of subject cards, loading skeleton (3 placeholder cards with pulse animation), error state with retry, empty state with back-to-classes CTA.
+  - Built `StudentTopics` screen: hero header showing breadcrumb (Class name → Subject), grid of topic cards with question count + last score, loading skeleton, error state, empty state.
+  - Rewrote `StudentHome`: now loads classes from `/api/student/academic` (was a placeholder in Phase 1). Shows "Ready to practice?" hero, dynamic class cards, loading skeleton, error state, empty state. Footer at bottom.
+  - Wired all new student screens into AppShell view-router with a switch statement. Added `student-history` placeholder (Phase 6 will replace).
+  - Lint: 0 errors, 0 warnings.
+  - Dev log: clean, no runtime errors.
+
+- Agent Browser verification (all passed):
+  - Admin Question CRUD:
+    - Logged in as admin → navigated to Questions sidebar → all 6 seeded questions displayed with correct Class/Subject/Topic/Status columns
+    - Tested Publish/Unpublish toggle: clicked Unpublish on first question → status changed to Draft → button label changed to "Publish" → clicked Publish → status changed back to Published. Both API calls succeeded.
+    - Tested Create Question dialog: opened dialog → Class defaulted to Class 9 → opened Subject dropdown → ONLY "Science" appeared (dependent selector working) → selected Science → Topic dropdown became enabled → opened it → ONLY "Force and Motion" appeared → selected it → filled question text + 4 options + explanation → marked Option A as correct → set status to Published → submitted via Enter (workaround for Radix dialog click issue) → new question "What does 1 Newton equal?" appeared at top of table with Status=Published
+    - Verified dashboard count updated: Total Questions = 7 (was 6), Published Questions = 7
+    - Deleted the test question via delete confirmation dialog → back to 6 seeded questions
+  - Student Navigation Flow:
+    - From admin, clicked "Back to student site" → landed on Student Home with "Ready to practice?" hero
+    - Student Home displayed dynamic Class 9 card with "1 subject, 6 questions" (loaded from /api/student/academic)
+    - Clicked Class 9 card → navigated to Subjects screen showing "Class 9" header + Science subject card with "1 topic, 6 questions"
+    - Clicked Science card → navigated to Topics screen showing breadcrumb "Class 9 → Subject" + Force and Motion topic card with "6 questions"
+    - Tested back arrow in student header → navigated from Topics back to Subjects (history-based navigation working)
+  - Auth verification:
+    - Signed out → fetch('/api/admin/questions') returned 401 (Authentication required)
+    - fetch('/api/student/academic') returned 401 (student endpoints also protected — only authenticated users can browse academic content)
+
+Stage Summary:
+- All Phase 3 + Phase 4 deliverables complete and verified end-to-end in the browser.
+- Phase 3: Admin can create, edit, delete, publish, and unpublish questions. The create/edit form features 3-level dependent selectors (Class → Subject → Topic) per PRD §11. Publish/draft toggle works inline without opening the edit dialog.
+- Phase 4: Student-facing app now has a real academic browser. The full navigation flow (Home → Class → Subject → Topic) works dynamically from the database. Topic cards show published-question counts and last-attempt scores. Loading skeletons, empty states, and error states are all in place.
+- Architecture remains fully dynamic: creating a new class through admin → it instantly appears on the student's home screen with zero code changes (verified by the earlier Phase 2 test that created/deleted Class 10).
+- Screenshot captured: /home/z/my-project/download/phase4-student-topics.png
+- Awaiting user confirmation to proceed to Phase 5 (Quiz Engine: question count picker with availability logic, random question selection, one-question-at-a-time UI, answer validation, progress, completion).
