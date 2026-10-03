@@ -6,6 +6,9 @@ import { AuthScreen } from "@/components/auth/auth-screen";
 import { StudentHome } from "@/components/student/student-home";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { AdminClasses } from "@/components/admin/admin-classes";
+import { AdminSubjects } from "@/components/admin/admin-subjects";
+import { AdminTopics } from "@/components/admin/admin-topics";
 import { useViewStore } from "@/stores/view-store";
 import { Loader2 } from "lucide-react";
 
@@ -88,18 +91,27 @@ export function AppShell() {
   }
 
   if (isAdminView) {
-    // Phase 1 only implements admin-dashboard. Other admin views will be
-    // added in Phases 2–7. For unknown admin views, show a "coming soon"
-    // panel inside the AdminShell so the sidebar still works.
-    return (
-      <AdminShell user={user}>
-        {view.name === "admin-dashboard" ? (
-          <AdminDashboard user={user} />
-        ) : (
-          <ComingSoon label={view.name} />
-        )}
-      </AdminShell>
-    );
+    // Phase 2 implements admin-dashboard, admin-classes, admin-subjects,
+    // and admin-topics. Other admin views (questions, quiz-sets, users,
+    // settings) arrive in later phases.
+    let content: React.ReactNode;
+    switch (view.name) {
+      case "admin-dashboard":
+        content = <AdminDashboard user={user} />;
+        break;
+      case "admin-classes":
+        content = <AdminClasses />;
+        break;
+      case "admin-subjects":
+        content = <AdminSubjects />;
+        break;
+      case "admin-topics":
+        content = <AdminTopics />;
+        break;
+      default:
+        content = <ComingSoon label={view.name} />;
+    }
+    return <AdminShell user={user}>{content}</AdminShell>;
   }
 
   // Student views — Phase 1 only implements student-home. The other
