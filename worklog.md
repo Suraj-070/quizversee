@@ -183,3 +183,89 @@ Stage Summary:
 - Architecture remains fully dynamic: creating a new class through admin → it instantly appears on the student's home screen with zero code changes (verified by the earlier Phase 2 test that created/deleted Class 10).
 - Screenshot captured: /home/z/my-project/download/phase4-student-topics.png
 - Awaiting user confirmation to proceed to Phase 5 (Quiz Engine: question count picker with availability logic, random question selection, one-question-at-a-time UI, answer validation, progress, completion).
+
+---
+Task ID: phase-5-6
+Agent: main
+Task: Phase 5 (Quiz Engine) + Phase 6 (Results, Review, History) — built together since they form a single quiz lifecycle.
+
+Work Log:
+- Phase 5 — Quiz Engine APIs:
+  - `GET /api/student/questions?topicId=` — returns published-question count + allowed quiz counts (from the `quiz_question_counts` Setting) with per-count `available` flag per PRD §14.
+  - `POST /api/student/attempts` — starts a new attempt: validates topicId + totalQuestions, verifies topic active, confirms totalQuestions ≤ published count (PRD §14), picks N random published questions (in-process shuffle), creates QuizAttempt + placeholder UserAnswer rows in a transaction, returns questions WITHOUT correctOption (security: client learns correctness only after answering).
+  - `GET /api/student/attempts?attemptId=` — fetches one attempt with full answers + questions (for results/review), OR lists recent attempts (for history).
+  - `PATCH /api/student/attempts/[id]/answer` — records the user's answer: validates userAnswerId + selectedOption, verifies ownership, compares to correctOption server-side, updates the UserAnswer row, returns {isCorrect, correctOption, explanation}. CRITICAL SAFETY: correctOption is NEVER sent before the user submits.
+  - `POST /api/student/attempts/[id]/complete` — marks attempt complete: sums correctAnswers from UserAnswer rows, computes scorePercentage, sets completedAt. Idempotent.
+
+- Phase 5 — Quiz Session Store:
+  - Created `src/stores/quiz-session-store.ts` with Zustand + persist middleware.
+  - State: attemptId, questions[], currentIndex, answers map.
+  - Persisted to localStorage (`quizverse-quiz-session`) so a page refresh mid-quiz restores the student to the same question (PRD §37).
+  - Actions: start(), setCurrentIndex(), recordAnswer(), complete(), clear().
+
+- Phase 5 — QuizSetup Screen:
+  - Fetches `/api/student/questions?topicId=` to get published count + allowed counts.
+  - Renders count tiles (10/20/30/40/50) with availability logic: tiles greater than published count are disabled and show "unavailable" + lock icon (PRD §14).
+  - Pre-selects the largest available count.
+  - "Start Quiz (N questions)" button calls POST /api/student/attempts → starts the quiz.
+  - Empty state when publishedCount === 0 ("This topic currently has no published questions").
+
+- Phase 5 — QuizActive Screen:
+  - One question at a time (PRD §22). Shows "Question X / Total" + progress bar + "Answered: N · Remaining: M" (PRD §26).
+  - Large answer cards with letter badges (A/B/C/D). Click to select → "Check answer" button enables → click to reveal.
+  - After reveal: correct option highlighted green with CheckCircle2 icon, wrong selection highlighted red with XCircle icon, other options greyed. Feedback panel shows "Correct!" or "Not quite — the answer is X" + explanation if available (PRD §25).
+  - "Next question" button (Q1-9) or "See results" button (Q10). Does NOT auto-advance — student has time to understand feedback (PRD §25).
+  - On "See results": calls POST /complete → navigates to quiz-results.
+  - Framer Motion AnimatePresence for smooth question transitions (slide in/out).
+  - Resume after refresh: reads currentIndex + answers from the persisted store, restores the revealed state for already-answered questions.
+
+- Phase 6 — QuizResults Screen:
+  - Fetches the attempt via GET /api/student/attempts?attemptId=.
+  - Shows animated Trophy icon (spring animation), "Quiz Complete" heading, topic name, big score (X / Total), percentage badge.
+  - Correct/Incorrect breakdown in two colored cards (green/red).
+  - Three action buttons: Review answers, Try again (clears session + navigates to quiz-setup), Back to topics (clears session + navigates to student-topics).
+  - Color shifts based on score (emerald for ≥70%, amber for <70%).
+
+- Phase 6 — QuizReview Screen:
+  - Fetches the attempt with all answers + questions.
+  - For each question: question text, all 4 options with letter badges, user's answer highlighted (red if wrong, green if correct), correct answer highlighted green, explanation shown below.
+  - "Back to topics" button at the bottom.
+
+- Phase 6 — StudentHistory Screen:
+  - Fetches GET /api/student/attempts (lists recent 50 attempts).
+  - Shows only completed attempts as cards: topic name, class · subject breadcrumb, date, score (X/Total), percentage.
+  - Trophy icon colored by score (emerald/amber).
+  - "Review answers" button on each card → navigates to quiz-review.
+  - Empty state when no attempts exist.
+
+- Bug fix during testing (CRITICAL):
+  - The AppShell bootstrap effect originally subscribed to live updates of the quiz session store (quizSessionAttemptId, quizSessionQuestions, quizSessionAnswers) and re-ran whenever any of them changed.
+  - This caused a critical bug: after answering Q10 (the last question), `Object.keys(quizSessionAnswers).length` became equal to `quizSessionQuestions.length`, so `hasActiveSession` flipped to false. The bootstrap effect re-ran and called `setView({ name: "student-home" })`, booting the student out of the quiz BEFORE they could click "See results".
+  - Fix: changed to read a single snapshot of the quiz session at mount time via `useQuizSessionStore.getState()` (stored in a useRef), so the bootstrap effect only runs once and doesn't react to live quiz state changes. Live quiz state is handled entirely by the QuizActive component.
+  - Verified the fix: after answering Q10, the "See results" button now appears and stays until clicked.
+
+- Lint: 0 errors, 0 warnings.
+- Dev log: clean, no runtime errors.
+
+- Agent Browser verification (all passed after the fix):
+  - Logged in as student@mcq.local → navigated Home → Class 9 → Science → Force and Motion → Quiz Setup
+  - Quiz Setup showed "10 published questions available" with count tiles: 10 = available (clickable), 20/30/40/50 = unavailable (disabled, lock icon). PRD §14 verified.
+  - Clicked "Start Quiz (10 questions)" → Quiz Active loaded with Q1/10, progress bar, 4 answer cards.
+  - Selected option A on Q1 → clicked "Check answer" → got "Correct!" feedback + explanation shown. Option A highlighted green with check icon.
+  - Advanced through Q2-Q9 via script, each with answer + check + next.
+  - On Q10: selected option A → clicked "Check answer" → feedback shown → "See results" button appeared (the bug fix worked — page did NOT navigate away).
+  - Clicked "See results" → POST /complete returned 200 → Results screen showed: "Quiz Complete", topic "Force and Motion", score 2/10 (20%), Correct: 2, Incorrect: 8, with Review/Try again/Back to topics buttons.
+  - Clicked "Try again" → navigated back to Quiz Setup for the same topic.
+  - Navigated to History → showed the completed attempt with topic name, "Class 9 · Science" breadcrumb, date, 2/10 score, 20%.
+  - Clicked "Review answers" on a history entry → Review screen showed all 10 questions with user's answer (red where wrong) + correct answer (green) + explanations.
+  - Topic cards on the Topics screen now show "Last: 2/10 (20%)" badge for topics with previous attempts (PRD §19).
+  - Screenshots captured: phase5-quiz-active.png, phase6-quiz-results.png, phase6-quiz-review.png, phase6-student-history.png, phase6-student-history-final.png.
+
+Stage Summary:
+- All Phase 5 + Phase 6 deliverables complete and verified end-to-end in the browser.
+- Phase 5: Full quiz engine working — count picker with availability logic, random question selection, one-question-at-a-time UI, answer validation with correct/incorrect feedback, progress bar, smooth transitions. The correct answer is NEVER exposed to the client before the user submits.
+- Phase 6: Results screen with score/percentage/correct-incorrect breakdown, Review screen with per-question analysis, History screen with recent attempts list. All screens have loading skeletons, error states, and empty states.
+- Critical bug found and fixed: the AppShell bootstrap effect was re-running on every quiz state change, causing the student to be booted from the quiz after answering the last question. Fixed by reading a single snapshot at mount time instead of subscribing to live updates.
+- Refresh resilience verified: the quiz session is persisted to localStorage, so a page refresh mid-quiz restores the student to the same question with their previous answers intact.
+- The full student lifecycle now works end-to-end: Home → Class → Subject → Topic → Quiz Setup → Quiz Active → Results → Review → History.
+- Awaiting user confirmation to proceed to Phase 7 (Quiz Sets — admin CRUD for grouped question sets + student quiz-set support) or Phase 8 (Polish — Framer Motion, skeletons, responsive, error handling, theme seam).

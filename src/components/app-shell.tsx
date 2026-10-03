@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PublicUser } from "@/types";
 import { AuthScreen } from "@/components/auth/auth-screen";
 import { StudentHome } from "@/components/student/student-home";
 import { StudentSubjects } from "@/components/student/student-subjects";
 import { StudentTopics } from "@/components/student/student-topics";
 import { StudentHeader } from "@/components/student/student-header";
+import { QuizSetup } from "@/components/student/quiz-setup";
+import { QuizActive } from "@/components/student/quiz-active";
+import { QuizResults } from "@/components/student/quiz-results";
+import { QuizReview } from "@/components/student/quiz-review";
+import { StudentHistory } from "@/components/student/student-history";
+import { useQuizSessionStore } from "@/stores/quiz-session-store";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { AdminClasses } from "@/components/admin/admin-classes";
@@ -36,6 +42,33 @@ export function AppShell() {
   const view = useViewStore((s) => s.view);
   const setView = useViewStore((s) => s.setView);
 
+  // Read the persisted quiz session ONCE (via a ref snapshot) so we can
+  // resume an in-progress quiz after a page refresh. Per PRD §37: refresh
+  // or accidental navigation must not corrupt completed attempts.
+  //
+  // IMPORTANT: we intentionally do NOT subscribe to live updates of the
+  // quiz session store here. If we did, the bootstrap effect would re-run
+  // every time the student answers a question — and once the last answer
+  // is recorded, "hasActiveSession" would flip to false, booting the
+  // student out of the quiz before they can click "See results".
+  //
+  // Instead, we take a single snapshot at mount time. Live quiz state is
+  // handled entirely by the QuizActive component.
+  const sessionSnapshot = useRef<{
+    attemptId: string | null;
+    questionCount: number;
+    answeredCount: number;
+  } | null>(null);
+  if (sessionSnapshot.current === null) {
+    // First render only — read the current store state without subscribing.
+    const state = useQuizSessionStore.getState();
+    sessionSnapshot.current = {
+      attemptId: state.attemptId,
+      questionCount: state.questions.length,
+      answeredCount: Object.keys(state.answers).length,
+    };
+  }
+
   useEffect(() => {
     let cancelled = false;
     async function bootstrap() {
@@ -46,13 +79,26 @@ export function AppShell() {
         if (!cancelled) {
           setUser(data.user);
           if (data.user) {
-            // On a fresh load, default admins to the admin dashboard and
-            // regular users to the student home.
-            setView(
-              data.user.role === "admin"
-                ? { name: "admin-dashboard" }
-                : { name: "student-home" }
-            );
+            // If there's an active (in-progress) quiz session, resume it.
+            const snap = sessionSnapshot.current;
+            const hasActiveSession =
+              snap?.attemptId &&
+              snap.questionCount > 0 &&
+              snap.answeredCount < snap.questionCount;
+            if (hasActiveSession) {
+              setView({
+                name: "quiz-active",
+                attemptId: snap!.attemptId!,
+              });
+            } else {
+              // On a fresh load, default admins to the admin dashboard
+              // and regular users to the student home.
+              setView(
+                data.user.role === "admin"
+                  ? { name: "admin-dashboard" }
+                  : { name: "student-home" }
+              );
+            }
           } else {
             setView({ name: "login" });
           }
@@ -121,23 +167,22 @@ export function AppShell() {
     return <AdminShell user={user}>{content}</AdminShell>;
   }
 
-  // Student views — Phase 4 implements student-home, student-subjects,
-  // and student-topics. Quiz-related screens and history arrive in
-  // Phases 5–6.
+  // Student views — Phases 4–6 implement the full student flow.
   switch (view.name) {
     case "student-subjects":
       return <StudentSubjects user={user} />;
     case "student-topics":
       return <StudentTopics user={user} />;
+    case "quiz-setup":
+      return <QuizSetup user={user} />;
+    case "quiz-active":
+      return <QuizActive user={user} />;
+    case "quiz-results":
+      return <QuizResults user={user} />;
+    case "quiz-review":
+      return <QuizReview user={user} />;
     case "student-history":
-      return (
-        <div className="min-h-screen bg-slate-50 flex flex-col">
-          <StudentHeader user={user} />
-          <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-10">
-            <ComingSoon label="Quiz history" />
-          </main>
-        </div>
-      );
+      return <StudentHistory user={user} />;
     case "student-home":
     default:
       return <StudentHome user={user} />;
