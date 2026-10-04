@@ -83,14 +83,21 @@ export function AdminShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const currentName = view.name;
-  // Treat admin-quiz-set-detail as part of the Quiz Sets section
+  // Treat admin-quiz-set-detail as part of the Quiz Sets section,
+  // and admin-user-detail as part of the Users section.
   const effectiveName =
-    currentName === "admin-quiz-set-detail" ? "admin-quiz-sets" : currentName;
+    currentName === "admin-quiz-set-detail"
+      ? "admin-quiz-sets"
+      : currentName === "admin-user-detail"
+        ? "admin-users"
+        : currentName;
   const activeItem = NAV_ITEMS.find((i) => i.view.name === effectiveName);
   const pageTitle =
     currentName === "admin-quiz-set-detail"
       ? "Quiz Set Details"
-      : activeItem?.label ?? "Admin";
+      : currentName === "admin-user-detail"
+        ? "Student Progress"
+        : activeItem?.label ?? "Admin";
 
   function isActive(item: NavItem) {
     return item.view.name === effectiveName;

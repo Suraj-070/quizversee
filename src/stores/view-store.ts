@@ -42,6 +42,7 @@ export type View =
   | { name: "admin-quiz-sets" }
   | { name: "admin-quiz-set-detail"; quizSetId: string }
   | { name: "admin-users" }
+  | { name: "admin-user-detail"; userId: string }
   | { name: "admin-settings" };
 
 type ViewState = {

@@ -25,6 +25,9 @@ import { AdminTopics } from "@/components/admin/admin-topics";
 import { AdminQuestions } from "@/components/admin/admin-questions";
 import { AdminQuizSets } from "@/components/admin/admin-quiz-sets";
 import { AdminQuizSetDetail } from "@/components/admin/admin-quiz-set-detail";
+import { AdminUsers } from "@/components/admin/admin-users";
+import { AdminUserDetail } from "@/components/admin/admin-user-detail";
+import { AdminSettings } from "@/components/admin/admin-settings";
 import { useViewStore } from "@/stores/view-store";
 import { Loader2 } from "lucide-react";
 
@@ -175,6 +178,17 @@ export function AppShell() {
         content = <AdminQuizSetDetail quizSetId={qsId} />;
         break;
       }
+      case "admin-users":
+        content = <AdminUsers />;
+        break;
+      case "admin-user-detail": {
+        const uId = view.name === "admin-user-detail" ? view.userId : "";
+        content = <AdminUserDetail userId={uId} />;
+        break;
+      }
+      case "admin-settings":
+        content = <AdminSettings />;
+        break;
       default:
         content = <ComingSoon label={view.name} />;
     }
