@@ -29,6 +29,12 @@ export type QuizQuestionClient = {
   optionD: string;
   explanation: string | null;
   userAnswerId: string;
+  // Optional images (base64 data URIs or URLs).
+  questionImage: string | null;
+  optionAImage: string | null;
+  optionBImage: string | null;
+  optionCImage: string | null;
+  optionDImage: string | null;
 };
 
 export type FeedbackMode = "immediate" | "exam";

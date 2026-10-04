@@ -108,9 +108,14 @@ export function QuizSetSetup({ user }: { user: PublicUser }) {
           optionD: string;
           explanation: string | null;
           userAnswerId: string;
+          questionImage: string | null;
+          optionAImage: string | null;
+          optionBImage: string | null;
+          optionCImage: string | null;
+          optionDImage: string | null;
         }>;
       };
-      startQuiz(data.attemptId, data.questions);
+      startQuiz(data.attemptId, data.questions, "immediate");
       setView({ name: "quiz-active", attemptId: data.attemptId });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to start quiz");

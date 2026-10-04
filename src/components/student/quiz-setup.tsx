@@ -144,6 +144,11 @@ export function QuizSetup({ user }: { user: PublicUser }) {
           optionD: string;
           explanation: string | null;
           userAnswerId: string;
+          questionImage: string | null;
+          optionAImage: string | null;
+          optionBImage: string | null;
+          optionCImage: string | null;
+          optionDImage: string | null;
         }>;
       };
       startQuiz(data.attemptId, data.questions, feedbackMode);

@@ -47,6 +47,11 @@ const UpdateQuestionSchema = z.object({
   correctOption: z.enum(["A", "B", "C", "D"]).optional(),
   explanation: z.string().max(2000).optional().nullable(),
   status: z.enum(["draft", "published"]).optional(),
+  questionImage: z.string().optional().nullable(),
+  optionAImage: z.string().optional().nullable(),
+  optionBImage: z.string().optional().nullable(),
+  optionCImage: z.string().optional().nullable(),
+  optionDImage: z.string().optional().nullable(),
 });
 
 /**
@@ -80,6 +85,12 @@ export async function PATCH(request: Request, { params }: Params) {
   if (data.explanation !== undefined) {
     data.explanation = data.explanation?.trim() || null;
   }
+  // Convert empty image strings to null (allows clearing an image)
+  if (data.questionImage !== undefined) data.questionImage = data.questionImage || null;
+  if (data.optionAImage !== undefined) data.optionAImage = data.optionAImage || null;
+  if (data.optionBImage !== undefined) data.optionBImage = data.optionBImage || null;
+  if (data.optionCImage !== undefined) data.optionCImage = data.optionCImage || null;
+  if (data.optionDImage !== undefined) data.optionDImage = data.optionDImage || null;
 
   // Verify topic exists if changing
   if (data.topicId) {

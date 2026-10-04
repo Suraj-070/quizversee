@@ -9,12 +9,15 @@ import {
   Info,
   ChevronLeft,
   Loader2,
+  Sparkles,
+  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
 import { StudentHeader } from "@/components/student/student-header";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 /**
  * QuizReview — lets students review every question after completing
@@ -278,6 +281,17 @@ export function QuizReview({ user }: { user: PublicUser }) {
                     <p>{ans.question.explanation}</p>
                   </div>
                 )}
+
+                {/* AI explanation button (only for wrong answers) */}
+                {!ans.isCorrect && (
+                  <AIExplanationButton
+                    questionId={ans.question.id}
+                    selectedOption={ans.selectedOption}
+                  />
+                )}
+
+                {/* Flag toggle */}
+                <FlagButton questionId={ans.question.id} />
               </motion.div>
             );
           })}
@@ -307,5 +321,125 @@ export function QuizReview({ user }: { user: PublicUser }) {
         </div>
       </main>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// AI Explanation Button — generates an AI-powered explanation for wrong answers
+// ---------------------------------------------------------------------------
+
+function AIExplanationButton({
+  questionId,
+  selectedOption,
+}: {
+  questionId: string;
+  selectedOption: "A" | "B" | "C" | "D";
+}) {
+  const [explanation, setExplanation] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleGenerate() {
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/student/questions/${questionId}/ai-explanation`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ selectedOption }),
+        }
+      );
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? "Failed to generate explanation");
+      }
+      const data = await res.json();
+      setExplanation(data.explanation);
+      toast.success("AI explanation ready");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to generate");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (explanation) {
+    return (
+      <div className="mt-3 rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-slate-700">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <Sparkles className="size-4 text-violet-500" />
+          <span className="font-medium text-violet-700">AI explanation</span>
+        </div>
+        <p>{explanation}</p>
+      </div>
+    );
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="mt-3 text-violet-600 border-violet-300 hover:bg-violet-50 hover:text-violet-700"
+      onClick={handleGenerate}
+      disabled={loading}
+    >
+      {loading ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        <Sparkles className="size-4" />
+      )}
+      {loading ? "Generating…" : "Get AI explanation"}
+    </Button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Flag Button — lets students bookmark a question for later review
+// ---------------------------------------------------------------------------
+
+function FlagButton({ questionId }: { questionId: string }) {
+  const [flagged, setFlagged] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/student/questions/${questionId}/flag`)
+      .then((r) => r.json())
+      .then((d) => setFlagged(!!d.flagged))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [questionId]);
+
+  async function toggle() {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/student/questions/${questionId}/flag`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to toggle");
+      const d = await res.json();
+      setFlagged(d.flagged);
+    } catch {
+      toast.error("Failed to toggle flag");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className={cn(
+        "mt-2",
+        flagged
+          ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+          : "text-slate-400 hover:text-slate-600"
+      )}
+      onClick={toggle}
+      disabled={loading}
+    >
+      <Flag className={cn("size-3.5", flagged && "fill-current")} />
+      {flagged ? "Flagged for review" : "Flag for review"}
+    </Button>
   );
 }

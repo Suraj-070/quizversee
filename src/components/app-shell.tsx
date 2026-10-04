@@ -14,6 +14,7 @@ import { QuizReview } from "@/components/student/quiz-review";
 import { StudentHistory } from "@/components/student/student-history";
 import { StudentQuizSets } from "@/components/student/student-quiz-sets";
 import { QuizSetSetup } from "@/components/student/quiz-set-setup";
+import { StudentFlagged } from "@/components/student/student-flagged";
 import { useQuizSessionStore } from "@/stores/quiz-session-store";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
@@ -199,6 +200,8 @@ export function AppShell() {
       return <StudentHistory user={user} />;
     case "student-quiz-sets":
       return <StudentQuizSets user={user} />;
+    case "student-flagged":
+      return <StudentFlagged user={user} />;
     case "student-home":
     default:
       return <StudentHome user={user} />;

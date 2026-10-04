@@ -115,6 +115,11 @@ export async function POST(request: Request) {
         optionC: true,
         optionD: true,
         explanation: true,
+        questionImage: true,
+        optionAImage: true,
+        optionBImage: true,
+        optionCImage: true,
+        optionDImage: true,
       },
     });
 
@@ -202,6 +207,11 @@ export async function POST(request: Request) {
       optionC: true,
       optionD: true,
       explanation: true,
+      questionImage: true,
+      optionAImage: true,
+      optionBImage: true,
+      optionCImage: true,
+      optionDImage: true,
     },
   });
 

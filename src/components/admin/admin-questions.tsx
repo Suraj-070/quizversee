@@ -46,6 +46,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { FormField } from "@/components/admin/form-field";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ListSkeleton } from "@/components/shared/list-skeleton";
+import { ImageUpload } from "@/components/admin/image-upload";
 
 type QuestionWithChain = Question & {
   topic: {
@@ -523,6 +524,11 @@ function QuestionDialog({
   const [optionB, setOptionB] = useState("");
   const [optionC, setOptionC] = useState("");
   const [optionD, setOptionD] = useState("");
+  const [questionImage, setQuestionImage] = useState<string | null>(null);
+  const [optionAImage, setOptionAImage] = useState<string | null>(null);
+  const [optionBImage, setOptionBImage] = useState<string | null>(null);
+  const [optionCImage, setOptionCImage] = useState<string | null>(null);
+  const [optionDImage, setOptionDImage] = useState<string | null>(null);
   const [correctOption, setCorrectOption] = useState<"A" | "B" | "C" | "D">("A");
   const [explanation, setExplanation] = useState("");
   const [status, setStatus] = useState<QuestionStatus>("draft");
@@ -546,6 +552,11 @@ function QuestionDialog({
       setCorrectOption(editing.correctOption);
       setExplanation(editing.explanation ?? "");
       setStatus(editing.status);
+      setQuestionImage(editing.questionImage ?? null);
+      setOptionAImage(editing.optionAImage ?? null);
+      setOptionBImage(editing.optionBImage ?? null);
+      setOptionCImage(editing.optionCImage ?? null);
+      setOptionDImage(editing.optionDImage ?? null);
     } else {
       setClassId(classes[0]?.id ?? "");
       setSubjectId("");
@@ -558,6 +569,11 @@ function QuestionDialog({
       setCorrectOption("A");
       setExplanation("");
       setStatus("draft");
+      setQuestionImage(null);
+      setOptionAImage(null);
+      setOptionBImage(null);
+      setOptionCImage(null);
+      setOptionDImage(null);
     }
   }, [open, editing, classes]);
 
@@ -674,6 +690,11 @@ function QuestionDialog({
           correctOption,
           explanation: explanation.trim() || null,
           status,
+          questionImage,
+          optionAImage,
+          optionBImage,
+          optionCImage,
+          optionDImage,
         }),
       });
       if (!res.ok) {
@@ -800,6 +821,13 @@ function QuestionDialog({
             />
           </FormField>
 
+          {/* Optional question image (e.g. a diagram, graph, or figure) */}
+          <ImageUpload
+            value={questionImage}
+            onChange={setQuestionImage}
+            label="Question image (optional — diagram, graph, figure)"
+          />
+
           <div className="grid gap-3 sm:grid-cols-2">
             <OptionField
               label="Option A"
@@ -808,6 +836,8 @@ function QuestionDialog({
               selected={correctOption === "A"}
               onSelect={() => setCorrectOption("A")}
               disabled={saving}
+              image={optionAImage}
+              onImageChange={setOptionAImage}
             />
             <OptionField
               label="Option B"
@@ -816,6 +846,8 @@ function QuestionDialog({
               selected={correctOption === "B"}
               onSelect={() => setCorrectOption("B")}
               disabled={saving}
+              image={optionBImage}
+              onImageChange={setOptionBImage}
             />
             <OptionField
               label="Option C"
@@ -824,6 +856,8 @@ function QuestionDialog({
               selected={correctOption === "C"}
               onSelect={() => setCorrectOption("C")}
               disabled={saving}
+              image={optionCImage}
+              onImageChange={setOptionCImage}
             />
             <OptionField
               label="Option D"
@@ -832,6 +866,8 @@ function QuestionDialog({
               selected={correctOption === "D"}
               onSelect={() => setCorrectOption("D")}
               disabled={saving}
+              image={optionDImage}
+              onImageChange={setOptionDImage}
             />
           </div>
 
@@ -909,6 +945,8 @@ function OptionField({
   selected,
   onSelect,
   disabled,
+  image,
+  onImageChange,
 }: {
   label: string;
   value: string;
@@ -916,6 +954,8 @@ function OptionField({
   selected: boolean;
   onSelect: () => void;
   disabled?: boolean;
+  image: string | null;
+  onImageChange: (v: string | null) => void;
 }) {
   return (
     <div
@@ -968,6 +1008,7 @@ function OptionField({
         disabled={disabled}
         className="border-0 px-0 focus-visible:ring-0 focus-visible:border-0 h-8"
       />
+      <ImageUpload value={image} onChange={onImageChange} className="mt-2" />
     </div>
   );
 }

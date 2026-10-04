@@ -78,6 +78,13 @@ const CreateQuestionSchema = z.object({
   correctOption: z.enum(["A", "B", "C", "D"]),
   explanation: z.string().max(2000).optional().nullable(),
   status: z.enum(["draft", "published"]).optional().default("draft"),
+  // Optional image fields (base64 data URIs). When set, the option or
+  // question renders with the image.
+  questionImage: z.string().optional().nullable(),
+  optionAImage: z.string().optional().nullable(),
+  optionBImage: z.string().optional().nullable(),
+  optionCImage: z.string().optional().nullable(),
+  optionDImage: z.string().optional().nullable(),
 });
 
 /**
@@ -107,6 +114,11 @@ export async function POST(request: Request) {
     correctOption,
     explanation,
     status,
+    questionImage,
+    optionAImage,
+    optionBImage,
+    optionCImage,
+    optionDImage,
   } = parsed.data;
 
   // Verify the parent topic exists
@@ -132,6 +144,11 @@ export async function POST(request: Request) {
       correctOption,
       explanation: explanation?.trim() || null,
       status,
+      questionImage: questionImage || null,
+      optionAImage: optionAImage || null,
+      optionBImage: optionBImage || null,
+      optionCImage: optionCImage || null,
+      optionDImage: optionDImage || null,
     },
     include: {
       topic: {

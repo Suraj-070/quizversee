@@ -67,6 +67,68 @@ export async function PATCH(request: Request, { params }: Params) {
     data: { selectedOption, isCorrect, answeredAt: new Date() },
   });
 
+  // Update QuestionMastery for spaced repetition (SM-2-inspired).
+  // This tracks how well the student knows this question so future
+  // quizzes can prioritize "due" questions (ones they got wrong before).
+  try {
+    const existing = await db.questionMastery.findUnique({
+      where: { userId_questionId: { userId: user.id, questionId: userAnswer.questionId } },
+    });
+
+    if (existing) {
+      // SM-2-inspired update
+      const newStreak = isCorrect ? existing.currentStreak + 1 : 0;
+      // Ease factor: decrease if wrong, increase slightly if correct (clamped 1.3–2.5)
+      const newEase = isCorrect
+        ? Math.min(2.5, existing.easeFactor + 0.1)
+        : Math.max(1.3, existing.easeFactor - 0.2);
+      // Interval: 0 if wrong (due immediately), otherwise grows with streak
+      const newInterval = isCorrect
+        ? Math.round(
+            newStreak === 1
+              ? 1
+              : existing.intervalDays * newEase
+          )
+        : 0;
+      const nextDue = new Date();
+      nextDue.setDate(nextDue.getDate() + newInterval);
+
+      await db.questionMastery.update({
+        where: { id: existing.id },
+        data: {
+          timesSeen: existing.timesSeen + 1,
+          timesCorrect: existing.timesCorrect + (isCorrect ? 1 : 0),
+          currentStreak: newStreak,
+          easeFactor: newEase,
+          intervalDays: newInterval,
+          lastSeenAt: new Date(),
+          nextDueAt: nextDue,
+        },
+      });
+    } else {
+      // First time seeing this question
+      const nextDue = new Date();
+      nextDue.setDate(nextDue.getDate() + (isCorrect ? 1 : 0));
+
+      await db.questionMastery.create({
+        data: {
+          userId: user.id,
+          questionId: userAnswer.questionId,
+          timesSeen: 1,
+          timesCorrect: isCorrect ? 1 : 0,
+          currentStreak: isCorrect ? 1 : 0,
+          easeFactor: 2.5,
+          intervalDays: isCorrect ? 1 : 0,
+          lastSeenAt: new Date(),
+          nextDueAt: nextDue,
+        },
+      });
+    }
+  } catch (masteryErr) {
+    // Don't fail the answer recording if mastery update fails
+    console.error("[mastery] update failed", masteryErr);
+  }
+
   // In exam mode (reveal=false), don't return the correct answer or
   // explanation — the student sees those only on the results/review
   // screen after completing the whole quiz.

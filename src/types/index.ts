@@ -57,6 +57,12 @@ export type Question = {
   status: QuestionStatus;
   createdAt: string;
   updatedAt: string;
+  // Optional images (base64 data URIs or URLs).
+  questionImage: string | null;
+  optionAImage: string | null;
+  optionBImage: string | null;
+  optionCImage: string | null;
+  optionDImage: string | null;
 };
 
 /**
@@ -72,6 +78,12 @@ export type QuizQuestionClient = {
   optionC: string;
   optionD: string;
   explanation: string | null;
+  // Optional images (base64 data URIs or URLs).
+  questionImage: string | null;
+  optionAImage: string | null;
+  optionBImage: string | null;
+  optionCImage: string | null;
+  optionDImage: string | null;
 };
 
 export type QuizAttempt = {

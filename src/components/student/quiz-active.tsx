@@ -9,6 +9,8 @@ import {
   Info,
   Loader2,
   XCircle,
+  Flag,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -60,6 +62,8 @@ export function QuizActive({ user }: { user: PublicUser }) {
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [flagged, setFlagged] = useState(false);
+  const [flagToggling, setFlagToggling] = useState(false);
 
   const isExamMode = feedbackMode === "exam";
 
@@ -69,11 +73,8 @@ export function QuizActive({ user }: { user: PublicUser }) {
     if (!q) return;
     const existing = answers[q.id];
     if (existing) {
-      // Resume state from a previous answer (e.g. after refresh)
       setSelectedOption(existing.selectedOption);
       if (isExamMode) {
-        // In exam mode, we only know the selectedOption (not correctness)
-        // — don't show the reveal panel.
         setRevealed(false);
         setRevealedResult(null);
       } else {
@@ -86,7 +87,32 @@ export function QuizActive({ user }: { user: PublicUser }) {
       setRevealedResult(null);
     }
     setError(null);
+
+    // Fetch flag status for this question
+    setFlagged(false);
+    fetch(`/api/student/questions/${q.id}/flag`)
+      .then((r) => r.json())
+      .then((d) => setFlagged(!!d.flagged))
+      .catch(() => {});
   }, [currentIndex, questions, answers, isExamMode]);
+
+  async function toggleFlag() {
+    const q = questions[currentIndex];
+    if (!q || flagToggling) return;
+    setFlagToggling(true);
+    try {
+      const res = await fetch(`/api/student/questions/${q.id}/flag`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to toggle flag");
+      const data = await res.json();
+      setFlagged(data.flagged);
+    } catch {
+      // ignore
+    } finally {
+      setFlagToggling(false);
+    }
+  }
 
   // Validate session
   if (
@@ -201,11 +227,15 @@ export function QuizActive({ user }: { user: PublicUser }) {
     }
   }
 
-  const options: Array<{ key: "A" | "B" | "C" | "D"; text: string }> = [
-    { key: "A", text: question.optionA },
-    { key: "B", text: question.optionB },
-    { key: "C", text: question.optionC },
-    { key: "D", text: question.optionD },
+  const options: Array<{
+    key: "A" | "B" | "C" | "D";
+    text: string;
+    image: string | null;
+  }> = [
+    { key: "A", text: question.optionA, image: question.optionAImage ?? null },
+    { key: "B", text: question.optionB, image: question.optionBImage ?? null },
+    { key: "C", text: question.optionC, image: question.optionCImage ?? null },
+    { key: "D", text: question.optionD, image: question.optionDImage ?? null },
   ];
 
   return (
@@ -243,9 +273,36 @@ export function QuizActive({ user }: { user: PublicUser }) {
             transition={{ duration: 0.25, ease: "easeOut" }}
           >
             {/* Question */}
-            <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 leading-relaxed">
-              {question.questionText}
-            </h1>
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 leading-relaxed flex-1">
+                {question.questionText}
+              </h1>
+              <button
+                type="button"
+                onClick={toggleFlag}
+                disabled={flagToggling}
+                className={cn(
+                  "shrink-0 size-9 rounded-lg flex items-center justify-center transition-colors",
+                  flagged
+                    ? "bg-amber-100 text-amber-600 hover:bg-amber-200"
+                    : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                )}
+                title={flagged ? "Unflag this question" : "Flag for review later"}
+              >
+                <Flag className={cn("size-4", flagged && "fill-current")} />
+              </button>
+            </div>
+
+            {/* Optional question image (diagram, graph, figure) */}
+            {question.questionImage && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
+                <img
+                  src={question.questionImage}
+                  alt="Question figure"
+                  className="max-h-64 w-auto mx-auto rounded"
+                />
+              </div>
+            )}
 
             {/* Options */}
             <div className="mt-6 space-y-3">
@@ -293,9 +350,17 @@ export function QuizActive({ user }: { user: PublicUser }) {
                       )}
                     </div>
 
-                    {/* Option text */}
-                    <div className="flex-1 pt-1">
-                      <p className="text-slate-900">{opt.text}</p>
+                    {/* Option text / image */}
+                    <div className="flex-1 pt-1 min-w-0">
+                      {opt.image ? (
+                        <img
+                          src={opt.image}
+                          alt={`Option ${opt.key}`}
+                          className="max-h-32 w-auto rounded"
+                        />
+                      ) : (
+                        <p className="text-slate-900">{opt.text}</p>
+                      )}
                     </div>
                   </button>
                 );
