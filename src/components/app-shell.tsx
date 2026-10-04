@@ -8,6 +8,7 @@ import { StudentSubjects } from "@/components/student/student-subjects";
 import { StudentTopics } from "@/components/student/student-topics";
 import { StudentHeader } from "@/components/student/student-header";
 import { QuizSetup } from "@/components/student/quiz-setup";
+import { SubjectQuizSetup } from "@/components/student/subject-quiz-setup";
 import { QuizActive } from "@/components/student/quiz-active";
 import { QuizResults } from "@/components/student/quiz-results";
 import { QuizReview } from "@/components/student/quiz-review";
@@ -188,6 +189,8 @@ export function AppShell() {
       return <StudentTopics user={user} />;
     case "quiz-setup":
       return <QuizSetup user={user} />;
+    case "subject-quiz-setup":
+      return <SubjectQuizSetup user={user} />;
     case "quiz-set-setup":
       return <QuizSetSetup user={user} />;
     case "quiz-active":

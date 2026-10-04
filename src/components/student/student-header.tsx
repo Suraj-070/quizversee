@@ -31,6 +31,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
     view.name === "student-subjects" ||
     view.name === "student-topics" ||
     view.name === "quiz-setup" ||
+    view.name === "subject-quiz-setup" ||
     view.name === "quiz-set-setup" ||
     view.name === "student-history" ||
     view.name === "student-quiz-sets" ||

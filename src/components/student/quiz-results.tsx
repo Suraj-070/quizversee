@@ -60,6 +60,11 @@ export function QuizResults({ user }: { user: PublicUser }) {
       class: { id: string; name: string };
       subject: { id: string; name: string } | null;
     } | null;
+    subject: {
+      id: string;
+      name: string;
+      class: { id: string; name: string };
+    } | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +109,11 @@ export function QuizResults({ user }: { user: PublicUser }) {
               class: { id: string; name: string };
               subject: { id: string; name: string } | null;
             } | null;
+            subject: {
+              id: string;
+              name: string;
+              class: { id: string; name: string };
+            } | null;
           };
         };
         if (cancelled) return;
@@ -119,6 +129,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
           completedAt: data.attempt.completedAt,
           topic: data.attempt.topic,
           quizSet: data.attempt.quizSet,
+          subject: data.attempt.subject,
         });
       } catch (e) {
         if (cancelled) return;
@@ -217,7 +228,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
             transition={{ delay: 0.3 }}
             className="mt-1 text-slate-600"
           >
-            {result.topic?.name ?? result.quizSet?.name ?? "Quiz"}
+            {result.topic?.name ?? result.quizSet?.name ?? result.subject?.name ?? "Quiz"}
           </motion.p>
         </motion.div>
 
@@ -307,6 +318,11 @@ export function QuizResults({ user }: { user: PublicUser }) {
                   name: "quiz-set-setup",
                   quizSetId: result.quizSet.id,
                 });
+              } else if (result.subject) {
+                setView({
+                  name: "subject-quiz-setup",
+                  subjectId: result.subject.id,
+                });
               } else {
                 setView({ name: "student-home" });
               }
@@ -328,13 +344,22 @@ export function QuizResults({ user }: { user: PublicUser }) {
                 });
               } else if (result.quizSet) {
                 setView({ name: "student-quiz-sets" });
+              } else if (result.subject) {
+                setView({
+                  name: "student-subjects",
+                  classId: result.subject.class.id,
+                });
               } else {
                 setView({ name: "student-home" });
               }
             }}
           >
             <ChevronLeft className="size-4" />
-            Back to topics
+            {result.topic
+              ? "Back to topics"
+              : result.subject
+                ? "Back to subjects"
+                : "Back to quiz sets"}
           </Button>
         </motion.div>
       </main>

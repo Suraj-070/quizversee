@@ -68,6 +68,11 @@ type ReviewAttempt = {
     class: { id: string; name: string };
     subject: { id: string; name: string } | null;
   } | null;
+  subject: {
+    id: string;
+    name: string;
+    class: { id: string; name: string };
+  } | null;
   answers: ReviewAnswer[];
 };
 
@@ -167,7 +172,7 @@ export function QuizReview({ user }: { user: PublicUser }) {
             Review
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 mt-1">
-            {attempt.topic?.name ?? attempt.quizSet?.name ?? "Quiz"}
+            {attempt.topic?.name ?? attempt.quizSet?.name ?? attempt.subject?.name ?? "Quiz"}
           </h1>
           <p className="text-sm text-slate-600 mt-1">
             You scored {attempt.correctAnswers}/{attempt.totalQuestions} (
@@ -310,13 +315,22 @@ export function QuizReview({ user }: { user: PublicUser }) {
                 });
               } else if (attempt.quizSet) {
                 setView({ name: "student-quiz-sets" });
+              } else if (attempt.subject) {
+                setView({
+                  name: "student-subjects",
+                  classId: attempt.subject.class.id,
+                });
               } else {
                 setView({ name: "student-home" });
               }
             }}
           >
             <ChevronLeft className="size-4" />
-            {attempt.topic ? "Back to topics" : "Back to quiz sets"}
+            {attempt.topic
+              ? "Back to topics"
+              : attempt.subject
+                ? "Back to subjects"
+                : "Back to quiz sets"}
           </Button>
         </div>
       </main>

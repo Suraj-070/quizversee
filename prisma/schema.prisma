@@ -59,6 +59,7 @@ model Subject {
   class         Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
   topics        Topic[]
   quizSets      QuizSet[]
+  attempts      QuizAttempt[]
 }
 
 model Topic {
@@ -148,6 +149,7 @@ model QuizAttempt {
   id                String    @id @default(cuid())
   userId            String
   topicId           String?
+  subjectId         String?   // set for subject-level exams (pulls from all topics)
   quizSetId         String?
   totalQuestions    Int
   correctAnswers    Int       @default(0)
@@ -157,6 +159,7 @@ model QuizAttempt {
 
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   topic             Topic?    @relation(fields: [topicId], references: [id])
+  subject           Subject?  @relation(fields: [subjectId], references: [id])
   quizSet           QuizSet?  @relation(fields: [quizSetId], references: [id])
   answers           UserAnswer[]
 }

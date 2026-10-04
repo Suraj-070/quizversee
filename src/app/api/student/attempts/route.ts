@@ -32,16 +32,19 @@ export async function POST(request: Request) {
   const schema = z
     .object({
       topicId: z.string().min(1).optional(),
+      subjectId: z.string().min(1).optional(),
       quizSetId: z.string().min(1).optional(),
       totalQuestions: z.number().int().positive().optional(),
     })
     .refine(
-      (data) => !!data.topicId || !!data.quizSetId,
-      "Either topicId or quizSetId is required"
+      (data) => !!data.topicId || !!data.quizSetId || !!data.subjectId,
+      "Either topicId, subjectId, or quizSetId is required"
     )
     .refine(
-      (data) => !data.topicId || !data.quizSetId,
-      "Provide either topicId or quizSetId, not both"
+      (data) =>
+        [data.topicId, data.subjectId, data.quizSetId].filter(Boolean)
+          .length === 1,
+      "Provide exactly one of: topicId, subjectId, or quizSetId"
     );
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
@@ -51,7 +54,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { topicId, quizSetId, totalQuestions } = parsed.data;
+  const { topicId, subjectId, quizSetId, totalQuestions } = parsed.data;
 
   // ----- Mode 1: Topic quiz -----
   if (topicId) {
@@ -130,6 +133,127 @@ export async function POST(request: Request) {
         data: {
           userId: user.id,
           topicId,
+          totalQuestions,
+          correctAnswers: 0,
+          scorePercentage: 0,
+        },
+      });
+
+      await tx.userAnswer.createMany({
+        data: finalOrder.map((q) => ({
+          attemptId: created.id,
+          userId: user.id,
+          questionId: q.id,
+          selectedOption: "A",
+          isCorrect: false,
+        })),
+      });
+
+      return created;
+    });
+
+    const userAnswers = await db.userAnswer.findMany({
+      where: { attemptId: attempt.id },
+      orderBy: { id: "asc" },
+      select: { id: true, questionId: true },
+    });
+
+    const questionsForClient = finalOrder.map((q) => {
+      const ua = userAnswers.find((a) => a.questionId === q.id);
+      return { ...q, userAnswerId: ua?.id ?? "" };
+    });
+
+    return NextResponse.json(
+      { attemptId: attempt.id, questions: questionsForClient },
+      { status: 201 }
+    );
+  }
+
+  // ----- Mode 1b: Subject exam (pulls from ALL topics in the subject) -----
+  if (subjectId) {
+    if (!totalQuestions) {
+      return NextResponse.json(
+        { error: "totalQuestions is required for subject exams" },
+        { status: 400 }
+      );
+    }
+
+    // Verify subject is active
+    const subject = await db.subject.findFirst({
+      where: { id: subjectId, isActive: true },
+      select: { id: true },
+    });
+    if (!subject) {
+      return NextResponse.json(
+        { error: "Subject not found or not available" },
+        { status: 404 }
+      );
+    }
+
+    // Count ALL published questions across all active topics in this subject
+    const publishedCount = await db.question.count({
+      where: {
+        status: "published",
+        topic: { subjectId, isActive: true },
+      },
+    });
+    if (publishedCount === 0) {
+      return NextResponse.json(
+        { error: "This subject has no published questions yet" },
+        { status: 400 }
+      );
+    }
+    if (totalQuestions > publishedCount) {
+      return NextResponse.json(
+        {
+          error: `Only ${publishedCount} questions available across all topics. Please pick a smaller count.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Pick N random published questions from ALL topics in the subject.
+    // Questions are NEVER repeated within a single exam session — we pick
+    // N distinct question IDs from the full pool.
+    const questionRows = await db.question.findMany({
+      where: {
+        status: "published",
+        topic: { subjectId, isActive: true },
+      },
+      select: { id: true },
+    });
+    const shuffled = [...questionRows].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, totalQuestions);
+    const questionIds = picked.map((q) => q.id);
+
+    const questions = await db.question.findMany({
+      where: { id: { in: questionIds } },
+      orderBy: { id: "asc" },
+      select: {
+        id: true,
+        questionText: true,
+        optionA: true,
+        optionB: true,
+        optionC: true,
+        optionD: true,
+        explanation: true,
+        questionImage: true,
+        optionAImage: true,
+        optionBImage: true,
+        optionCImage: true,
+        optionDImage: true,
+      },
+    });
+
+    // Re-shuffle so the order is random (not alphabetical by ID)
+    const finalOrder = [...questions].sort(() => Math.random() - 0.5);
+
+    const attempt = await db.$transaction(async (tx) => {
+      const created = await tx.quizAttempt.create({
+        data: {
+          userId: user.id,
+          topicId: null,
+          subjectId,
           totalQuestions,
           correctAnswers: 0,
           scorePercentage: 0,
@@ -311,6 +435,13 @@ export async function GET(request: Request) {
             subjectId: true,
           },
         },
+        subject: {
+          select: {
+            id: true,
+            name: true,
+            class: { select: { id: true, name: true } },
+          },
+        },
         answers: {
           select: {
             id: true,
@@ -400,6 +531,13 @@ export async function GET(request: Request) {
           name: true,
           classId: true,
           subjectId: true,
+        },
+      },
+      subject: {
+        select: {
+          id: true,
+          name: true,
+          class: { select: { id: true, name: true } },
         },
       },
     },

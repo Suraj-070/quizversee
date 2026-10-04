@@ -50,6 +50,11 @@ type HistoryAttempt = {
     class: { id: string; name: string };
     subject: { id: string; name: string } | null;
   } | null;
+  subject: {
+    id: string;
+    name: string;
+    class: { id: string; name: string };
+  } | null;
 };
 
 export function StudentHistory({ user }: { user: PublicUser }) {
@@ -176,14 +181,16 @@ export function StudentHistory({ user }: { user: PublicUser }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-slate-900 truncate">
-                        {a.topic?.name ?? a.quizSet?.name ?? "Quiz"}
+                        {a.topic?.name ?? a.quizSet?.name ?? a.subject?.name ?? "Quiz"}
                       </p>
                       <p className="text-xs text-slate-500 mt-0.5">
                         {a.topic
                           ? `${a.topic.subject.class.name} · ${a.topic.subject.name}`
                           : a.quizSet
                             ? `${a.quizSet.class.name}${a.quizSet.subject ? ` · ${a.quizSet.subject.name}` : ""}`
-                            : ""}
+                            : a.subject
+                              ? `${a.subject.class.name} · ${a.subject.name} (Subject Exam)`
+                              : ""}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">
                         {new Date(a.completedAt!).toLocaleDateString(

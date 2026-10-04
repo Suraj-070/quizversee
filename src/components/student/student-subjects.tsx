@@ -142,6 +142,12 @@ export function StudentSubjects({ user }: { user: PublicUser }) {
                     subjectId: subject.id,
                   })
                 }
+                onExam={() =>
+                  setView({
+                    name: "subject-quiz-setup",
+                    subjectId: subject.id,
+                  })
+                }
               />
             ))}
           </div>
