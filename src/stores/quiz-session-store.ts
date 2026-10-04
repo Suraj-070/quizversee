@@ -11,7 +11,7 @@ import { persist } from "zustand/middleware";
  * into the active quiz screen.
  *
  * Lifecycle:
- *   1. QuizSetup calls start() with attemptId + questions
+ *   1. QuizSetup calls start() with attemptId + questions + feedbackMode
  *   2. QuizActive advances one question at a time via setCurrentIndex()
  *   3. Each answer is recorded via recordAnswer()
  *   4. On completion, complete() clears the session
@@ -31,10 +31,21 @@ export type QuizQuestionClient = {
   userAnswerId: string;
 };
 
+export type FeedbackMode = "immediate" | "exam";
+
 export type AnswerResult = {
   selectedOption: "A" | "B" | "C" | "D";
-  isCorrect: boolean;
-  correctOption: "A" | "B" | "C" | "D";
+  /**
+   * In "immediate" mode, isCorrect + correctOption + explanation are
+   * filled in right after the user submits (the server returns them).
+   *
+   * In "exam" mode, these stay null until the quiz is completed —
+   * the server records the answer without revealing correctness, and
+   * the client learns the results only on the results/review screen
+   * (which fetches the full attempt from /api/student/attempts).
+   */
+  isCorrect: boolean | null;
+  correctOption: "A" | "B" | "C" | "D" | null;
   explanation: string | null;
 };
 
@@ -44,8 +55,14 @@ type QuizSessionState = {
   currentIndex: number;
   /** Map of questionId → answer result. Cleared on session end. */
   answers: Record<string, AnswerResult>;
+  /** When "exam", no feedback is shown until the end. */
+  feedbackMode: FeedbackMode;
 
-  start: (attemptId: string, questions: QuizQuestionClient[]) => void;
+  start: (
+    attemptId: string,
+    questions: QuizQuestionClient[],
+    feedbackMode?: FeedbackMode
+  ) => void;
   setCurrentIndex: (index: number) => void;
   recordAnswer: (questionId: string, result: AnswerResult) => void;
   /** Mark session as complete (results screen). */
@@ -61,13 +78,15 @@ export const useQuizSessionStore = create<QuizSessionState>()(
       questions: [],
       currentIndex: 0,
       answers: {},
+      feedbackMode: "immediate",
 
-      start: (attemptId, questions) =>
+      start: (attemptId, questions, feedbackMode = "immediate") =>
         set({
           attemptId,
           questions,
           currentIndex: 0,
           answers: {},
+          feedbackMode,
         }),
       setCurrentIndex: (index) => set({ currentIndex: index }),
       recordAnswer: (questionId, result) =>
@@ -87,11 +106,12 @@ export const useQuizSessionStore = create<QuizSessionState>()(
           questions: [],
           currentIndex: 0,
           answers: {},
+          feedbackMode: "immediate",
         }),
     }),
     {
       name: "quizverse-quiz-session",
-      version: 1,
+      version: 2,
     }
   )
 );

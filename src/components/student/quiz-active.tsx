@@ -47,6 +47,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
   const questions = useQuizSessionStore((s) => s.questions);
   const currentIndex = useQuizSessionStore((s) => s.currentIndex);
   const answers = useQuizSessionStore((s) => s.answers);
+  const feedbackMode = useQuizSessionStore((s) => s.feedbackMode);
   const setCurrentIndex = useQuizSessionStore((s) => s.setCurrentIndex);
   const recordAnswer = useQuizSessionStore((s) => s.recordAnswer);
 
@@ -60,6 +61,8 @@ export function QuizActive({ user }: { user: PublicUser }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isExamMode = feedbackMode === "exam";
+
   // Reset local state when the question changes
   useEffect(() => {
     const q = questions[currentIndex];
@@ -68,15 +71,22 @@ export function QuizActive({ user }: { user: PublicUser }) {
     if (existing) {
       // Resume state from a previous answer (e.g. after refresh)
       setSelectedOption(existing.selectedOption);
-      setRevealed(true);
-      setRevealedResult(existing);
+      if (isExamMode) {
+        // In exam mode, we only know the selectedOption (not correctness)
+        // — don't show the reveal panel.
+        setRevealed(false);
+        setRevealedResult(null);
+      } else {
+        setRevealed(true);
+        setRevealedResult(existing);
+      }
     } else {
       setSelectedOption(null);
       setRevealed(false);
       setRevealedResult(null);
     }
     setError(null);
-  }, [currentIndex, questions, answers]);
+  }, [currentIndex, questions, answers, isExamMode]);
 
   // Validate session
   if (
@@ -126,6 +136,8 @@ export function QuizActive({ user }: { user: PublicUser }) {
           body: JSON.stringify({
             userAnswerId: question.userAnswerId,
             selectedOption,
+            // In exam mode, don't ask the server to reveal the answer.
+            reveal: !isExamMode,
           }),
         }
       );
@@ -133,10 +145,26 @@ export function QuizActive({ user }: { user: PublicUser }) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error ?? "Failed to submit answer");
       }
-      const data = (await res.json()) as AnswerResult;
-      recordAnswer(question.id, data);
-      setRevealedResult(data);
-      setRevealed(true);
+
+      if (isExamMode) {
+        // Exam mode: server returned { recorded: true } only.
+        // Store a partial answer (no correctness info) so the session
+        // knows this question was answered.
+        recordAnswer(question.id, {
+          selectedOption,
+          isCorrect: null,
+          correctOption: null,
+          explanation: null,
+        });
+        // Advance immediately — no feedback panel in exam mode.
+        handleNext();
+      } else {
+        // Immediate mode: server returned { isCorrect, correctOption, explanation }.
+        const data = (await res.json()) as AnswerResult;
+        recordAnswer(question.id, data);
+        setRevealedResult(data);
+        setRevealed(true);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to submit answer");
     } finally {
@@ -188,10 +216,17 @@ export function QuizActive({ user }: { user: PublicUser }) {
         {/* Progress header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-700">
-              Question {currentIndex + 1}{" "}
-              <span className="text-slate-400">/ {totalQuestions}</span>
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-slate-700">
+                Question {currentIndex + 1}{" "}
+                <span className="text-slate-400">/ {totalQuestions}</span>
+              </p>
+              {isExamMode && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                  Exam mode
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-500">
               Answered: {answeredCount} · Remaining: {remaining}
             </p>
@@ -321,7 +356,32 @@ export function QuizActive({ user }: { user: PublicUser }) {
 
             {/* Action button */}
             <div className="mt-6 flex justify-end">
-              {!revealed ? (
+              {isExamMode ? (
+                // Exam mode: single button that records + advances.
+                // No "Check answer" — no feedback is shown.
+                <Button
+                  size="lg"
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                  disabled={!selectedOption || submitting}
+                  onClick={handleReveal}
+                >
+                  {submitting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
+                  {currentIndex < totalQuestions - 1 ? (
+                    <>
+                      Next question
+                      <ChevronRight className="size-5" />
+                    </>
+                  ) : (
+                    <>
+                      {submitting && <Loader2 className="size-4 animate-spin" />}
+                      Finish quiz
+                    </>
+                  )}
+                </Button>
+              ) : !revealed ? (
+                // Immediate mode, before reveal: "Check answer"
                 <Button
                   size="lg"
                   className="bg-emerald-500 hover:bg-emerald-600 text-white"
@@ -334,6 +394,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
                   Check answer
                 </Button>
               ) : (
+                // Immediate mode, after reveal: "Next question" / "See results"
                 <Button
                   size="lg"
                   className="bg-emerald-500 hover:bg-emerald-600 text-white"

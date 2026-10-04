@@ -9,11 +9,17 @@ import {
   Loader2,
   Lock,
   PlayCircle,
+  Zap,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
-import { useQuizSessionStore } from "@/stores/quiz-session-store";
+import {
+  useQuizSessionStore,
+  type FeedbackMode,
+} from "@/stores/quiz-session-store";
 import { StudentHeader } from "@/components/student/student-header";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +64,7 @@ export function QuizSetup({ user }: { user: PublicUser }) {
   const [publishedCount, setPublishedCount] = useState(0);
   const [allowedCounts, setAllowedCounts] = useState<AllowedCount[]>([]);
   const [selectedCount, setSelectedCount] = useState<number | null>(null);
+  const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>("immediate");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
@@ -139,7 +146,7 @@ export function QuizSetup({ user }: { user: PublicUser }) {
           userAnswerId: string;
         }>;
       };
-      startQuiz(data.attemptId, data.questions);
+      startQuiz(data.attemptId, data.questions, feedbackMode);
       setView({ name: "quiz-active", attemptId: data.attemptId });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to start quiz");
@@ -264,6 +271,37 @@ export function QuizSetup({ user }: { user: PublicUser }) {
                 </div>
               </div>
 
+              {/* Feedback mode selector */}
+              <div className="mt-8">
+                <h2 className="text-base font-semibold text-slate-900">
+                  Feedback mode
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  When do you want to see if your answer was right?
+                </p>
+
+                <div className="mt-4 grid sm:grid-cols-2 gap-3">
+                  <ModeTile
+                    mode="immediate"
+                    selected={feedbackMode === "immediate"}
+                    onSelect={() => setFeedbackMode("immediate")}
+                    icon={Eye}
+                    title="Immediate feedback"
+                    description="See the correct answer + explanation right after each question."
+                    badge="Practice"
+                  />
+                  <ModeTile
+                    mode="exam"
+                    selected={feedbackMode === "exam"}
+                    onSelect={() => setFeedbackMode("exam")}
+                    icon={EyeOff}
+                    title="Exam mode"
+                    description="No reveals during the quiz — see all results at the end, like a real exam."
+                    badge="Test yourself"
+                  />
+                </div>
+              </div>
+
               {/* Start button */}
               <div className="mt-8 flex justify-end">
                 <Button
@@ -337,6 +375,74 @@ function CountTile({
       {!available && (
         <div className="absolute top-2 right-2">
           <Lock className="size-3.5 text-slate-400" />
+        </div>
+      )}
+    </button>
+  );
+}
+
+function ModeTile({
+  mode,
+  selected,
+  onSelect,
+  icon: Icon,
+  title,
+  description,
+  badge,
+}: {
+  mode: FeedbackMode;
+  selected: boolean;
+  onSelect: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  badge: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "relative text-left rounded-xl border-2 p-4 transition-all",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",
+        !selected &&
+          "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30",
+        selected && "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={cn(
+            "size-10 rounded-lg flex items-center justify-center shrink-0",
+            selected
+              ? "bg-emerald-500 text-white"
+              : "bg-slate-100 text-slate-600"
+          )}
+        >
+          <Icon className="size-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+            <span
+              className={cn(
+                "text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded",
+                selected
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-slate-100 text-slate-500"
+              )}
+            >
+              {badge}
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+            {description}
+          </p>
+        </div>
+      </div>
+      {selected && (
+        <div className="absolute top-3 right-3">
+          <CheckCircle2 className="size-4 text-emerald-500" />
         </div>
       )}
     </button>
