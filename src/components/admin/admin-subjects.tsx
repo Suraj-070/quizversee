@@ -38,6 +38,10 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { FormField } from "@/components/admin/form-field";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ListSkeleton } from "@/components/shared/list-skeleton";
+import { getAvailableIconNames } from "@/lib/icon-registry";
+
+// Pre-compute the available icon list once at module load.
+const availableIcons = getAvailableIconNames();
 
 type SubjectWithClass = AcademicSubject & {
   class: { id: string; name: string };
@@ -469,15 +473,21 @@ function SubjectDialog({
           <FormField
             label="Icon"
             htmlFor="subject-icon"
-            hint="Optional — a lucide icon name, e.g. 'flask-conical'."
+            hint="Optional — pick from the list, or leave blank for the default."
           >
-            <Input
-              id="subject-icon"
-              value={icon}
-              onChange={(e) => setIcon(e.target.value)}
-              placeholder="flask-conical"
-              disabled={saving}
-            />
+            <Select value={icon || "__none__"} onValueChange={(v) => setIcon(v === "__none__" ? "" : v)} disabled={saving}>
+              <SelectTrigger id="subject-icon">
+                <SelectValue placeholder="Default (BookOpen)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Default (BookOpen)</SelectItem>
+                {availableIcons.map((name) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FormField>
 
           <FormField label="Display order" htmlFor="subject-order">

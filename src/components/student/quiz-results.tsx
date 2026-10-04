@@ -53,7 +53,13 @@ export function QuizResults({ user }: { user: PublicUser }) {
         name: string;
         class: { id: string; name: string };
       };
-    };
+    } | null;
+    quizSet: {
+      id: string;
+      name: string;
+      class: { id: string; name: string };
+      subject: { id: string; name: string } | null;
+    } | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +97,13 @@ export function QuizResults({ user }: { user: PublicUser }) {
                 name: string;
                 class: { id: string; name: string };
               };
-            };
+            } | null;
+            quizSet: {
+              id: string;
+              name: string;
+              class: { id: string; name: string };
+              subject: { id: string; name: string } | null;
+            } | null;
           };
         };
         if (cancelled) return;
@@ -106,6 +118,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
           scorePercentage: data.attempt.scorePercentage,
           completedAt: data.attempt.completedAt,
           topic: data.attempt.topic,
+          quizSet: data.attempt.quizSet,
         });
       } catch (e) {
         if (cancelled) return;
@@ -204,7 +217,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
             transition={{ delay: 0.3 }}
             className="mt-1 text-slate-600"
           >
-            {result.topic.name}
+            {result.topic?.name ?? result.quizSet?.name ?? "Quiz"}
           </motion.p>
         </motion.div>
 
@@ -287,7 +300,16 @@ export function QuizResults({ user }: { user: PublicUser }) {
             className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
             onClick={() => {
               clearSession();
-              setView({ name: "quiz-setup", topicId: result.topic.id });
+              if (result.topic) {
+                setView({ name: "quiz-setup", topicId: result.topic.id });
+              } else if (result.quizSet) {
+                setView({
+                  name: "quiz-set-setup",
+                  quizSetId: result.quizSet.id,
+                });
+              } else {
+                setView({ name: "student-home" });
+              }
             }}
           >
             <RefreshCw className="size-4" />
@@ -298,11 +320,17 @@ export function QuizResults({ user }: { user: PublicUser }) {
             className="flex-1"
             onClick={() => {
               clearSession();
-              setView({
-                name: "student-topics",
-                classId: result.topic.subject.class.id,
-                subjectId: result.topic.subject.id,
-              });
+              if (result.topic) {
+                setView({
+                  name: "student-topics",
+                  classId: result.topic.subject.class.id,
+                  subjectId: result.topic.subject.id,
+                });
+              } else if (result.quizSet) {
+                setView({ name: "student-quiz-sets" });
+              } else {
+                setView({ name: "student-home" });
+              }
             }}
           >
             <ChevronLeft className="size-4" />

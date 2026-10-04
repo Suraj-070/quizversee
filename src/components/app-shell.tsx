@@ -12,6 +12,8 @@ import { QuizActive } from "@/components/student/quiz-active";
 import { QuizResults } from "@/components/student/quiz-results";
 import { QuizReview } from "@/components/student/quiz-review";
 import { StudentHistory } from "@/components/student/student-history";
+import { StudentQuizSets } from "@/components/student/student-quiz-sets";
+import { QuizSetSetup } from "@/components/student/quiz-set-setup";
 import { useQuizSessionStore } from "@/stores/quiz-session-store";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
@@ -19,6 +21,8 @@ import { AdminClasses } from "@/components/admin/admin-classes";
 import { AdminSubjects } from "@/components/admin/admin-subjects";
 import { AdminTopics } from "@/components/admin/admin-topics";
 import { AdminQuestions } from "@/components/admin/admin-questions";
+import { AdminQuizSets } from "@/components/admin/admin-quiz-sets";
+import { AdminQuizSetDetail } from "@/components/admin/admin-quiz-set-detail";
 import { useViewStore } from "@/stores/view-store";
 import { Loader2 } from "lucide-react";
 
@@ -161,6 +165,14 @@ export function AppShell() {
       case "admin-questions":
         content = <AdminQuestions />;
         break;
+      case "admin-quiz-sets":
+        content = <AdminQuizSets />;
+        break;
+      case "admin-quiz-set-detail": {
+        const qsId = view.name === "admin-quiz-set-detail" ? view.quizSetId : "";
+        content = <AdminQuizSetDetail quizSetId={qsId} />;
+        break;
+      }
       default:
         content = <ComingSoon label={view.name} />;
     }
@@ -175,6 +187,8 @@ export function AppShell() {
       return <StudentTopics user={user} />;
     case "quiz-setup":
       return <QuizSetup user={user} />;
+    case "quiz-set-setup":
+      return <QuizSetSetup user={user} />;
     case "quiz-active":
       return <QuizActive user={user} />;
     case "quiz-results":
@@ -183,6 +197,8 @@ export function AppShell() {
       return <QuizReview user={user} />;
     case "student-history":
       return <StudentHistory user={user} />;
+    case "student-quiz-sets":
+      return <StudentQuizSets user={user} />;
     case "student-home":
     default:
       return <StudentHome user={user} />;

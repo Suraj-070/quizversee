@@ -20,6 +20,8 @@ export async function GET() {
     publishedQuestions,
     users,
     quizAttempts,
+    quizSets,
+    publishedQuizSets,
   ] = await Promise.all([
     db.class.count(),
     db.subject.count(),
@@ -28,6 +30,8 @@ export async function GET() {
     db.question.count({ where: { status: "published" } }),
     db.user.count(),
     db.quizAttempt.count(),
+    db.quizSet.count(),
+    db.quizSet.count({ where: { status: "published" } }),
   ]);
 
   return NextResponse.json({
@@ -38,5 +42,7 @@ export async function GET() {
     publishedQuestions,
     users,
     quizAttempts,
+    quizSets,
+    publishedQuizSets,
   });
 }

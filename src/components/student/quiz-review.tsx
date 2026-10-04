@@ -58,7 +58,13 @@ type ReviewAttempt = {
       name: string;
       class: { id: string; name: string };
     };
-  };
+  } | null;
+  quizSet: {
+    id: string;
+    name: string;
+    class: { id: string; name: string };
+    subject: { id: string; name: string } | null;
+  } | null;
   answers: ReviewAnswer[];
 };
 
@@ -158,7 +164,7 @@ export function QuizReview({ user }: { user: PublicUser }) {
             Review
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 mt-1">
-            {attempt.topic.name}
+            {attempt.topic?.name ?? attempt.quizSet?.name ?? "Quiz"}
           </h1>
           <p className="text-sm text-slate-600 mt-1">
             You scored {attempt.correctAnswers}/{attempt.totalQuestions} (
@@ -281,16 +287,22 @@ export function QuizReview({ user }: { user: PublicUser }) {
         <div className="mt-8 flex justify-center">
           <Button
             variant="outline"
-            onClick={() =>
-              setView({
-                name: "student-topics",
-                classId: attempt.topic.subject.class.id,
-                subjectId: attempt.topic.subject.id,
-              })
-            }
+            onClick={() => {
+              if (attempt.topic) {
+                setView({
+                  name: "student-topics",
+                  classId: attempt.topic.subject.class.id,
+                  subjectId: attempt.topic.subject.id,
+                });
+              } else if (attempt.quizSet) {
+                setView({ name: "student-quiz-sets" });
+              } else {
+                setView({ name: "student-home" });
+              }
+            }}
           >
             <ChevronLeft className="size-4" />
-            Back to topics
+            {attempt.topic ? "Back to topics" : "Back to quiz sets"}
           </Button>
         </div>
       </main>

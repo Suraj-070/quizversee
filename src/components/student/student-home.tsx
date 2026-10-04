@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, GraduationCap, Loader2, AlertTriangle } from "lucide-react";
+import { Sparkles, GraduationCap, Loader2, AlertTriangle, ListChecks, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
@@ -97,21 +97,54 @@ export function StudentHome({ user }: { user: PublicUser }) {
             description="Your administrator hasn't published any classes. Check back soon!"
           />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {classes.map((klass, idx) => (
-              <ClassCard
-                key={klass.id}
-                klass={klass}
-                index={idx}
-                onClick={() =>
-                  setView({
-                    name: "student-subjects",
-                    classId: klass.id,
-                  })
-                }
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {classes.map((klass, idx) => (
+                <ClassCard
+                  key={klass.id}
+                  klass={klass}
+                  index={idx}
+                  onClick={() =>
+                    setView({
+                      name: "student-subjects",
+                      classId: klass.id,
+                    })
+                  }
+                />
+              ))}
+            </div>
+
+            {/* Quiz sets link */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="mt-10"
+            >
+              <button
+                type="button"
+                onClick={() => setView({ name: "student-quiz-sets" })}
+                className="w-full rounded-2xl border border-slate-200/60 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-11 rounded-xl bg-gradient-to-br from-violet-400 to-fuchsia-500 text-white flex items-center justify-center shadow-sm shadow-violet-500/20">
+                      <ListChecks className="size-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-900">
+                        Browse quiz sets
+                      </h3>
+                      <p className="text-sm text-slate-500 mt-0.5">
+                        Pre-built collections curated by your instructor.
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="size-5 text-slate-300" />
+                </div>
+              </button>
+            </motion.div>
+          </>
         )}
       </main>
 

@@ -39,6 +39,7 @@ model Class {
   updatedAt     DateTime  @updatedAt
 
   subjects      Subject[]
+  quizSets      QuizSet[]
 }
 
 model Subject {
@@ -54,6 +55,7 @@ model Subject {
 
   class         Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
   topics        Topic[]
+  quizSets      QuizSet[]
 }
 
 model Topic {
@@ -106,6 +108,8 @@ model QuizSet {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  class         Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject       Subject?  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   questions     QuizSetQuestion[]
   attempts      QuizAttempt[]
 }

@@ -7,6 +7,7 @@ import {
   Settings,
   ArrowLeft,
   History,
+  ListChecks,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
@@ -29,7 +30,9 @@ export function StudentHeader({ user }: { user: PublicUser }) {
     view.name === "student-subjects" ||
     view.name === "student-topics" ||
     view.name === "quiz-setup" ||
-    view.name === "student-history";
+    view.name === "quiz-set-setup" ||
+    view.name === "student-history" ||
+    view.name === "student-quiz-sets";
 
   return (
     <header className="border-b border-slate-200/60 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
@@ -59,6 +62,15 @@ export function StudentHeader({ user }: { user: PublicUser }) {
           </button>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setView({ name: "student-quiz-sets" })}
+            className="text-slate-600"
+          >
+            <ListChecks className="size-4" />
+            <span className="hidden sm:inline">Quiz Sets</span>
+          </Button>
           <Button
             variant="ghost"
             size="sm"

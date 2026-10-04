@@ -6,18 +6,22 @@ import { requireUser } from "@/lib/auth-guard";
 /**
  * POST /api/student/attempts
  *
- * Starts a new quiz attempt:
- *   1. Validates topicId + totalQuestions
- *   2. Verifies the topic is active
- *   3. Confirms totalQuestions <= published-question count (PRD §14:
- *      never attempt to generate more questions than exist)
- *   4. Picks N random published questions for this topic
- *   5. Creates the QuizAttempt row + placeholder UserAnswer rows
- *      (one per question, initially with isCorrect=false)
- *   6. Returns the attempt ID + the questions WITHOUT correctOption
- *      (the client learns correctness only after answering)
+ * Starts a new quiz attempt.
  *
- * Body: { topicId: string, totalQuestions: number }
+ * Two modes:
+ *   1. Topic quiz: { topicId, totalQuestions }
+ *      - Picks N random published questions from the topic
+ *      - totalQuestions must be ≤ published-question count (PRD §14)
+ *   2. Quiz set: { quizSetId }
+ *      - Uses ALL questions in the quiz set (no count picker)
+ *      - The quiz set must be published and have ≥1 question
+ *
+ * In both modes:
+ *   - Creates the QuizAttempt row + placeholder UserAnswer rows
+ *     (one per question, initially with isCorrect=false)
+ *   - Returns the attempt ID + the questions WITHOUT correctOption
+ *     (the client learns correctness only after answering)
+ *
  * Returns: { attemptId, questions: QuizQuestionClient[] }
  */
 export async function POST(request: Request) {
@@ -25,10 +29,20 @@ export async function POST(request: Request) {
   if (error) return error;
 
   const body = await request.json().catch(() => null);
-  const schema = z.object({
-    topicId: z.string().min(1),
-    totalQuestions: z.number().int().positive(),
-  });
+  const schema = z
+    .object({
+      topicId: z.string().min(1).optional(),
+      quizSetId: z.string().min(1).optional(),
+      totalQuestions: z.number().int().positive().optional(),
+    })
+    .refine(
+      (data) => !!data.topicId || !!data.quizSetId,
+      "Either topicId or quizSetId is required"
+    )
+    .refine(
+      (data) => !data.topicId || !data.quizSetId,
+      "Provide either topicId or quizSetId, not both"
+    );
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -37,60 +51,149 @@ export async function POST(request: Request) {
     );
   }
 
-  const { topicId, totalQuestions } = parsed.data;
+  const { topicId, quizSetId, totalQuestions } = parsed.data;
 
-  // Verify topic is active
-  const topic = await db.topic.findFirst({
-    where: { id: topicId, isActive: true },
-    select: { id: true },
-  });
-  if (!topic) {
+  // ----- Mode 1: Topic quiz -----
+  if (topicId) {
+    if (!totalQuestions) {
+      return NextResponse.json(
+        { error: "totalQuestions is required for topic quizzes" },
+        { status: 400 }
+      );
+    }
+
+    // Verify topic is active
+    const topic = await db.topic.findFirst({
+      where: { id: topicId, isActive: true },
+      select: { id: true },
+    });
+    if (!topic) {
+      return NextResponse.json(
+        { error: "Topic not found or not available" },
+        { status: 404 }
+      );
+    }
+
+    // Count published questions
+    const publishedCount = await db.question.count({
+      where: { topicId, status: "published" },
+    });
+    if (publishedCount === 0) {
+      return NextResponse.json(
+        { error: "This topic has no published questions yet" },
+        { status: 400 }
+      );
+    }
+    if (totalQuestions > publishedCount) {
+      return NextResponse.json(
+        {
+          error: `Only ${publishedCount} question${
+            publishedCount === 1 ? "" : "s"
+          } available. Please pick a smaller count.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Pick N random published questions.
+    const questionRows = await db.question.findMany({
+      where: { topicId, status: "published" },
+      select: { id: true },
+    });
+    const shuffled = [...questionRows].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, totalQuestions);
+    const questionIds = picked.map((q) => q.id);
+
+    const questions = await db.question.findMany({
+      where: { id: { in: questionIds } },
+      orderBy: { id: "asc" },
+      select: {
+        id: true,
+        questionText: true,
+        optionA: true,
+        optionB: true,
+        optionC: true,
+        optionD: true,
+        explanation: true,
+      },
+    });
+
+    const finalOrder = [...questions].sort(() => Math.random() - 0.5);
+
+    const attempt = await db.$transaction(async (tx) => {
+      const created = await tx.quizAttempt.create({
+        data: {
+          userId: user.id,
+          topicId,
+          totalQuestions,
+          correctAnswers: 0,
+          scorePercentage: 0,
+        },
+      });
+
+      await tx.userAnswer.createMany({
+        data: finalOrder.map((q) => ({
+          attemptId: created.id,
+          userId: user.id,
+          questionId: q.id,
+          selectedOption: "A",
+          isCorrect: false,
+        })),
+      });
+
+      return created;
+    });
+
+    const userAnswers = await db.userAnswer.findMany({
+      where: { attemptId: attempt.id },
+      orderBy: { id: "asc" },
+      select: { id: true, questionId: true },
+    });
+
+    const questionsForClient = finalOrder.map((q) => {
+      const ua = userAnswers.find((a) => a.questionId === q.id);
+      return { ...q, userAnswerId: ua?.id ?? "" };
+    });
+
     return NextResponse.json(
-      { error: "Topic not found or not available" },
+      { attemptId: attempt.id, questions: questionsForClient },
+      { status: 201 }
+    );
+  }
+
+  // ----- Mode 2: Quiz set -----
+  // quizSetId is defined here (schema refinement guarantees it)
+  const quizSetIdVal = quizSetId!;
+
+  // Fetch the quiz set (without include — avoids stale-Prisma-client issues).
+  const quizSet = await db.quizSet.findFirst({
+    where: { id: quizSetIdVal, status: "published" },
+    select: { id: true, name: true, classId: true, subjectId: true },
+  });
+  if (!quizSet) {
+    return NextResponse.json(
+      { error: "Quiz set not found or not published" },
       { status: 404 }
     );
   }
 
-  // Count published questions
-  const publishedCount = await db.question.count({
-    where: { topicId, status: "published" },
+  // Fetch the question IDs linked to this quiz set.
+  const questionLinks = await db.quizSetQuestion.findMany({
+    where: { quizSetId: quizSet.id },
+    select: { questionId: true },
   });
-  if (publishedCount === 0) {
+
+  if (questionLinks.length === 0) {
     return NextResponse.json(
-      { error: "This topic has no published questions yet" },
-      { status: 400 }
-    );
-  }
-  if (totalQuestions > publishedCount) {
-    return NextResponse.json(
-      {
-        error: `Only ${publishedCount} question${
-          publishedCount === 1 ? "" : "s"
-        } available. Please pick a smaller count.`,
-      },
+      { error: "This quiz set has no questions" },
       { status: 400 }
     );
   }
 
-  // Pick N random published questions.
-  // SQLite-specific: ORDER BY RANDOM() — works for the sandbox.
-  // On Postgres this would be ORDER BY RANDOM() too, so portable.
-  // We use $queryRaw for the random selection since Prisma doesn't expose
-  // ORDER BY RANDOM() in its query builder.
-  const questionRows = await db.question.findMany({
-    where: { topicId, status: "published" },
-    select: { id: true },
-  });
-
-  // Shuffle in-process (more portable than relying on a SQL function).
-  const shuffled = [...questionRows].sort(() => Math.random() - 0.5);
-  const picked = shuffled.slice(0, totalQuestions);
-  const questionIds = picked.map((q) => q.id);
-
-  // Fetch the full questions (without correctOption on the wire)
-  const questions = await db.question.findMany({
+  // Fetch the actual question data.
+  const questionIds = questionLinks.map((l) => l.questionId);
+  const qsQuestions = await db.question.findMany({
     where: { id: { in: questionIds } },
-    orderBy: { id: "asc" }, // stable order for the client
     select: {
       id: true,
       questionText: true,
@@ -102,17 +205,17 @@ export async function POST(request: Request) {
     },
   });
 
-  // Re-shuffle the questions one more time so the order returned to the
-  // student doesn't always match the alphabetical-by-id order from above.
-  const finalOrder = [...questions].sort(() => Math.random() - 0.5);
+  // Use ALL questions in the quiz set, in randomized order.
+  const finalOrder = [...qsQuestions].sort(() => Math.random() - 0.5);
+  const total = finalOrder.length;
 
-  // Create the attempt + placeholder answers in a transaction.
   const attempt = await db.$transaction(async (tx) => {
     const created = await tx.quizAttempt.create({
       data: {
         userId: user.id,
-        topicId,
-        totalQuestions,
+        topicId: null,
+        quizSetId: quizSet.id,
+        totalQuestions: total,
         correctAnswers: 0,
         scorePercentage: 0,
       },
@@ -123,7 +226,7 @@ export async function POST(request: Request) {
         attemptId: created.id,
         userId: user.id,
         questionId: q.id,
-        selectedOption: "A", // placeholder; will be overwritten on answer
+        selectedOption: "A",
         isCorrect: false,
       })),
     });
@@ -131,8 +234,6 @@ export async function POST(request: Request) {
     return created;
   });
 
-  // For the client, also include the userAnswerId so the PATCH call knows
-  // which row to update.
   const userAnswers = await db.userAnswer.findMany({
     where: { attemptId: attempt.id },
     orderBy: { id: "asc" },
@@ -141,14 +242,20 @@ export async function POST(request: Request) {
 
   const questionsForClient = finalOrder.map((q) => {
     const ua = userAnswers.find((a) => a.questionId === q.id);
-    return { ...q, userAnswerId: ua?.id ?? "" };
+    return {
+      id: q.id,
+      questionText: q.questionText,
+      optionA: q.optionA,
+      optionB: q.optionB,
+      optionC: q.optionC,
+      optionD: q.optionD,
+      explanation: q.explanation,
+      userAnswerId: ua?.id ?? "",
+    };
   });
 
   return NextResponse.json(
-    {
-      attemptId: attempt.id,
-      questions: questionsForClient,
-    },
+    { attemptId: attempt.id, questions: questionsForClient },
     { status: 201 }
   );
 }
@@ -186,6 +293,14 @@ export async function GET(request: Request) {
             },
           },
         },
+        quizSet: {
+          select: {
+            id: true,
+            name: true,
+            classId: true,
+            subjectId: true,
+          },
+        },
         answers: {
           select: {
             id: true,
@@ -214,7 +329,40 @@ export async function GET(request: Request) {
         { status: 404 }
       );
     }
-    return NextResponse.json({ attempt });
+
+    // If the attempt has a quizSet, fetch its class/subject names
+    // separately (avoids the stale-Prisma-client include issue on
+    // QuizSet.class/subject relations).
+    let quizSetWithRelations: {
+      id: string;
+      name: string;
+      class: { id: string; name: string } | null;
+      subject: { id: string; name: string } | null;
+    } | null = null;
+    if (attempt.quizSet) {
+      const [class_, subject] = await Promise.all([
+        db.class.findUnique({
+          where: { id: attempt.quizSet.classId },
+          select: { id: true, name: true },
+        }),
+        attempt.quizSet.subjectId
+          ? db.subject.findUnique({
+              where: { id: attempt.quizSet.subjectId },
+              select: { id: true, name: true },
+            })
+          : Promise.resolve(null),
+      ]);
+      quizSetWithRelations = {
+        id: attempt.quizSet.id,
+        name: attempt.quizSet.name,
+        class: class_,
+        subject,
+      };
+    }
+
+    return NextResponse.json({
+      attempt: { ...attempt, quizSet: quizSetWithRelations },
+    });
   }
 
   // No attemptId → list recent attempts (history)
@@ -236,8 +384,69 @@ export async function GET(request: Request) {
           },
         },
       },
+      quizSet: {
+        select: {
+          id: true,
+          name: true,
+          classId: true,
+          subjectId: true,
+        },
+      },
     },
   });
 
-  return NextResponse.json({ attempts });
+  // Fetch class/subject names for each quiz set separately (avoids the
+  // stale-Prisma-client include issue on QuizSet.class/subject relations).
+  const quizSetIds = [
+    ...new Set(
+      attempts
+        .filter((a) => a.quizSet)
+        .map((a) => a.quizSet!.id)
+    ),
+  ];
+  const quizSetClassIds = [
+    ...new Set(
+      attempts
+        .filter((a) => a.quizSet)
+        .map((a) => a.quizSet!.classId)
+    ),
+  ];
+  const quizSetSubjectIds = [
+    ...new Set(
+      attempts
+        .filter((a) => a.quizSet?.subjectId)
+        .map((a) => a.quizSet!.subjectId!)
+    ),
+  ];
+
+  const [quizSetClasses, quizSetSubjects] = await Promise.all([
+    db.class.findMany({
+      where: { id: { in: quizSetClassIds } },
+      select: { id: true, name: true },
+    }),
+    db.subject.findMany({
+      where: { id: { in: quizSetSubjectIds } },
+      select: { id: true, name: true },
+    }),
+  ]);
+
+  const classMap = new Map(quizSetClasses.map((c) => [c.id, c]));
+  const subjectMap = new Map(quizSetSubjects.map((s) => [s.id, s]));
+
+  const attemptsWithRelations = attempts.map((a) => {
+    if (!a.quizSet) return a;
+    return {
+      ...a,
+      quizSet: {
+        id: a.quizSet.id,
+        name: a.quizSet.name,
+        class: classMap.get(a.quizSet.classId) ?? null,
+        subject: a.quizSet.subjectId
+          ? subjectMap.get(a.quizSet.subjectId) ?? null
+          : null,
+      },
+    };
+  });
+
+  return NextResponse.json({ attempts: attemptsWithRelations });
 }

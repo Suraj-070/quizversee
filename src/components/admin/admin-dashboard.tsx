@@ -37,6 +37,8 @@ type DashboardStats = {
   publishedQuestions: number;
   users: number;
   quizAttempts: number;
+  quizSets: number;
+  publishedQuizSets: number;
 };
 
 export function AdminDashboard({ user: _user }: { user: PublicUser }) {
@@ -134,10 +136,10 @@ export function AdminDashboard({ user: _user }: { user: PublicUser }) {
         <StatCard
           label="Quiz Sets"
           icon={ListChecks}
-          value={0}
-          loading={false}
+          value={stats?.quizSets}
+          loading={loading}
           color="violet"
-          hint="Phase 7"
+          hint={stats ? `${stats.publishedQuizSets} published` : undefined}
         />
       </div>
 
@@ -151,27 +153,27 @@ export function AdminDashboard({ user: _user }: { user: PublicUser }) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Phase 1 status</CardTitle>
+          <CardTitle className="text-base">Platform status</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-slate-600 space-y-2">
           <p>
-            ✅ Database schema applied — all 10 tables (User, Class, Subject,
-            Topic, Question, QuizSet, QuizSetQuestion, QuizAttempt, UserAnswer,
-            Setting) are live.
+            ✅ All core modules are live: Classes, Subjects, Topics, Questions,
+            Quiz Sets, Quiz Engine, Results, Review, History.
           </p>
           <p>
-            ✅ Authentication is wired up via NextAuth + bcrypt. Roles
-            (<code>user</code> / <code>admin</code>) are stored on the User
-            record and enforced server-side via <code>requireAdmin()</code>.
+            ✅ Authentication + role enforcement via NextAuth + bcrypt. Roles
+            (<code>user</code> / <code>admin</code>) stored on the User record
+            and enforced server-side via <code>requireAdmin()</code>.
           </p>
           <p>
-            ✅ Seed data inserted — admin & student users, plus a sample
-            Class 9 → Science → Force and Motion hierarchy with 6 published
-            questions and a <code>quiz_question_counts</code> setting.
+            ✅ Architecture is fully dynamic — adding a new class, subject,
+            topic, question, or quiz set through the Admin Portal requires
+            <strong> zero source-code changes</strong>.
           </p>
           <p>
-            Next up — <strong>Phase 2</strong>: Academic CRUD (Classes /
-            Subjects / Topics with dependent selectors + confirmation dialogs).
+            ✅ Quiz engine is theme-ready (PRD §24) — the{" "}
+            <code>quiz-themes.ts</code> registry ships one default theme. Adding
+            Focus / Chill / Arcade themes is a single registry entry.
           </p>
         </CardContent>
       </Card>

@@ -2,23 +2,23 @@
 
 import { motion } from "framer-motion";
 import {
-  BookOpen,
   ChevronRight,
   Layers,
   HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ICONS, ICONS_FALLBACK } from "@/lib/icon-registry";
 
 /**
  * SubjectCard — used on the student's "Choose a subject" screen.
  *
- * NOTE: the database `icon` field is a lucide icon name (e.g.
- * "flask-conical"). Dynamically resolving icons from a string at render
- * time conflicts with the `react-hooks/static-components` ESLint rule.
- * For Phase 4 we render a single consistent icon (BookOpen). A proper
- * icon registry will be added in Phase 8 (Polish) — it will pre-bind a
- * fixed set of icon names to components at module load, avoiding the
- * rule violation entirely.
+ * Uses the icon registry to resolve the database-stored `icon` field
+ * (a lucide icon name like "flask-conical") to a pre-bound React
+ * component. Falls back to BookOpen for unknown/null icons.
+ *
+ * The lookup is a flat object access (ICONS[name] ?? ICONS_FALLBACK),
+ * NOT a function call — this satisfies the `react-hooks/static-components`
+ * ESLint rule which forbids creating components during render.
  */
 
 export type StudentSubject = {
@@ -40,6 +40,9 @@ export function SubjectCard({
   index: number;
   onClick: () => void;
 }) {
+  // Flat object lookup — no function call, no component creation during render.
+  const Icon = (subject.icon && ICONS[subject.icon]) || ICONS_FALLBACK;
+
   return (
     <motion.button
       type="button"
@@ -59,7 +62,7 @@ export function SubjectCard({
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <div className="size-11 rounded-xl bg-gradient-to-br from-violet-400 to-fuchsia-500 text-white flex items-center justify-center shadow-sm shadow-violet-500/20">
-            <BookOpen className="size-6" />
+            <Icon className="size-6" />
           </div>
           <div>
             <h3 className="text-base font-semibold text-slate-900">
@@ -89,3 +92,4 @@ export function SubjectCard({
     </motion.button>
   );
 }
+

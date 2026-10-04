@@ -24,7 +24,9 @@ export type View =
   | { name: "student-classes" }
   | { name: "student-subjects"; classId: string }
   | { name: "student-topics"; classId: string; subjectId: string }
+  | { name: "student-quiz-sets"; classId?: string }
   | { name: "quiz-setup"; topicId: string }
+  | { name: "quiz-set-setup"; quizSetId: string }
   | { name: "quiz-active"; attemptId: string }
   | { name: "quiz-results"; attemptId: string }
   | { name: "quiz-review"; attemptId: string }
@@ -36,6 +38,7 @@ export type View =
   | { name: "admin-topics" }
   | { name: "admin-questions" }
   | { name: "admin-quiz-sets" }
+  | { name: "admin-quiz-set-detail"; quizSetId: string }
   | { name: "admin-users" }
   | { name: "admin-settings" };
 
