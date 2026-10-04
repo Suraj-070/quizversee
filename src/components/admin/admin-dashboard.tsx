@@ -205,7 +205,7 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden shadow-card transition-shadow hover:shadow-card-hover">
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div>
@@ -215,7 +215,7 @@ function StatCard({
             {loading ? (
               <Skeleton className="h-8 w-16 mt-2" />
             ) : (
-              <p className="text-2xl font-bold text-slate-900 mt-2">
+              <p className="text-2xl font-bold text-slate-900 mt-2 tracking-tight">
                 {value ?? 0}
               </p>
             )}

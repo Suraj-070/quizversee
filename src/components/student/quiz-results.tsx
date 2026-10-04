@@ -205,7 +205,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
               delay: 0.1,
             }}
             className={cn(
-              "mx-auto size-20 rounded-2xl flex items-center justify-center shadow-lg",
+              "mx-auto size-20 rounded-3xl flex items-center justify-center shadow-lg",
               isGoodScore
                 ? "bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-emerald-500/30"
                 : "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-500/30"
@@ -217,7 +217,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
           <motion.h1
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="mt-5 text-3xl font-bold tracking-tight text-slate-900"
           >
             Quiz Complete
@@ -225,7 +225,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
           <motion.p
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="mt-1 text-slate-600"
           >
             {result.topic?.name ?? result.quizSet?.name ?? result.subject?.name ?? "Quiz"}
@@ -233,17 +233,17 @@ export function QuizResults({ user }: { user: PublicUser }) {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm"
+          initial={{ opacity: 0, y: 16, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-card"
         >
           {/* Big score */}
           <div className="text-center">
             <div className="flex items-baseline justify-center gap-2">
               <span
                 className={cn(
-                  "text-5xl sm:text-6xl font-bold",
+                  "text-5xl sm:text-6xl font-bold tracking-tight",
                   isGoodScore ? "text-emerald-600" : "text-amber-600"
                 )}
               >
@@ -267,7 +267,12 @@ export function QuizResults({ user }: { user: PublicUser }) {
 
           {/* Correct / Incorrect breakdown */}
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="rounded-xl border border-emerald-200 bg-emerald-50 p-4"
+            >
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="size-5 text-emerald-600" />
                 <span className="text-sm font-medium text-emerald-700">
@@ -277,8 +282,13 @@ export function QuizResults({ user }: { user: PublicUser }) {
               <p className="mt-2 text-2xl font-bold text-emerald-700">
                 {result.correctAnswers}
               </p>
-            </div>
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              className="rounded-xl border border-red-200 bg-red-50 p-4"
+            >
               <div className="flex items-center gap-2">
                 <XCircle className="size-5 text-red-600" />
                 <span className="text-sm font-medium text-red-700">
@@ -286,7 +296,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
                 </span>
               </div>
               <p className="mt-2 text-2xl font-bold text-red-700">{incorrect}</p>
-            </div>
+            </motion.div>
           </div>
         </motion.div>
 

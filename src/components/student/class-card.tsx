@@ -44,14 +44,14 @@ export function ClassCard({
     <motion.button
       type="button"
       onClick={onClick}
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.99 }}
+      transition={{ duration: 0.4, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -3 }}
+      whileTap={{ scale: 0.985 }}
       className={cn(
         "group w-full text-left",
-        "rounded-2xl border border-slate-200/60 bg-white p-5 sm:p-6 shadow-sm",
+        "rounded-2xl border border-slate-200/60 bg-white p-5 sm:p-6 shadow-card",
         "hover:shadow-md hover:border-emerald-300 transition-all",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
       )}

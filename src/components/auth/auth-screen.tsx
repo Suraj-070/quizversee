@@ -90,17 +90,31 @@ export function AuthScreen() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gradient-to-br from-emerald-50 via-white to-teal-50 relative overflow-hidden">
+      {/* Subtle background pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 25% 25%, oklch(0.5 0.15 160) 1px, transparent 1px), radial-gradient(circle at 75% 75%, oklch(0.5 0.15 180) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }}
+      />
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-md"
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md relative z-10"
       >
         <div className="flex flex-col items-center gap-3 mb-8">
-          <div className="size-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <GraduationCap className="size-7" />
-          </div>
+          <motion.div
+            initial={{ scale: 0, rotate: -15 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.1 }}
+            className="size-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25"
+          >
+            <GraduationCap className="size-8" />
+          </motion.div>
           <div className="text-center">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
               Quizverse
@@ -111,9 +125,9 @@ export function AuthScreen() {
           </div>
         </div>
 
-        <Card className="shadow-xl border-slate-200/60">
+        <Card className="shadow-card-hover border-slate-200/50 backdrop-blur-sm bg-white/95">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 tracking-tight">
               {mode === "login" ? "Welcome back" : "Create your account"}
               <Sparkles className="size-4 text-emerald-500" />
             </CardTitle>

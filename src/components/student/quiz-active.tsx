@@ -261,20 +261,20 @@ export function QuizActive({ user }: { user: PublicUser }) {
               Answered: {answeredCount} · Remaining: {remaining}
             </p>
           </div>
-          <Progress value={progressValue} className="h-2" />
+          <Progress value={progressValue} className="h-1.5" />
         </div>
 
         <AnimatePresence mode="wait">
           <motion.div
             key={question.id}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             {/* Question */}
             <div className="flex items-start justify-between gap-3">
-              <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 leading-relaxed flex-1">
+              <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 leading-relaxed flex-1 tracking-tight">
                 {question.questionText}
               </h1>
               <button
@@ -282,31 +282,31 @@ export function QuizActive({ user }: { user: PublicUser }) {
                 onClick={toggleFlag}
                 disabled={flagToggling}
                 className={cn(
-                  "shrink-0 size-9 rounded-lg flex items-center justify-center transition-colors",
+                  "shrink-0 size-9 rounded-lg flex items-center justify-center transition-all duration-200",
                   flagged
-                    ? "bg-amber-100 text-amber-600 hover:bg-amber-200"
+                    ? "bg-amber-100 text-amber-600 hover:bg-amber-200 scale-105"
                     : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
                 )}
                 title={flagged ? "Unflag this question" : "Flag for review later"}
               >
-                <Flag className={cn("size-4", flagged && "fill-current")} />
+                <Flag className={cn("size-4 transition-transform", flagged && "fill-current scale-110")} />
               </button>
             </div>
 
             {/* Optional question image (diagram, graph, figure) */}
             {question.questionImage && (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
+              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <img
                   src={question.questionImage}
                   alt="Question figure"
-                  className="max-h-64 w-auto mx-auto rounded"
+                  className="max-h-64 w-auto mx-auto rounded-lg"
                 />
               </div>
             )}
 
             {/* Options */}
-            <div className="mt-6 space-y-3">
-              {options.map((opt) => {
+            <div className="mt-6 space-y-2.5">
+              {options.map((opt, optIdx) => {
                 const isSelected = selectedOption === opt.key;
                 const isCorrect =
                   revealed &&
@@ -315,36 +315,44 @@ export function QuizActive({ user }: { user: PublicUser }) {
                   revealed && isSelected && !revealedResult?.isCorrect;
 
                 return (
-                  <button
+                  <motion.button
                     key={opt.key}
                     type="button"
                     onClick={() => !revealed && setSelectedOption(opt.key)}
                     disabled={revealed || submitting}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 + optIdx * 0.04, duration: 0.2, ease: "easeOut" }}
+                    whileTap={!revealed ? { scale: 0.995 } : undefined}
                     className={cn(
-                      "w-full text-left rounded-xl border-2 p-4 transition-all flex items-start gap-3",
+                      "w-full text-left rounded-xl border-2 p-4 transition-all duration-200 flex items-start gap-3",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",
-                      !revealed && !isSelected && "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30",
-                      !revealed && isSelected && "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20",
-                      isCorrect && "border-emerald-500 bg-emerald-50",
+                      !revealed && !isSelected && "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/40 hover:shadow-sm",
+                      !revealed && isSelected && "border-emerald-500 bg-emerald-50 shadow-glow-emerald",
+                      isCorrect && "border-emerald-500 bg-emerald-50 shadow-glow-emerald",
                       isWrongSelected && "border-red-500 bg-red-50",
-                      revealed && !isCorrect && !isWrongSelected && "border-slate-200 bg-slate-50 opacity-60"
+                      revealed && !isCorrect && !isWrongSelected && "border-slate-200 bg-slate-50/60 opacity-50"
                     )}
                   >
                     {/* Letter badge */}
                     <div
                       className={cn(
-                        "size-8 shrink-0 rounded-lg flex items-center justify-center font-semibold text-sm transition-colors",
+                        "size-8 shrink-0 rounded-lg flex items-center justify-center font-semibold text-sm transition-all duration-200",
                         !revealed && !isSelected && "bg-slate-100 text-slate-600",
-                        !revealed && isSelected && "bg-emerald-500 text-white",
+                        !revealed && isSelected && "bg-emerald-500 text-white scale-110",
                         isCorrect && "bg-emerald-500 text-white",
                         isWrongSelected && "bg-red-500 text-white",
-                        revealed && !isCorrect && !isWrongSelected && "bg-slate-200 text-slate-500"
+                        revealed && !isCorrect && !isWrongSelected && "bg-slate-200 text-slate-400"
                       )}
                     >
                       {revealed && isCorrect ? (
-                        <CheckCircle2 className="size-5" />
+                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}>
+                          <CheckCircle2 className="size-5" />
+                        </motion.span>
                       ) : revealed && isWrongSelected ? (
-                        <XCircle className="size-5" />
+                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}>
+                          <XCircle className="size-5" />
+                        </motion.span>
                       ) : (
                         opt.key
                       )}
@@ -356,13 +364,16 @@ export function QuizActive({ user }: { user: PublicUser }) {
                         <img
                           src={opt.image}
                           alt={`Option ${opt.key}`}
-                          className="max-h-32 w-auto rounded"
+                          className="max-h-32 w-auto rounded-lg"
                         />
                       ) : (
-                        <p className="text-slate-900">{opt.text}</p>
+                        <p className={cn(
+                          "text-slate-900 transition-colors",
+                          revealed && !isCorrect && !isWrongSelected && "text-slate-500"
+                        )}>{opt.text}</p>
                       )}
                     </div>
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
@@ -371,8 +382,10 @@ export function QuizActive({ user }: { user: PublicUser }) {
             <AnimatePresence>
               {revealed && revealedResult && (
                 <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                   className={cn(
                     "mt-5 rounded-xl border p-4",
                     revealedResult.isCorrect
@@ -380,13 +393,13 @@ export function QuizActive({ user }: { user: PublicUser }) {
                       : "border-red-200 bg-red-50"
                   )}
                 >
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-2.5">
                     {revealedResult.isCorrect ? (
-                      <CheckCircle2 className="size-5 text-emerald-600 mt-0.5" />
+                      <CheckCircle2 className="size-5 text-emerald-600 mt-0.5 shrink-0" />
                     ) : (
-                      <XCircle className="size-5 text-red-600 mt-0.5" />
+                      <XCircle className="size-5 text-red-600 mt-0.5 shrink-0" />
                     )}
-                    <div>
+                    <div className="flex-1">
                       <p
                         className={cn(
                           "font-semibold text-sm",

@@ -58,17 +58,22 @@ export function StudentHome({ user }: { user: PublicUser }) {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="text-center max-w-2xl mx-auto mb-10"
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="text-center max-w-2xl mx-auto mb-12"
         >
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-medium mb-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1, duration: 0.3 }}
+            className="inline-flex items-center gap-2 rounded-full bg-emerald-100 text-emerald-700 px-3.5 py-1.5 text-xs font-medium mb-5"
+          >
             <Sparkles className="size-3" />
             Welcome, {user.name.split(" ")[0]}
-          </div>
+          </motion.div>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">
             Ready to practice?
           </h1>
-          <p className="mt-4 text-lg text-slate-600">
+          <p className="mt-4 text-lg text-slate-600 leading-relaxed">
             Pick a class to start. Choose your subject, drill into a topic,
             and we&apos;ll handle the rest.
           </p>
