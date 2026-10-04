@@ -76,6 +76,11 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // Don't hardcode NEXTAUTH_URL — let NextAuth auto-detect from request
+  // headers. This works correctly in both dev (localhost:3000) and
+  // production (your-hosted-domain.com) without env changes.
+  // If you must override, set NEXTAUTH_URL in your production env vars
+  // to your exact deployed URL (e.g. https://my-app.vercel.app).
 };
 
 /**

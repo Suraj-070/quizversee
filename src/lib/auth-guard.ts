@@ -33,7 +33,15 @@ async function getSessionUser(): Promise<AppSessionUser | null> {
   const h = await headers();
   const cookieHeader = h.get("cookie") || "";
 
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  // Auto-detect the base URL from the request's host header, falling back
+  // to NEXTAUTH_URL env var, then localhost. This works in both dev and
+  // production without hardcoding.
+  const host = h.get("host");
+  const protocol = h.get("x-forwarded-proto") || "http";
+  const baseUrl = host
+    ? `${protocol}://${host}`
+    : process.env.NEXTAUTH_URL || "http://localhost:3000";
+
   const res = await fetch(`${baseUrl}/api/auth/session`, {
     headers: { cookie: cookieHeader },
     cache: "no-store",

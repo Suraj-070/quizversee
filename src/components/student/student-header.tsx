@@ -106,7 +106,11 @@ export function StudentHeader({ user }: { user: PublicUser }) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => {
+              signOut({ redirect: false }).then(() => {
+                window.location.href = "/";
+              });
+            }}
             className="text-slate-600"
           >
             <LogOut className="size-4" />

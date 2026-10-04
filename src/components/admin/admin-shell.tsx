@@ -165,7 +165,11 @@ export function AdminShell({
             variant="ghost"
             size="sm"
             className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800"
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => {
+              signOut({ redirect: false }).then(() => {
+                window.location.href = "/";
+              });
+            }}
           >
             <LogOut className="size-4" />
             Sign out
