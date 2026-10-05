@@ -14,6 +14,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
 import {
@@ -65,6 +66,7 @@ export function QuizSetup({ user }: { user: PublicUser }) {
   const [allowedCounts, setAllowedCounts] = useState<AllowedCount[]>([]);
   const [selectedCount, setSelectedCount] = useState<number | null>(null);
   const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>("immediate");
+  const [smartPractice, setSmartPractice] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
@@ -121,7 +123,11 @@ export function QuizSetup({ user }: { user: PublicUser }) {
     setStarting(true);
     setError(null);
     try {
-      const res = await fetch("/api/student/attempts", {
+      // Use smart-practice endpoint if enabled, otherwise normal attempts
+      const endpoint = smartPractice
+        ? "/api/student/smart-practice"
+        : "/api/student/attempts";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -307,11 +313,24 @@ export function QuizSetup({ user }: { user: PublicUser }) {
                 </div>
               </div>
 
+              {/* Smart practice toggle */}
+              <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-900">Smart Practice</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Prioritizes questions you previously got wrong or haven&apos;t seen recently.
+                  </p>
+                </div>
+                <Switch checked={smartPractice} onCheckedChange={setSmartPractice} />
+              </div>
+
               {/* Start button */}
-              <div className="mt-8 flex justify-end">
+              <div className="mt-6 flex justify-end">
                 <Button
                   size="lg"
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                  className={smartPractice
+                    ? "bg-violet-500 hover:bg-violet-600 text-white"
+                    : "bg-emerald-500 hover:bg-emerald-600 text-white"}
                   disabled={!selectedCount || starting}
                   onClick={handleStart}
                 >

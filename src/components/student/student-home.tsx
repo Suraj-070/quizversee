@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
   Sparkles, GraduationCap, Loader2, AlertTriangle, ListChecks,
   ChevronRight, Megaphone, Play, TrendingUp, Award, Target,
-  Clock, X,
+  Clock, X, AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
@@ -36,12 +36,21 @@ type RecentlyPracticed = {
   date: string;
 };
 
+type WeakTopic = {
+  topicId: string;
+  topicName: string;
+  subjectName: string;
+  className: string;
+  correctRate: number;
+};
+
 export function StudentHome({ user }: { user: PublicUser }) {
   const setView = useViewStore((s) => s.setView);
   const [classes, setClasses] = useState<StudentClass[] | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [progress, setProgress] = useState<ProgressStats | null>(null);
   const [recentlyPracticed, setRecentlyPracticed] = useState<RecentlyPracticed[]>([]);
+  const [weakTopics, setWeakTopics] = useState<WeakTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState<Set<string>>(new Set());
@@ -63,10 +72,11 @@ export function StudentHome({ user }: { user: PublicUser }) {
       setLoading(true);
       setError(null);
       try {
-        const [classesRes, annRes, progressRes] = await Promise.all([
+        const [classesRes, annRes, progressRes, weakRes] = await Promise.all([
           fetch("/api/student/academic", { cache: "no-store" }),
           fetch("/api/student/announcements", { cache: "no-store" }),
           fetch("/api/student/progress", { cache: "no-store" }),
+          fetch("/api/student/weak-topics", { cache: "no-store" }),
         ]);
 
         if (!classesRes.ok) throw new Error("Failed to load classes");
@@ -88,6 +98,11 @@ export function StudentHome({ user }: { user: PublicUser }) {
             setProgress(progressData.overview);
             setRecentlyPracticed(progressData.recentlyPracticed);
           }
+        }
+
+        if (weakRes.ok) {
+          const weakData = (await weakRes.json()) as { weakTopics: WeakTopic[] };
+          if (!cancelled) setWeakTopics(weakData.weakTopics);
         }
       } catch (e) {
         if (cancelled) return;
@@ -228,6 +243,43 @@ export function StudentHome({ user }: { user: PublicUser }) {
               value={`${progress.bestScore}%`}
               color="amber"
             />
+          </motion.div>
+        )}
+
+        {/* Needs Practice — weak topics from mastery data */}
+        {weakTopics.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.32 }}
+            className="mb-8"
+          >
+            <h2 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+              <AlertCircle className="size-4 text-amber-500" />
+              Needs Practice
+            </h2>
+            <div className="space-y-2">
+              {weakTopics.slice(0, 3).map((t) => (
+                <button
+                  key={t.topicId}
+                  type="button"
+                  onClick={() => setView({ name: "quiz-setup", topicId: t.topicId })}
+                  className="w-full rounded-lg border border-amber-200 bg-amber-50/50 p-3 flex items-center gap-3 hover:bg-amber-50 transition-colors text-left"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">{t.topicName}</p>
+                    <p className="text-xs text-slate-500">{t.subjectName} · {t.className}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-sm font-bold text-amber-600">{t.correctRate}%</span>
+                    <p className="text-xs text-slate-400">correct</p>
+                  </div>
+                  <Button size="sm" variant="outline" className="shrink-0 border-amber-300 text-amber-700 hover:bg-amber-100">
+                    Practice
+                  </Button>
+                </button>
+              ))}
+            </div>
           </motion.div>
         )}
 
