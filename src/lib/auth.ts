@@ -75,7 +75,10 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  // Stable secret — uses env var if available, falls back to a hardcoded
+  // dev secret so login NEVER breaks even if .env gets wiped by the sandbox.
+  // In production, ALWAYS set NEXTAUTH_SECRET in your hosting env vars.
+  secret: process.env.NEXTAUTH_SECRET || "quizverse-dev-secret-stable-v1-do-not-change",
   // Don't hardcode NEXTAUTH_URL — let NextAuth auto-detect from request
   // headers. This works correctly in both dev (localhost:3000) and
   // production (your-hosted-domain.com) without env changes.
