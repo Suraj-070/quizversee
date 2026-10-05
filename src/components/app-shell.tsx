@@ -28,6 +28,13 @@ import { AdminQuizSetDetail } from "@/components/admin/admin-quiz-set-detail";
 import { AdminUsers } from "@/components/admin/admin-users";
 import { AdminUserDetail } from "@/components/admin/admin-user-detail";
 import { AdminSettings } from "@/components/admin/admin-settings";
+import { AdminImports } from "@/components/admin/admin-imports";
+import { AdminAnnouncements } from "@/components/admin/admin-announcements";
+import { AdminActivityLog } from "@/components/admin/admin-activity-log";
+import { AdminAnalytics } from "@/components/admin/admin-analytics";
+import { AdminAttempts } from "@/components/admin/admin-attempts";
+import { AdminArchive } from "@/components/admin/admin-archive";
+import { AdminSiteContent } from "@/components/admin/admin-site-content";
 import { useViewStore } from "@/stores/view-store";
 import { Loader2 } from "lucide-react";
 
@@ -188,6 +195,27 @@ export function AppShell() {
       }
       case "admin-settings":
         content = <AdminSettings />;
+        break;
+      case "admin-imports":
+        content = <AdminImports />;
+        break;
+      case "admin-announcements":
+        content = <AdminAnnouncements />;
+        break;
+      case "admin-activity-log":
+        content = <AdminActivityLog />;
+        break;
+      case "admin-analytics":
+        content = <AdminAnalytics />;
+        break;
+      case "admin-attempts":
+        content = <AdminAttempts />;
+        break;
+      case "admin-archive":
+        content = <AdminArchive />;
+        break;
+      case "admin-site-content":
+        content = <AdminSiteContent />;
         break;
       default:
         content = <ComingSoon label={view.name} />;

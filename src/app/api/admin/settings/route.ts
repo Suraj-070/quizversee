@@ -27,14 +27,18 @@ const UpdateSchema = z.object({
   quiz_question_counts: z
     .array(z.number().int().positive())
     .optional(),
+  site_homepage_heading: z.string().max(200).optional(),
+  site_homepage_subtitle: z.string().max(500).optional(),
+  site_footer_text: z.string().max(200).optional(),
+  site_contact_email: z.string().max(200).optional(),
 });
 
 /**
  * PUT /api/admin/settings
- * Updates settings. Currently only supports `quiz_question_counts`.
+ * Updates settings. Supports quiz_question_counts + site content keys.
  */
 export async function PUT(request: Request) {
-  const { error } = await requireAdmin();
+  const { user, error } = await requireAdmin();
   if (error) return error;
 
   const body = await request.json().catch(() => null);
@@ -46,13 +50,38 @@ export async function PUT(request: Request) {
     );
   }
 
+  // Update each setting key that was provided
+  const updates: Array<[string, string]> = [];
   if (parsed.data.quiz_question_counts) {
-    const value = JSON.stringify(parsed.data.quiz_question_counts);
+    updates.push(["quiz_question_counts", JSON.stringify(parsed.data.quiz_question_counts)]);
+  }
+  if (parsed.data.site_homepage_heading !== undefined) {
+    updates.push(["site_homepage_heading", JSON.stringify(parsed.data.site_homepage_heading)]);
+  }
+  if (parsed.data.site_homepage_subtitle !== undefined) {
+    updates.push(["site_homepage_subtitle", JSON.stringify(parsed.data.site_homepage_subtitle)]);
+  }
+  if (parsed.data.site_footer_text !== undefined) {
+    updates.push(["site_footer_text", JSON.stringify(parsed.data.site_footer_text)]);
+  }
+  if (parsed.data.site_contact_email !== undefined) {
+    updates.push(["site_contact_email", JSON.stringify(parsed.data.site_contact_email)]);
+  }
+
+  for (const [key, value] of updates) {
     await db.setting.upsert({
-      where: { key: "quiz_question_counts" },
+      where: { key },
       update: { value },
-      create: { key: "quiz_question_counts", value },
+      create: { key, value },
     });
+  }
+
+  // Log settings change
+  if (updates.length > 0) {
+    try {
+      const { logAdminActivity, ADMIN_ACTIONS } = await import("@/lib/admin-activity");
+      await logAdminActivity(user.id, ADMIN_ACTIONS.SETTINGS_CHANGED, "Setting", null, "Updated site settings");
+    } catch { /* ignore */ }
   }
 
   return NextResponse.json({ success: true });

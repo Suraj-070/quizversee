@@ -41,9 +41,16 @@ export type View =
   | { name: "admin-questions" }
   | { name: "admin-quiz-sets" }
   | { name: "admin-quiz-set-detail"; quizSetId: string }
+  | { name: "admin-imports" }
   | { name: "admin-users" }
   | { name: "admin-user-detail"; userId: string }
-  | { name: "admin-settings" };
+  | { name: "admin-attempts" }
+  | { name: "admin-analytics" }
+  | { name: "admin-announcements" }
+  | { name: "admin-site-content" }
+  | { name: "admin-settings" }
+  | { name: "admin-activity-log" }
+  | { name: "admin-archive" };
 
 type ViewState = {
   view: View;

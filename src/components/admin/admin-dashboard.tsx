@@ -35,10 +35,20 @@ type DashboardStats = {
   topics: number;
   questions: number;
   publishedQuestions: number;
+  draftQuestions: number;
   users: number;
   quizAttempts: number;
+  quizAttemptsToday: number;
   quizSets: number;
   publishedQuizSets: number;
+  avgScore: number;
+  recentActivity: Array<{
+    id: string;
+    description: string;
+    action: string;
+    createdAt: string;
+    adminName: string | null;
+  }>;
 };
 
 export function AdminDashboard({ user: _user }: { user: PublicUser }) {
@@ -132,6 +142,7 @@ export function AdminDashboard({ user: _user }: { user: PublicUser }) {
           value={stats?.quizAttempts}
           loading={loading}
           color="sky"
+          hint={stats ? `${stats.quizAttemptsToday} today` : undefined}
         />
         <StatCard
           label="Quiz Sets"
@@ -141,7 +152,39 @@ export function AdminDashboard({ user: _user }: { user: PublicUser }) {
           color="violet"
           hint={stats ? `${stats.publishedQuizSets} published` : undefined}
         />
+        <StatCard
+          label="Avg Score"
+          icon={TrendingUp}
+          value={stats?.avgScore !== undefined ? `${stats.avgScore}%` : undefined}
+          loading={loading}
+          color="emerald"
+        />
       </div>
+
+      {/* Recent Activity */}
+      {stats?.recentActivity && stats.recentActivity.length > 0 && (
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="text-base">Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {stats.recentActivity.map((a) => (
+              <div key={a.id} className="flex items-start gap-2 text-sm">
+                <span className="size-2 mt-1.5 rounded-full bg-emerald-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-slate-900">{a.description}</p>
+                  <p className="text-xs text-slate-400">
+                    {a.adminName ?? "System"} ·{" "}
+                    {new Date(a.createdAt).toLocaleString(undefined, {
+                      month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {error && (
         <Card className="border-red-200 bg-red-50">

@@ -27,6 +27,9 @@ model User {
   flags         QuestionFlag[]
   mastery       QuestionMastery[]
   aiExplanations AIExplanation[]
+  announcements  Announcement[] @relation("AnnouncementAdmin")
+  imports       ImportHistory[] @relation("ImportAdmin")
+  activities    AdminActivity[] @relation("ActivityAdmin")
 }
 
 // ---------------------------------------------------------------------------
@@ -40,6 +43,7 @@ model Class {
   displayOrder  Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime?
 
   subjects      Subject[]
   quizSets      QuizSet[]
@@ -55,6 +59,7 @@ model Subject {
   displayOrder  Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime?
 
   class         Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
   topics        Topic[]
@@ -71,6 +76,7 @@ model Topic {
   displayOrder  Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime?
 
   subject       Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   questions     Question[]
@@ -93,6 +99,7 @@ model Question {
   status         String    @default("draft") // "draft" | "published"
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  archivedAt     DateTime?
 
   // Optional images (base64 data URIs or URLs). When set, the option or
   // question renders with the image instead of (or in addition to) text.
@@ -124,6 +131,11 @@ model QuizSet {
   status        String    @default("draft") // "draft" | "published"
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime?
+  // Random set mode: when mode is "random", the quiz uses N random
+  // published questions from the topic instead of fixed selections.
+  mode          String    @default("fixed") // "fixed" | "random"
+  randomCount   Int?      // number of questions for random mode
 
   class         Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
   subject       Subject?  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
@@ -240,4 +252,57 @@ model AIExplanation {
   user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([questionId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Announcements (admin-published notices shown to students)
+// ---------------------------------------------------------------------------
+model Announcement {
+  id            String    @id @default(cuid())
+  title         String
+  message       String
+  status        String    @default("draft") // "draft" | "published"
+  publishDate   DateTime  @default(now())
+  expiryDate    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime?
+
+  // Admin who created it (optional — the admin who created the announcement).
+  adminId       String?
+  admin         User?     @relation("AnnouncementAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+}
+
+// ---------------------------------------------------------------------------
+// Import History (tracks JSON question imports)
+// ---------------------------------------------------------------------------
+model ImportHistory {
+  id            String   @id @default(cuid())
+  filename      String
+  className     String
+  subjectName   String
+  topicName     String
+  imported      Int      @default(0)
+  failed        Int      @default(0)
+  skipped       Int      @default(0)
+  imagesCount   Int      @default(0)
+  adminId       String?
+  createdAt      DateTime @default(now())
+
+  admin          User?    @relation("ImportAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+}
+
+// ---------------------------------------------------------------------------
+// Admin Activity Log (tracks important admin actions)
+// ---------------------------------------------------------------------------
+model AdminActivity {
+  id            String   @id @default(cuid())
+  adminId       String?
+  action        String   // e.g. "question.created", "question.published", "topic.archived"
+  entity        String   // e.g. "Question", "Topic", "Class"
+  entityId      String?
+  description   String   // human-readable: "Published 13 Force & Motion questions"
+  createdAt     DateTime @default(now())
+
+  admin         User?    @relation("ActivityAdmin", fields: [adminId], references: [id], onDelete: SetNull)
 }

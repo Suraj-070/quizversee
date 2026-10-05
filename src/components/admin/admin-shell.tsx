@@ -15,6 +15,13 @@ import {
   Menu,
   X,
   ArrowLeft,
+  Upload,
+  ClipboardList,
+  BarChart3,
+  Megaphone,
+  FileText,
+  History,
+  Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,41 +33,43 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   view: View;
-  group?: "academic" | "main";
+  group?: string;
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
 };
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, view: { name: "admin-dashboard" } },
-  {
-    label: "Classes",
-    icon: GraduationCap,
-    view: { name: "admin-classes" },
-    group: "academic",
-  },
-  {
-    label: "Subjects",
-    icon: BookOpen,
-    view: { name: "admin-subjects" },
-    group: "academic",
-  },
-  {
-    label: "Topics",
-    icon: Layers,
-    view: { name: "admin-topics" },
-    group: "academic",
-  },
-  {
-    label: "Questions",
-    icon: FileQuestion,
-    view: { name: "admin-questions" },
-  },
-  {
-    label: "Quiz Sets",
-    icon: ListChecks,
-    view: { name: "admin-quiz-sets" },
-  },
-  { label: "Users", icon: Users, view: { name: "admin-users" } },
-  { label: "Settings", icon: Settings, view: { name: "admin-settings" } },
+  // CONTENT
+  { label: "Classes", icon: GraduationCap, view: { name: "admin-classes" }, group: "content" },
+  { label: "Subjects", icon: BookOpen, view: { name: "admin-subjects" }, group: "content" },
+  { label: "Topics", icon: Layers, view: { name: "admin-topics" }, group: "content" },
+  { label: "Questions", icon: FileQuestion, view: { name: "admin-questions" }, group: "content" },
+  { label: "Quiz Sets", icon: ListChecks, view: { name: "admin-quiz-sets" }, group: "content" },
+  { label: "Imports", icon: Upload, view: { name: "admin-imports" }, group: "content" },
+  // PEOPLE
+  { label: "Users", icon: Users, view: { name: "admin-users" }, group: "people" },
+  { label: "Quiz Attempts", icon: ClipboardList, view: { name: "admin-attempts" }, group: "people" },
+  // INSIGHTS
+  { label: "Analytics", icon: BarChart3, view: { name: "admin-analytics" }, group: "insights" },
+  // WEBSITE
+  { label: "Announcements", icon: Megaphone, view: { name: "admin-announcements" }, group: "website" },
+  { label: "Site Content", icon: FileText, view: { name: "admin-site-content" }, group: "website" },
+  { label: "Settings", icon: Settings, view: { name: "admin-settings" }, group: "website" },
+  // SYSTEM
+  { label: "Activity Log", icon: History, view: { name: "admin-activity-log" }, group: "system" },
+  { label: "Archive", icon: Archive, view: { name: "admin-archive" }, group: "system" },
+];
+
+const NAV_GROUPS: { label: string; group: string }[] = [
+  { label: "Content", group: "content" },
+  { label: "People", group: "people" },
+  { label: "Insights", group: "insights" },
+  { label: "Website", group: "website" },
+  { label: "System", group: "system" },
 ];
 
 /**
@@ -83,8 +92,7 @@ export function AdminShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const currentName = view.name;
-  // Treat admin-quiz-set-detail as part of the Quiz Sets section,
-  // and admin-user-detail as part of the Users section.
+  // Map detail views to their parent section for sidebar highlighting
   const effectiveName =
     currentName === "admin-quiz-set-detail"
       ? "admin-quiz-sets"
@@ -125,6 +133,7 @@ export function AdminShell({
         </div>
 
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
+          {/* Dashboard (standalone) */}
           <div className="space-y-1">
             {NAV_ITEMS.filter((i) => !i.group).map((item) => (
               <NavButton
@@ -136,19 +145,24 @@ export function AdminShell({
             ))}
           </div>
 
-          <div className="mt-6 mb-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">
-            Academic
-          </div>
-          <div className="space-y-1">
-            {NAV_ITEMS.filter((i) => i.group === "academic").map((item) => (
-              <NavButton
-                key={item.label}
-                item={item}
-                active={isActive(item)}
-                onClick={() => handleNav(item)}
-              />
-            ))}
-          </div>
+          {/* Grouped nav items */}
+          {NAV_GROUPS.map((grp) => (
+            <div key={grp.group}>
+              <div className="mt-5 mb-2 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                {grp.label}
+              </div>
+              <div className="space-y-0.5">
+                {NAV_ITEMS.filter((i) => i.group === grp.group).map((item) => (
+                  <NavButton
+                    key={item.label}
+                    item={item}
+                    active={isActive(item)}
+                    onClick={() => handleNav(item)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </nav>
 
         <div className="border-t border-slate-800 p-3">

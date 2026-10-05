@@ -28,11 +28,37 @@ export async function GET() {
     db.topic.count(),
     db.question.count(),
     db.question.count({ where: { status: "published" } }),
+    db.question.count({ where: { status: "draft" } }),
     db.user.count(),
     db.quizAttempt.count(),
+    db.quizAttempt.count({
+      where: {
+        completedAt: { not: null },
+        startedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      },
+    }),
     db.quizSet.count(),
     db.quizSet.count({ where: { status: "published" } }),
   ]);
+
+  // Fetch recent activity (last 10)
+  const recentActivity = await db.adminActivity.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 8,
+    select: {
+      id: true,
+      description: true,
+      action: true,
+      createdAt: true,
+      admin: { select: { name: true } },
+    },
+  });
+
+  // Average score
+  const avgScoreAgg = await db.quizAttempt.aggregate({
+    where: { completedAt: { not: null } },
+    _avg: { scorePercentage: true },
+  });
 
   return NextResponse.json({
     classes,
@@ -40,9 +66,19 @@ export async function GET() {
     topics,
     questions,
     publishedQuestions,
+    draftQuestions,
     users,
     quizAttempts,
+    quizAttemptsToday,
     quizSets,
     publishedQuizSets,
+    avgScore: Math.round(avgScoreAgg._avg.scorePercentage ?? 0),
+    recentActivity: recentActivity.map((a) => ({
+      id: a.id,
+      description: a.description,
+      action: a.action,
+      createdAt: a.createdAt.toISOString(),
+      adminName: a.admin?.name ?? null,
+    })),
   });
 }
