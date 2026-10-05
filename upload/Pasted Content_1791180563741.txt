@@ -1,0 +1,2229 @@
+QUIZVERSE — SENIOR UI/UX PRODUCT DESIGN AUDIT & REFINEMENT
+==========================================================
+
+ROLE
+----------------------------------------------------------
+
+Act as a Senior Product Designer / UI-UX Designer
+and Senior Frontend Engineer.
+
+You are working on my EXISTING Quizverse application.
+
+This is NOT a redesign from scratch.
+
+The product architecture and functionality already exist.
+
+Your responsibility is to:
+
+AUDIT
+SIMPLIFY
+REFINE
+POLISH
+STANDARDIZE
+
+the existing Quizverse user experience.
+
+The final product should feel like a professionally designed
+modern educational SaaS/product rather than a collection of
+individually designed pages.
+
+
+==========================================================
+FIRST: DO NOT CODE IMMEDIATELY
+==========================================================
+
+Before changing anything:
+
+inspect the COMPLETE existing application.
+
+Review:
+
+- landing/auth experience
+- onboarding
+- student dashboard
+- My Learning
+- subjects
+- topics
+- quiz setup
+- quiz experience
+- results
+- review answers
+- Extra Practice
+- Explore
+- history
+- progress
+- profile
+- academic settings
+
+Also inspect:
+
+- admin dashboard
+- academic management
+- question manager
+- question editor
+- imports
+- external library
+- users
+- attempts
+- analytics
+- settings
+
+Then inspect the existing:
+
+- components
+- layouts
+- typography
+- spacing
+- colors
+- cards
+- buttons
+- inputs
+- navigation
+- dialogs
+- tables
+- responsive behavior
+- animations
+- loading states
+- empty states
+- error states
+
+Identify inconsistencies BEFORE making changes.
+
+
+==========================================================
+DO NOT CHANGE PRODUCT LOGIC
+==========================================================
+
+This task is primarily UI/UX refinement.
+
+DO NOT:
+
+rebuild Quizverse
+
+replace the technology stack
+
+change database architecture unnecessarily
+
+rewrite authentication
+
+replace the quiz engine
+
+remove working functionality
+
+change routes without a strong reason
+
+invent major new features
+
+change the established:
+
+My Learning
+Extra Practice
+Explore
+
+product model.
+
+
+==========================================================
+PRODUCT EXPERIENCE PRINCIPLE
+==========================================================
+
+Quizverse should feel:
+
+CALM
+FOCUSED
+MODERN
+FAST
+FRIENDLY
+ACADEMIC
+POLISHED
+
+It should NOT feel:
+
+childish
+overly gamified
+corporate
+cluttered
+template-like
+AI-generated
+over-animated
+
+
+The interface should get out of the student's way.
+
+
+==========================================================
+DESIGN FOR TWO VERY DIFFERENT USERS
+==========================================================
+
+Quizverse has two major environments:
+
+STUDENT
+
+and
+
+ADMIN
+
+
+They should belong to the same product family,
+but they should NOT have identical information density.
+
+
+STUDENT UI:
+
+simple
+visual
+focused
+comfortable
+low cognitive load
+
+
+ADMIN UI:
+
+efficient
+compact
+information-rich
+scannable
+action-oriented
+
+
+==========================================================
+STUDENT INFORMATION ARCHITECTURE
+==========================================================
+
+Keep the student mental model extremely clear.
+
+HOME
+
+MY LEARNING
+
+EXTRA PRACTICE
+
+EXPLORE
+
+HISTORY / PROGRESS
+
+PROFILE
+
+
+Students should quickly understand:
+
+My Learning
+=
+what I am studying
+
+
+Extra Practice
+=
+more practice for what I study
+
+
+Explore
+=
+discover other practice
+
+
+Do not make students understand backend concepts such as:
+
+datasets
+APIs
+imports
+content types
+source mappings
+database categories.
+
+
+==========================================================
+STUDENT DASHBOARD
+==========================================================
+
+The dashboard should answer three questions immediately:
+
+1. Where did I leave off?
+
+2. What am I studying?
+
+3. What should I practice next?
+
+
+Recommended hierarchy:
+
+
+Hello, Alex
+Class 11
+
+
+CONTINUE LEARNING
+
+┌────────────────────────────────────┐
+│ Physics                            │
+│ Kinematics                         │
+│                                    │
+│ Question 6 of 10                   │
+│ ████████████░░░░░░                 │
+│                                    │
+│                       Continue →   │
+└────────────────────────────────────┘
+
+
+MY SUBJECTS
+
+[ Physics ]
+[ Chemistry ]
+[ Mathematics ]
+
+
+NEEDS PRACTICE
+
+Vectors
+
+Recent performance
+52%
+
+[Practice]
+
+
+RECENT ACTIVITY
+
+Chemistry
+8 / 10
+
+Physics
+7 / 10
+
+
+Do not create a dashboard containing 12 unrelated cards.
+
+
+==========================================================
+VISUAL HIERARCHY
+==========================================================
+
+Every screen should have ONE obvious primary purpose.
+
+Example:
+
+Topic page
+
+PRIMARY:
+Start Practice
+
+SECONDARY:
+View progress
+
+TERTIARY:
+View history
+
+
+Do not give:
+
+Start
+Review
+History
+Bookmark
+Share
+Settings
+Explore
+Practice
+Details
+
+all identical visual importance.
+
+
+==========================================================
+PAGE HEADERS
+==========================================================
+
+Standardize page headers.
+
+Example:
+
+Physics
+
+Class 11
+12 topics • 240 questions
+
+
+Avoid giant hero sections inside application pages.
+
+Application pages should prioritize content,
+not marketing.
+
+
+==========================================================
+CARDS
+==========================================================
+
+Reduce excessive card usage.
+
+Not every piece of information needs:
+
+background
+border
+shadow
+rounded container
+
+
+Use cards for:
+
+interactive content
+important grouping
+summary information
+
+
+Use normal layout/text for secondary information.
+
+
+==========================================================
+CARD DESIGN
+==========================================================
+
+Standardize:
+
+border radius
+padding
+border treatment
+hover state
+selected state
+disabled state
+shadow
+
+Avoid mixing:
+
+rounded-md
+rounded-lg
+rounded-xl
+rounded-2xl
+rounded-3xl
+
+randomly across pages.
+
+
+==========================================================
+SPACING SYSTEM
+==========================================================
+
+Create a consistent spacing rhythm.
+
+Prefer a small spacing scale.
+
+Example concept:
+
+4
+8
+12
+16
+24
+32
+48
+
+
+Use spacing intentionally.
+
+Avoid arbitrary values everywhere.
+
+
+==========================================================
+TYPOGRAPHY
+==========================================================
+
+Create a clear hierarchy.
+
+Page title
+
+Section title
+
+Card title
+
+Body
+
+Supporting text
+
+Metadata
+
+
+Avoid using:
+
+large bold text everywhere.
+
+
+Not every number needs huge typography.
+
+Not every heading needs font-bold.
+
+
+==========================================================
+COLOR
+==========================================================
+
+Use the existing Quizverse brand color.
+
+Refine rather than replace it.
+
+Use color primarily for:
+
+primary actions
+selection
+progress
+status
+focus
+
+
+Avoid turning every subject into a rainbow.
+
+Do not use five gradients on one page.
+
+
+==========================================================
+SUBJECT IDENTIFICATION
+==========================================================
+
+Subjects may have subtle visual identity.
+
+Example:
+
+Physics
+icon + subtle accent
+
+Chemistry
+icon + subtle accent
+
+Biology
+icon + subtle accent
+
+
+Keep the overall UI cohesive.
+
+Do NOT make each subject look like a separate application.
+
+
+==========================================================
+ICONS
+==========================================================
+
+Use the existing icon library consistently.
+
+Prefer simple line icons.
+
+Do NOT:
+
+mix icon libraries unnecessarily
+
+use emoji as primary UI icons
+
+place icons everywhere
+
+use icons where text is clearer.
+
+
+==========================================================
+BUTTON SYSTEM
+==========================================================
+
+Standardize buttons.
+
+PRIMARY
+
+Continue
+Start Quiz
+Save
+Import
+
+
+SECONDARY
+
+Review
+View Details
+Cancel
+
+
+TERTIARY / GHOST
+
+Back
+Explore
+More
+
+
+DANGER
+
+Delete
+Disable
+
+
+Do not create unique button styles per page.
+
+
+==========================================================
+QUIZ EXPERIENCE
+==========================================================
+
+The quiz interface should be the most focused screen
+in Quizverse.
+
+Remove unnecessary navigation/distractions while a quiz
+is active.
+
+Example:
+
+
+Physics • Kinematics
+
+Question 6 of 10
+
+████████████████░░░░
+
+
+What is ...?
+
+
+A   Answer
+
+B   Answer
+
+C   Answer
+
+D   Answer
+
+
+                         Next →
+
+
+Keep it calm.
+
+Do NOT surround the question with multiple unnecessary cards.
+
+
+==========================================================
+ANSWER OPTIONS
+==========================================================
+
+Answer options should:
+
+have large click/touch targets
+
+have clear hover/focus states
+
+have obvious selected state
+
+support keyboard navigation
+
+work well on mobile
+
+
+Selection should feel immediate.
+
+
+Use a subtle:
+
+border change
+background tint
+check indicator
+
+
+Avoid excessive bouncing/glowing animation.
+
+
+==========================================================
+QUESTION TRANSITIONS
+==========================================================
+
+When moving:
+
+Question 5
+→ Question 6
+
+
+use subtle motion.
+
+Approximately:
+
+150–250ms
+
+
+Small:
+
+fade
+slide
+content transition
+
+
+Do NOT animate the entire page dramatically.
+
+
+==========================================================
+QUIZ PROGRESS
+==========================================================
+
+Always clearly show:
+
+current question
+total questions
+progress
+
+
+Example:
+
+6 / 10
+
+████████████░░░░
+
+
+Do not make students guess how much remains.
+
+
+==========================================================
+QUIZ NAVIGATOR
+==========================================================
+
+If question navigation exists:
+
+keep it secondary.
+
+Example:
+
+1 ✓
+2 ✓
+3 ✓
+4 ✓
+5 ✓
+6 ●
+7 ○
+8 ○
+9 ○
+10 ○
+
+
+On mobile:
+
+place it inside a collapsible control if space is limited.
+
+
+==========================================================
+QUIZ SUBMISSION
+==========================================================
+
+Before submission:
+
+if unanswered questions exist:
+
+"2 questions are unanswered."
+
+
+[Review Questions]
+
+[Submit Anyway]
+
+
+If all questions are answered:
+
+keep confirmation minimal.
+
+
+Do not create scary confirmation dialogs.
+
+
+==========================================================
+RESULTS EXPERIENCE
+==========================================================
+
+Results should immediately communicate performance.
+
+Example:
+
+
+Quiz Complete
+
+
+8 / 10
+
+80%
+
+
+Good progress.
+
+
+Correct
+8
+
+Incorrect
+2
+
+
+[Review Answers]
+
+[Practice Again]
+
+
+Avoid excessive confetti.
+
+A small completion animation is enough.
+
+
+==========================================================
+ANSWER REVIEW
+==========================================================
+
+Make review highly readable.
+
+Example:
+
+Question 4
+
+
+Your answer
+
+B. Newton
+
+
+Correct answer
+
+C. Joule
+
+
+Explanation
+
+Energy is measured in joules...
+
+
+Use semantic success/error states.
+
+Do not rely on color alone.
+
+
+==========================================================
+MY LEARNING
+==========================================================
+
+My Learning should feel structured and academic.
+
+Example:
+
+
+MY LEARNING
+
+Class 11
+
+
+Your Subjects
+
+Physics
+12 Topics
+240 Questions
+→
+
+
+Chemistry
+10 Topics
+198 Questions
+→
+
+
+Mathematics
+14 Topics
+312 Questions
+→
+
+
+Do not show unrelated classes.
+
+
+==========================================================
+TOPIC LIST
+==========================================================
+
+Topic cards/rows should quickly communicate:
+
+topic
+progress
+question availability
+next action
+
+
+Example:
+
+Kinematics
+
+42 questions
+
+Progress
+72%
+
+Continue →
+
+
+Avoid unnecessary metadata.
+
+
+==========================================================
+EXTRA PRACTICE
+==========================================================
+
+Extra Practice should feel slightly more exploratory than
+My Learning but still personalized.
+
+Example:
+
+
+EXTRA PRACTICE
+
+Practice more for your subjects.
+
+
+Recommended
+
+Mechanics
+
+Based on your Physics activity
+
+10 question practice
+
+[Start]
+
+
+Your Subjects
+
+Physics
+Chemistry
+Mathematics
+
+
+Do NOT display:
+
+ScienceQA
+ARC
+MMLU
+Dataset ID
+API Provider
+
+prominently.
+
+
+==========================================================
+EXPLORE
+==========================================================
+
+Explore should feel like discovery.
+
+Use:
+
+search
+subject/category cards
+clear grouping
+
+
+Example:
+
+
+Explore
+
+Discover more practice
+
+
+[ Search topics... ]
+
+
+Science
+
+Physics
+Chemistry
+Biology
+Computer Science
+
+
+Mathematics
+
+Mathematics
+Statistics
+
+
+Challenges
+
+Mixed Science
+STEM Challenge
+
+
+Avoid an endless catalog.
+
+
+==========================================================
+SEARCH UX
+==========================================================
+
+Search should feel immediate.
+
+Use:
+
+debouncing
+loading indicator only when necessary
+clear empty results
+keyboard support
+
+
+Example empty state:
+
+No practice found for "xyz".
+
+Try another topic.
+
+
+Not:
+
+0 records returned.
+
+
+==========================================================
+HISTORY
+==========================================================
+
+History should be easy to scan.
+
+Use simple filters:
+
+All
+My Learning
+Extra Practice
+
+
+Each attempt:
+
+Physics
+
+Kinematics
+
+8 / 10 • 80%
+
+Today, 2:14 PM
+
+Review →
+
+
+Avoid huge cards.
+
+
+==========================================================
+PROGRESS
+==========================================================
+
+Do not turn Progress into an analytics dashboard.
+
+Students need understandable insights.
+
+Show:
+
+overall curriculum progress
+
+subject performance
+
+topics needing practice
+
+recent improvement
+
+
+Avoid complex charts unless they genuinely improve understanding.
+
+
+==========================================================
+ONBOARDING
+==========================================================
+
+Keep academic onboarding extremely lightweight.
+
+Welcome
+    ↓
+Choose Class
+    ↓
+Choose Subjects if needed
+    ↓
+Done
+
+
+Use:
+
+large selectable cards
+
+clear selected state
+
+minimal progress indicator
+
+smooth transitions
+
+
+Avoid:
+
+long forms
+
+multiple modals
+
+unnecessary questions.
+
+
+==========================================================
+PROFILE
+==========================================================
+
+Group settings logically.
+
+Profile
+
+Personal Information
+
+Academic Details
+
+Preferences
+
+Account
+
+
+Do not place every setting on one giant page.
+
+
+==========================================================
+MOBILE NAVIGATION
+==========================================================
+
+Do NOT try to fit six destinations into a cramped
+bottom navigation.
+
+Prefer approximately four primary destinations.
+
+Example:
+
+Home
+
+Learn
+
+Practice
+
+Profile
+
+
+"Learn" can lead to My Learning.
+
+"Practice" can expose:
+
+Extra Practice
+Explore
+
+
+History may live inside:
+
+Home / Profile / More
+
+depending on the existing architecture.
+
+
+Choose the simplest model after inspecting the existing app.
+
+
+==========================================================
+DESKTOP NAVIGATION
+==========================================================
+
+Desktop may use a compact sidebar.
+
+Example:
+
+Quizverse
+
+
+Home
+
+My Learning
+
+Extra Practice
+
+Explore
+
+History
+
+
+────────────
+
+Profile
+
+
+Keep navigation visually quiet.
+
+The content should dominate.
+
+
+==========================================================
+ADMIN EXPERIENCE
+==========================================================
+
+The admin portal should prioritize efficiency.
+
+Suggested hierarchy:
+
+Dashboard
+
+CONTENT
+Academic
+Questions
+Quiz Sets
+Imports
+
+EXTERNAL
+External Library
+
+PEOPLE
+Users
+Attempts
+
+INSIGHTS
+Analytics
+
+SYSTEM
+Settings
+Activity
+
+
+Do not create deeply nested navigation.
+
+
+==========================================================
+ADMIN DASHBOARD
+==========================================================
+
+Admin dashboard should answer:
+
+What is happening?
+
+What needs attention?
+
+What should I do?
+
+
+Example:
+
+
+ADMIN DASHBOARD
+
+
+Today
+
+142
+Quiz Attempts
+
+1,421
+Questions Answered
+
+78%
+Average
+
+
+NEEDS ATTENTION
+
+8 Questions Need Review
+
+14 Possible Duplicates
+
+27 Missing Explanations
+
+Review →
+
+
+POPULAR TODAY
+
+Force & Motion
+Chemical Reactions
+Kinematics
+
+
+STUDENTS NEED PRACTICE
+
+Vectors
+Chemical Bonding
+Electricity
+
+
+Do not fill the page with decorative charts.
+
+
+==========================================================
+ADMIN TABLES
+==========================================================
+
+Admin tables should be dense enough to be useful
+but still readable.
+
+Questions example:
+
+Question | Class | Subject | Topic | Status | Attempts | ⋯
+
+
+Use:
+
+sticky header where useful
+pagination
+search
+filters
+sorting where useful
+
+
+Avoid huge card layouts for thousands of questions.
+
+
+==========================================================
+ADMIN FILTER UX
+==========================================================
+
+Do NOT show ten filter dropdowns permanently.
+
+Show important filters first.
+
+Example:
+
+[Search questions]
+
+Class
+Subject
+Topic
+Status
+
+[More Filters]
+
+
+Allow:
+
+Clear filters
+
+
+Keep filters persistent during navigation when appropriate.
+
+
+==========================================================
+BULK ACTIONS
+==========================================================
+
+When rows are selected:
+
+show contextual bulk actions.
+
+Example:
+
+12 selected
+
+[Publish]
+
+[Move]
+
+[Archive]
+
+[Clear]
+
+
+Do not permanently show bulk controls when nothing is selected.
+
+
+==========================================================
+QUESTION EDITOR
+==========================================================
+
+Question editing should be focused.
+
+Structure:
+
+Question
+
+Options
+
+Correct Answer
+
+Explanation
+
+Classification
+
+Media
+
+Source
+
+
+Primary action:
+
+Save Question
+
+
+Secondary:
+
+Save & Add Another
+
+
+Avoid overwhelming the admin with every metadata field at once.
+
+
+==========================================================
+IMPORT EXPERIENCE
+==========================================================
+
+Use a clear step workflow.
+
+1 Upload
+
+2 Validate
+
+3 Review
+
+4 Import
+
+
+Example:
+
+
+Import Questions
+
+
+✓ 482 Ready
+
+⚠ 14 Need Review
+
+✕ 4 Invalid
+
+
+[Review Issues]
+
+[Import 482 Questions]
+
+
+The admin should immediately understand what happened.
+
+
+==========================================================
+EXTERNAL LIBRARY
+==========================================================
+
+Keep dataset complexity away from the main admin experience.
+
+External Library
+
+Sources
+
+Questions
+
+Imports
+
+
+Source card:
+
+ScienceQA
+
+1,240 questions
+
+Active
+
+Last imported
+...
+
+Manage →
+
+
+Do not expose unnecessary implementation details.
+
+
+==========================================================
+SMART ADMIN WARNINGS
+==========================================================
+
+Warnings should be actionable.
+
+GOOD:
+
+"8 questions have unusually low correct rates."
+
+[Review]
+
+
+BAD:
+
+"Question health score: 73"
+
+
+Prefer understandable language over mysterious scores.
+
+
+==========================================================
+MODALS
+==========================================================
+
+Avoid excessive modals.
+
+Use modal/dialog for:
+
+confirmation
+small focused task
+destructive action
+
+
+Use full page/drawer for:
+
+complex editing
+question creation
+large forms
+
+
+Do not place forms with 20 fields inside a tiny modal.
+
+
+==========================================================
+TOASTS
+==========================================================
+
+Use toast feedback for lightweight success.
+
+Examples:
+
+Question saved
+
+Preferences updated
+
+Import completed
+
+
+Do NOT show toast notifications for every tiny interaction.
+
+
+==========================================================
+LOADING
+==========================================================
+
+Remove generic giant loading spinners where possible.
+
+Use layout-aware skeletons.
+
+Dashboard skeleton should resemble dashboard.
+
+Question table skeleton should resemble rows.
+
+Topic skeleton should resemble topic cards.
+
+
+This reduces perceived loading time.
+
+
+==========================================================
+OPTIMISTIC INTERACTIONS
+==========================================================
+
+Where safe:
+
+bookmarking
+simple preferences
+filtering
+selection
+
+
+should feel immediate.
+
+For important operations:
+
+publishing
+deleting
+imports
+academic-profile changes
+
+
+wait for backend confirmation or provide proper rollback.
+
+
+==========================================================
+EMPTY STATES
+==========================================================
+
+Every important empty state should answer:
+
+What happened?
+
+What can I do?
+
+
+Example:
+
+No quiz history yet.
+
+Complete your first quiz and it will appear here.
+
+[Start Learning]
+
+
+Avoid:
+
+No data.
+
+
+==========================================================
+ERROR STATES
+==========================================================
+
+Errors should be understandable.
+
+Example:
+
+We couldn't load your subjects.
+
+[Try Again]
+
+
+Admin may receive more technical details where appropriate.
+
+Students should not see raw database/API errors.
+
+
+==========================================================
+MOTION SYSTEM
+==========================================================
+
+Create a consistent motion language.
+
+FAST:
+
+100–150ms
+
+hover
+pressed
+selection
+
+
+NORMAL:
+
+180–250ms
+
+dropdown
+card transition
+question transition
+
+
+SLOW:
+
+250–350ms
+
+page-level transition
+dialog
+
+
+Avoid animations above this unless there is a strong reason.
+
+
+Use consistent easing.
+
+
+==========================================================
+FRAMER MOTION
+==========================================================
+
+If Framer Motion already exists:
+
+use it selectively.
+
+Good:
+
+onboarding transitions
+
+quiz question transitions
+
+small result animation
+
+drawer
+
+dialog
+
+page content entrance
+
+
+Bad:
+
+animating every card on every page
+
+constant floating effects
+
+large bouncing elements.
+
+
+==========================================================
+REDUCED MOTION
+==========================================================
+
+Respect:
+
+prefers-reduced-motion
+
+
+The application must remain fully usable without animation.
+
+
+==========================================================
+HOVER ≠ MOBILE
+==========================================================
+
+Never hide essential functionality behind hover.
+
+Hover effects are enhancement only.
+
+All actions must work naturally with:
+
+touch
+keyboard
+mouse.
+
+
+==========================================================
+RESPONSIVE DESIGN
+==========================================================
+
+Do NOT merely shrink desktop layouts.
+
+Design responsive behavior intentionally.
+
+
+Desktop:
+
+more information visible
+
+sidebar possible
+
+tables appropriate
+
+
+Tablet:
+
+reduced columns
+
+compact navigation
+
+
+Mobile:
+
+single-column focus
+
+large touch targets
+
+simplified controls
+
+drawers instead of wide filter panels.
+
+
+==========================================================
+ACCESSIBILITY
+==========================================================
+
+Maintain:
+
+semantic HTML
+
+keyboard navigation
+
+visible focus states
+
+appropriate ARIA labels
+
+accessible dialogs
+
+sufficient contrast
+
+touch target size
+
+screen reader support
+
+
+Never communicate:
+
+correct
+incorrect
+selected
+disabled
+
+using color alone.
+
+
+==========================================================
+DESIGN SYSTEM CLEANUP
+==========================================================
+
+Audit the codebase for duplicated UI patterns.
+
+Where appropriate consolidate reusable:
+
+Button
+
+Card
+
+Badge
+
+Input
+
+Select
+
+Dialog
+
+Drawer
+
+Tabs
+
+Table
+
+EmptyState
+
+Skeleton
+
+PageHeader
+
+ProgressBar
+
+QuizOption
+
+SubjectCard
+
+TopicRow
+
+
+Do NOT abstract everything.
+
+Only extract patterns that genuinely repeat.
+
+
+==========================================================
+CONSISTENCY AUDIT
+==========================================================
+
+Specifically search for:
+
+different button heights
+
+different card radii
+
+inconsistent page widths
+
+random shadows
+
+different heading sizes
+
+duplicate colors
+
+different input styling
+
+different loading indicators
+
+different empty-state designs
+
+different dialog styles
+
+inconsistent icon sizing
+
+
+Standardize them.
+
+
+==========================================================
+CONTENT WIDTH
+==========================================================
+
+Avoid extremely wide text/content areas.
+
+Student pages should use comfortable content widths.
+
+Admin tables can use more screen width.
+
+Quiz question text should remain readable even on
+large monitors.
+
+
+==========================================================
+DARK MODE
+==========================================================
+
+If dark mode already exists:
+
+fully support it.
+
+If it does NOT exist:
+
+do not make dark mode the priority of this refinement.
+
+Fix the core experience first.
+
+
+==========================================================
+MICROCOPY
+==========================================================
+
+Rewrite awkward interface language.
+
+Prefer:
+
+Start Practice
+
+Continue
+
+Review Answers
+
+Try Again
+
+Save Changes
+
+Explore Topics
+
+
+Avoid:
+
+Initiate Quiz Session
+
+Submit Configuration
+
+Question Dataset Resource
+
+Execute Import
+
+
+Use human language.
+
+
+==========================================================
+STUDENT VS ADMIN LANGUAGE
+==========================================================
+
+Student:
+
+Questions
+Practice
+Topics
+Progress
+
+
+Admin:
+
+Question Bank
+Imports
+Sources
+Analytics
+
+
+Do not expose administrator terminology to students.
+
+
+==========================================================
+PERFORMANCE IS UX
+==========================================================
+
+Do not sacrifice performance for visual polish.
+
+Avoid:
+
+unnecessary client components
+
+huge animation libraries for tiny effects
+
+loading all questions
+
+unoptimized images
+
+unnecessary rerenders
+
+duplicate network requests
+
+
+Use:
+
+route prefetching
+
+server rendering where appropriate
+
+pagination
+
+lazy loading
+
+optimized images
+
+proper caching
+
+
+A fast simple page is better UX than a beautiful slow page.
+
+
+==========================================================
+DESIGN QUALITY CHECK
+==========================================================
+
+For EVERY page ask:
+
+1. What is the primary goal?
+
+2. Is that goal immediately obvious?
+
+3. Is anything unnecessary?
+
+4. Is visual hierarchy clear?
+
+5. Is there one obvious primary action?
+
+6. Does it work on mobile?
+
+7. Does it work with keyboard?
+
+8. Does loading feel smooth?
+
+9. Is the empty state useful?
+
+10. Does it visually belong to Quizverse?
+
+
+If not, improve it.
+
+
+==========================================================
+DO NOT OVERDESIGN
+==========================================================
+
+Avoid:
+
+glassmorphism everywhere
+
+neon gradients
+
+giant gradients
+
+floating blobs
+
+excessive shadows
+
+3D cards
+
+excessive blur
+
+huge hero sections
+
+animated backgrounds
+
+constant motion
+
+emoji-heavy interfaces
+
+gamification everywhere
+
+
+Use restraint.
+
+
+==========================================================
+DESIGN TARGET
+==========================================================
+
+The final product should have the maturity of a modern
+consumer education product combined with the clarity of
+a polished SaaS application.
+
+Do NOT directly clone another product.
+
+Take inspiration from modern product principles:
+
+clear hierarchy
+progressive disclosure
+fast feedback
+simple navigation
+consistent components
+excellent mobile behavior
+purposeful motion
+low cognitive load.
+
+
+==========================================================
+IMPLEMENTATION APPROACH
+==========================================================
+
+DO NOT redesign everything simultaneously.
+
+PHASE 1
+
+Audit existing UI/UX and identify inconsistencies.
+
+
+PHASE 2
+
+Standardize design foundations:
+
+spacing
+typography
+colors
+buttons
+cards
+inputs
+page widths
+motion
+
+
+PHASE 3
+
+Refine global navigation.
+
+
+PHASE 4
+
+Refine student:
+
+Home
+My Learning
+Extra Practice
+Explore
+
+
+PHASE 5
+
+Refine quiz:
+
+Setup
+Quiz
+Submit
+Results
+Review
+
+
+PHASE 6
+
+Refine:
+
+History
+Progress
+Profile
+Onboarding
+
+
+PHASE 7
+
+Refine admin:
+
+Dashboard
+Questions
+Question Editor
+Imports
+External Library
+
+
+PHASE 8
+
+Responsive/mobile audit.
+
+
+PHASE 9
+
+Accessibility audit.
+
+
+PHASE 10
+
+Performance and motion polish.
+
+
+==========================================================
+IMPORTANT IMPLEMENTATION RULE
+==========================================================
+
+Before modifying each major screen:
+
+briefly determine:
+
+CURRENT PROBLEM
+
+DESIGN DECISION
+
+WHAT WILL CHANGE
+
+WHAT WILL REMAIN
+
+
+Then implement.
+
+Do not blindly replace existing screens.
+
+
+==========================================================
+FINAL ACCEPTANCE TEST
+==========================================================
+
+A NEW STUDENT should be able to:
+
+Register
+→ Choose Class
+→ Choose Subjects
+→ Understand Home
+→ Open My Learning
+→ Find a Topic
+→ Start Quiz
+→ Answer Questions
+→ Submit
+→ Understand Result
+→ Review Mistakes
+
+without instructions.
+
+
+A RETURNING STUDENT should be able to:
+
+Login
+→ immediately understand what to continue
+→ see what needs practice
+→ continue within seconds.
+
+
+A STUDENT looking for more questions should naturally understand:
+
+Extra Practice
+→ more for my subjects
+
+
+and:
+
+Explore
+→ discover something different.
+
+
+AN ADMIN should be able to:
+
+Upload questions
+→ validate
+→ fix issues
+→ publish
+
+and:
+
+Import external questions
+→ review
+→ classify
+→ publish
+
+without confusion.
+
+
+==========================================================
+FINAL PRINCIPLE
+==========================================================
+
+Do not try to make Quizverse impressive by adding MORE.
+
+Make it impressive by making every existing interaction feel
+INTENTIONAL.
+
+A great Quizverse experience should feel:
+
+"I always know where I am."
+
+"I always know what to do next."
+
+"Everything responds immediately."
+
+"Nothing unnecessary gets in my way."
+
+
+The finished application should be:
+
+MODERN
+
+MINIMAL
+
+COHESIVE
+
+RESPONSIVE
+
+ACCESSIBLE
+
+FAST
+
+ACADEMIC
+
+BUTTERY SMOOTH.

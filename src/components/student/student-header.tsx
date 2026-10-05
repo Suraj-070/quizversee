@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
+import { cn } from "@/lib/utils";
 
 /**
  * StudentHeader — shared top navigation for the student app.
@@ -49,15 +50,16 @@ export function StudentHeader({ user }: { user: PublicUser }) {
     view.name === "explore";
 
   return (
-    <header className="border-b border-slate-200/60 bg-white/85 backdrop-blur-md sticky top-0 z-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <header className="border-b border-slate-200/60 bg-white/90 backdrop-blur-md sticky top-0 z-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2">
+        {/* Left: Logo + Back */}
+        <div className="flex items-center gap-2 shrink-0">
           {canGoBack && (
             <Button
               variant="ghost"
               size="icon"
               onClick={goBack}
-              className="text-slate-600"
+              className="text-slate-500 hover:text-slate-700"
             >
               <ArrowLeft className="size-5" />
             </Button>
@@ -67,61 +69,110 @@ export function StudentHeader({ user }: { user: PublicUser }) {
             onClick={() => setView({ name: "student-home" })}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <div className="size-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center">
-              <GraduationCap className="size-5" />
+            <div className="size-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center">
+              <GraduationCap className="size-4" />
             </div>
-            <span className="font-semibold text-slate-900 hidden sm:inline">
+            <span className="font-semibold text-slate-900 text-sm hidden sm:inline">
               Quizverse
             </span>
           </button>
         </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => setView({ name: "my-learning" })} className="text-slate-600">
-            <BookOpen className="size-4" />
-            <span className="hidden md:inline">My Learning</span>
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setView({ name: "extra-practice" })} className="text-slate-600">
-            <Dumbbell className="size-4" />
-            <span className="hidden md:inline">Practice</span>
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setView({ name: "explore" })} className="text-slate-600">
-            <Compass className="size-4" />
-            <span className="hidden lg:inline">Explore</span>
-          </Button>
-          <div className="hidden sm:block w-px h-6 bg-slate-200 mx-1" />
-          <Button variant="ghost" size="sm" onClick={() => setView({ name: "student-history" })} className="text-slate-600">
+
+        {/* Center: Primary navigation (hidden on mobile) */}
+        <nav className="hidden md:flex items-center gap-0.5">
+          <NavButton view="my-learning" current={view.name} setView={setView} icon={BookOpen} label="My Learning" show="md" />
+          <NavButton view="extra-practice" current={view.name} setView={setView} icon={Dumbbell} label="Practice" show="md" />
+          <NavButton view="explore" current={view.name} setView={setView} icon={Compass} label="Explore" show="lg" />
+        </nav>
+
+        {/* Right: Account + secondary */}
+        <div className="flex items-center gap-0.5 shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => setView({ name: "student-history" })} className="text-slate-500" title="History">
             <History className="size-4" />
-            <span className="hidden lg:inline">History</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setView({ name: "student-progress" })} className="text-slate-600">
+          <Button variant="ghost" size="icon" onClick={() => setView({ name: "student-progress" })} className="text-slate-500" title="Progress">
             <TrendingUp className="size-4" />
-            <span className="hidden lg:inline">Progress</span>
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setView({ name: "student-profile" })} className="text-slate-600">
-            <UserCircle className="size-4" />
-            <span className="hidden md:inline">Profile</span>
           </Button>
           {user.role === "admin" && (
-            <Button variant="ghost" size="sm" onClick={() => setView({ name: "admin-dashboard" })} className="text-slate-600">
+            <Button variant="ghost" size="icon" onClick={() => setView({ name: "admin-dashboard" })} className="text-slate-500" title="Admin">
               <Settings className="size-4" />
-              <span className="hidden lg:inline">Admin</span>
             </Button>
           )}
+          <Button variant="ghost" size="icon" onClick={() => setView({ name: "student-profile" })} className="text-slate-500" title="Profile">
+            <UserCircle className="size-4" />
+          </Button>
+          <div className="w-px h-5 bg-slate-200 mx-1" />
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => {
               signOut({ redirect: false }).then(() => {
                 window.location.href = "/";
               });
             }}
-            className="text-slate-600"
+            className="text-slate-400 hover:text-red-500"
+            title="Sign out"
           >
             <LogOut className="size-4" />
-            <span className="hidden sm:inline">Sign out</span>
           </Button>
         </div>
       </div>
+
+      {/* Mobile nav: compact primary tabs */}
+      <div className="md:hidden border-t border-slate-100 px-2 py-1.5 flex items-center justify-around">
+        <MobileNavButton view="my-learning" current={view.name} setView={setView} icon={BookOpen} label="Learn" />
+        <MobileNavButton view="extra-practice" current={view.name} setView={setView} icon={Dumbbell} label="Practice" />
+        <MobileNavButton view="explore" current={view.name} setView={setView} icon={Compass} label="Explore" />
+        <MobileNavButton view="student-home" current={view.name} setView={setView} icon={Home} label="Home" />
+      </div>
     </header>
+  );
+}
+
+function NavButton({ view, current, setView, icon: Icon, label, show }: {
+  view: string;
+  current: string;
+  setView: (v: View) => void;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  show: "md" | "lg";
+}) {
+  const isActive = current === view;
+  return (
+    <button
+      type="button"
+      onClick={() => setView({ name: view as View["name"] } as View)}
+      className={cn(
+        "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+        isActive
+          ? "bg-emerald-50 text-emerald-700"
+          : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function MobileNavButton({ view, current, setView, icon: Icon, label }: {
+  view: string;
+  current: string;
+  setView: (v: View) => void;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}) {
+  const isActive = current === view;
+  return (
+    <button
+      type="button"
+      onClick={() => setView({ name: view as View["name"] } as View)}
+      className={cn(
+        "flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors",
+        isActive ? "text-emerald-600" : "text-slate-400"
+      )}
+    >
+      <Icon className="size-4" />
+      <span className="text-[10px] font-medium">{label}</span>
+    </button>
   );
 }

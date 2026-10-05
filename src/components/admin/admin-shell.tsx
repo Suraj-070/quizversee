@@ -201,7 +201,7 @@ export function AdminShell({
 
       {/* Main content area */}
       <div className="flex-1 lg:ml-64 flex flex-col min-w-0">
-        <header className="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
+        <header className="h-14 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -211,12 +211,11 @@ export function AdminShell({
             >
               {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
             </Button>
-            <h1 className="text-lg font-semibold text-slate-900 tracking-tight">{pageTitle}</h1>
+            <h1 className="text-base font-semibold text-slate-900 tracking-tight">{pageTitle}</h1>
           </div>
-          <div className="text-sm text-slate-600">
-            <span className="hidden sm:inline">Signed in as </span>
-            <span className="font-medium text-slate-900">{user.name}</span>
-            <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-2.5 py-0.5 text-xs font-medium">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-slate-500 hidden sm:inline">{user.name}</span>
+            <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-xs font-medium">
               Admin
             </span>
           </div>
@@ -225,9 +224,9 @@ export function AdminShell({
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
           <motion.div
             key={currentName}
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
             {children}
           </motion.div>

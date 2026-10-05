@@ -390,7 +390,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
   const questionIds = questions.map((q) => q.id);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <StudentHeader user={user} />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 pb-24">

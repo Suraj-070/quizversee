@@ -168,7 +168,7 @@ export function QuizSetup({ user }: { user: PublicUser }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white flex flex-col">
+      <div className="min-h-screen bg-slate-50 flex flex-col">
         <StudentHeader user={user} />
         <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-10">
           <div className="flex items-center justify-center py-12">
@@ -182,7 +182,7 @@ export function QuizSetup({ user }: { user: PublicUser }) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white flex flex-col">
+      <div className="min-h-screen bg-slate-50 flex flex-col">
         <StudentHeader user={user} />
         <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-10">
           <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
@@ -204,13 +204,13 @@ export function QuizSetup({ user }: { user: PublicUser }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <StudentHeader user={user} />
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-10">
+      <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-6 py-8">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         >
           <p className="text-xs font-medium text-emerald-600 uppercase tracking-wider">
             {topic?.subject.class.name} → {topic?.subject.name}

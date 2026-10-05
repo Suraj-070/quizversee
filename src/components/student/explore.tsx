@@ -79,7 +79,7 @@ export function Explore({ user }: { user: PublicUser }) {
   }, [classes, search]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-white flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <StudentHeader user={user} />
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}

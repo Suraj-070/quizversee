@@ -90,7 +90,7 @@ export function StudentHistory({ user }: { user: PublicUser }) {
   const completed = (attempts ?? []).filter((a) => a.completedAt);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <StudentHeader user={user} />
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-10">
         <motion.div
