@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { PublicUser } from "@/types";
 import { AuthScreen } from "@/components/auth/auth-screen";
+import { AcademicOnboarding } from "@/components/student/academic-onboarding";
 import { StudentHome } from "@/components/student/student-home";
 import { StudentSubjects } from "@/components/student/student-subjects";
 import { StudentTopics } from "@/components/student/student-topics";
@@ -93,7 +94,12 @@ export function AppShell() {
       try {
         const res = await fetch("/api/me", { cache: "no-store" });
         if (!res.ok) throw new Error(`me failed: ${res.status}`);
-        const data = (await res.json()) as { user: PublicUser | null };
+        const data = (await res.json()) as {
+          user: (PublicUser & {
+            onboardingCompleted: boolean;
+            currentClassId: string | null;
+          }) | null;
+        };
         if (!cancelled) {
           setUser(data.user);
           if (data.user) {
@@ -108,6 +114,12 @@ export function AppShell() {
                 name: "quiz-active",
                 attemptId: snap!.attemptId!,
               });
+            } else if (
+              data.user.role === "user" &&
+              !data.user.onboardingCompleted
+            ) {
+              // Student hasn't completed academic onboarding → show onboarding
+              setView({ name: "onboarding" });
             } else {
               // On a fresh load, default admins to the admin dashboard
               // and regular users to the student home.
@@ -147,6 +159,12 @@ export function AppShell() {
   // Not authenticated → AuthScreen (login or register).
   if (!user) {
     return <AuthScreen />;
+  }
+
+  // If the view is onboarding, render the onboarding flow
+  // (only for non-admin students who haven't completed setup).
+  if (view.name === "onboarding") {
+    return <AcademicOnboarding user={user} />;
   }
 
   // Authenticated. Decide which surface to render.

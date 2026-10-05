@@ -22,6 +22,12 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Personalized academic profile
+  currentClassId     String?  // the student's current class
+  onboardingCompleted Boolean @default(false)
+  currentClass       Class?   @relation("UserCurrentClass", fields: [currentClassId], references: [id], onDelete: SetNull)
+  selectedSubjects   UserSubject[]
+
   attempts      QuizAttempt[]
   answers       UserAnswer[]
   flags         QuestionFlag[]
@@ -30,6 +36,21 @@ model User {
   announcements  Announcement[] @relation("AnnouncementAdmin")
   imports       ImportHistory[] @relation("ImportAdmin")
   activities    AdminActivity[] @relation("ActivityAdmin")
+}
+
+// ---------------------------------------------------------------------------
+// Student-Subject selection (personalized academic profile)
+// ---------------------------------------------------------------------------
+model UserSubject {
+  id          String   @id @default(cuid())
+  userId      String
+  subjectId   String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subjectId])
 }
 
 // ---------------------------------------------------------------------------
@@ -47,6 +68,7 @@ model Class {
 
   subjects      Subject[]
   quizSets      QuizSet[]
+  users         User[]    @relation("UserCurrentClass")
 }
 
 model Subject {
@@ -65,6 +87,7 @@ model Subject {
   topics        Topic[]
   quizSets      QuizSet[]
   attempts      QuizAttempt[]
+  userSelections UserSubject[]
 }
 
 model Topic {

@@ -1,0 +1,1732 @@
+QUIZVERSE — PERSONALIZED STUDENT ACADEMIC EXPERIENCE UPDATE
+
+You are working on my EXISTING Quizverse project.
+
+Quizverse is already built and currently contains:
+- authentication
+- student portal
+- admin portal
+- classes
+- subjects
+- topics
+- questions
+- quizzes
+- quiz attempts
+- student progress
+- existing UI/design/components
+
+THIS IS AN UPDATE.
+
+DO NOT rebuild the application.
+DO NOT create another Quizverse project.
+DO NOT unnecessarily redesign working pages.
+DO NOT replace existing architecture just because you prefer another approach.
+
+FIRST inspect the current codebase, database schema, authentication flow,
+student portal, admin portal and existing academic hierarchy.
+
+Then integrate the following system into the EXISTING application.
+
+========================================================
+MAIN PRODUCT GOAL
+========================================================
+
+Quizverse is going to support a much larger academic question bank,
+especially:
+
+Class 9
+Class 10
+Class 11
+Class 12
+
+with subjects such as:
+
+Science
+Physics
+Chemistry
+Biology
+Mathematics
+Computer Science
+
+As the content library grows, DO NOT show every class, subject and topic
+to every student.
+
+The student experience should become PERSONALIZED.
+
+Quizverse should know:
+
+"What does this student currently study?"
+
+and use that information to determine what should normally appear
+throughout their learning experience.
+
+The experience should feel:
+
+modern
+fast
+personal
+clean
+smooth
+focused
+simple
+
+Avoid complicated LMS-style workflows.
+
+========================================================
+CORE EXPERIENCE
+========================================================
+
+The desired flow is:
+
+Register / Login
+        ↓
+Academic Setup
+        ↓
+Choose Current Class
+        ↓
+Choose Subjects if necessary
+        ↓
+Personalized Dashboard
+        ↓
+Learn
+        ↓
+Subject
+        ↓
+Topic
+        ↓
+Quiz Setup
+        ↓
+Quiz
+        ↓
+Results / Review / Progress
+
+
+For returning students:
+
+Login
+  ↓
+Personalized Dashboard
+
+They should NOT repeatedly go through academic setup.
+
+========================================================
+1. FIRST-TIME ACADEMIC ONBOARDING
+========================================================
+
+After a new student successfully creates an account:
+
+DO NOT immediately dump them onto a dashboard containing all classes.
+
+If their academic profile has not been configured,
+show a lightweight academic onboarding flow.
+
+Keep onboarding SHORT.
+
+Do NOT create a long questionnaire.
+
+========================================================
+2. ONBOARDING WELCOME
+========================================================
+
+Create a polished welcome step.
+
+Example:
+
+Welcome to Quizverse
+
+Let's personalize your learning experience.
+
+Tell us what you're currently studying so we can show you
+the right subjects, topics and quizzes.
+
+[Get Started]
+
+Use subtle entrance animation.
+
+No unnecessary carousel.
+No 5-page introduction.
+No feature advertisement.
+
+========================================================
+3. CLASS SELECTION
+========================================================
+
+Next ask:
+
+What class are you studying in?
+
+Display available classes dynamically from the database.
+
+Example:
+
+Class 9
+Class 10
+Class 11
+Class 12
+
+Use clean selectable cards.
+
+Example:
+
+┌─────────────────────┐
+│        Class 9      │
+│                     │
+│ Secondary Level     │
+└─────────────────────┘
+
+Do NOT hardcode Class 9–12 into the frontend.
+
+Only display classes that are:
+
+published
+active
+available to students
+
+If admin later adds another class,
+the onboarding should automatically support it.
+
+========================================================
+4. SUBJECT SELECTION LOGIC
+========================================================
+
+Subject selection should depend on the selected class.
+
+DO NOT assume every class requires manual subject selection.
+
+For example:
+
+Class 9
+may currently have:
+
+Science
+
+If there is only one relevant subject,
+Quizverse can automatically select it
+or provide a simple confirmation.
+
+Do not force unnecessary steps.
+
+For Class 11:
+
+Physics
+Chemistry
+Mathematics
+Biology
+Computer Science
+
+may be available.
+
+In this situation show:
+
+Choose the subjects you study
+
+☑ Physics
+☑ Chemistry
+☐ Biology
+☑ Mathematics
+☐ Computer Science
+
+[Continue]
+
+Subjects must come from the database.
+
+========================================================
+5. SUBJECT RELATIONSHIPS
+========================================================
+
+Use the EXISTING academic architecture where possible.
+
+Class
+   ↓
+Subjects
+   ↓
+Topics
+   ↓
+Questions
+
+Do not create duplicate subjects specifically for onboarding.
+
+Onboarding should reference the same academic entities used by:
+
+admin
+questions
+topics
+quizzes
+student learning pages
+
+========================================================
+6. STUDENT ACADEMIC PROFILE
+========================================================
+
+Persist the student's selected class.
+
+Conceptually:
+
+student
+→ current class
+
+For subject selections, use a proper relationship.
+
+Conceptually:
+
+student_subjects
+
+student_id
+subject_id
+
+Do NOT create fields such as:
+
+physics = true
+chemistry = true
+biology = false
+math = true
+
+because subjects must remain dynamic.
+
+IMPORTANT:
+
+Inspect the existing schema first.
+
+Reuse existing profile/relationship tables if appropriate.
+
+Only create migrations when necessary.
+
+========================================================
+7. ONBOARDING COMPLETION
+========================================================
+
+Once academic setup is saved:
+
+show a short smooth success state.
+
+Example:
+
+You're all set!
+
+Your Quizverse experience is ready.
+
+[Start Learning]
+
+Then transition into the personalized dashboard.
+
+Do not make the student log in again.
+
+========================================================
+8. ONBOARDING STATE
+========================================================
+
+Quizverse must know whether academic setup has been completed.
+
+Possible conceptual state:
+
+academic_setup_completed
+
+BUT:
+
+inspect the existing database before creating a new field.
+
+If completion can reliably be inferred from existing academic-profile
+data, avoid unnecessary columns.
+
+========================================================
+9. RETURNING STUDENTS
+========================================================
+
+On login:
+
+IF academic profile exists:
+
+→ Dashboard
+
+IF academic profile is incomplete:
+
+→ Academic Setup
+
+Do NOT flash the dashboard first and then redirect.
+
+Resolve the student's academic state before rendering the main experience
+where reasonably possible.
+
+Avoid visual flickering.
+
+========================================================
+10. EXISTING USERS
+========================================================
+
+Very important:
+
+Quizverse may already contain users who registered BEFORE this feature.
+
+DO NOT break their accounts.
+
+When an existing student logs in and has no academic profile:
+
+show:
+
+Let's finish setting up your learning experience.
+
+Then run the same academic setup.
+
+Do NOT delete or reset:
+
+quiz history
+attempts
+bookmarks
+progress
+profile information
+
+========================================================
+11. PERSONALIZED DASHBOARD
+========================================================
+
+After onboarding, redesign/improve the existing dashboard logic so it is
+based primarily on the student's academic profile.
+
+Example:
+
+Good afternoon, Alex
+
+Class 11
+
+Continue Learning
+
+Physics
+Motion
+6 / 10 answered
+
+[Continue Quiz]
+
+
+YOUR SUBJECTS
+
+Physics
+Chemistry
+Mathematics
+Computer Science
+
+
+RECENT ACTIVITY
+
+Physics
+8 / 10
+
+Chemistry
+7 / 10
+
+
+YOUR PROGRESS
+
+12 Quizzes
+78% Average
+90% Best
+
+
+EXPLORE YOUR SUBJECTS
+
+[Physics]
+[Chemistry]
+[Mathematics]
+[Computer Science]
+
+Do not show unrelated Class 9, 10 or 12 content.
+
+========================================================
+12. CONTENT VISIBILITY
+========================================================
+
+The student's CURRENT CLASS should determine the default academic content
+visible throughout Quizverse.
+
+Example:
+
+Student:
+Class 9
+
+Normal Learn experience:
+
+Class 9
+→ Science
+→ Class 9 topics
+
+NOT:
+
+Class 9
+Class 10
+Class 11
+Class 12
+
+all mixed together.
+
+========================================================
+13. SUBJECT VISIBILITY
+========================================================
+
+For classes where students choose subjects:
+
+only show the student's selected subjects in their normal learning
+experience.
+
+Example:
+
+Class 11 student selects:
+
+Physics
+Chemistry
+Mathematics
+Computer Science
+
+but NOT Biology.
+
+Their normal Learn page should show:
+
+Physics
+Chemistry
+Mathematics
+Computer Science
+
+Do not clutter it with Biology.
+
+========================================================
+14. LEARN PAGE
+========================================================
+
+Improve the Learn page around personalization.
+
+Instead of:
+
+Choose Class
+→ Choose Subject
+
+every single time,
+
+a configured student should enter Learn and immediately see:
+
+Your Subjects
+
+Physics
+Chemistry
+Mathematics
+Computer Science
+
+because Quizverse already knows they are in Class 11.
+
+This removes unnecessary navigation.
+
+========================================================
+15. SUBJECT PAGE
+========================================================
+
+Selecting:
+
+Physics
+
+should show the topics belonging to:
+
+student's current class
++
+Physics
+
+Example:
+
+Physics
+
+Your Topics
+
+Physical Quantities
+Vectors
+Kinematics
+Dynamics
+Work, Energy and Power
+etc.
+
+Topics must come dynamically from the database.
+
+========================================================
+16. TOPIC CARDS
+========================================================
+
+Topic cards may show:
+
+Topic name
+Available questions
+Best score
+Attempts
+
+Example:
+
+Kinematics
+
+42 Questions
+
+Best Score
+85%
+
+Attempts
+4
+
+[Practice]
+
+If no attempt exists:
+
+Not practiced yet
+
+[Start Practice]
+
+========================================================
+17. CONTINUE LEARNING
+========================================================
+
+If the student has an incomplete quiz,
+show it prominently.
+
+Example:
+
+Continue Learning
+
+Physics
+Kinematics
+
+Question 6 of 10
+
+[Continue]
+
+Only show incomplete quizzes belonging to the current student.
+
+========================================================
+18. SMART DASHBOARD PRIORITY
+========================================================
+
+Dashboard content should appear in this approximate priority:
+
+1. Continue unfinished quiz
+2. Active/relevant announcement
+3. Student's subjects
+4. Recent quizzes
+5. Progress
+6. Suggested next learning action
+
+Do NOT fill the dashboard with unnecessary widgets.
+
+========================================================
+19. SIMPLE "CONTINUE STUDYING"
+========================================================
+
+If there is no unfinished quiz but the student recently practiced a topic,
+Quizverse may show:
+
+Continue Studying
+
+Kinematics
+Physics
+
+Last Score: 8/10
+
+[Practice Again]
+
+This should use real activity data.
+
+No AI recommendation engine is required.
+
+========================================================
+20. PROFILE — ACADEMIC DETAILS
+========================================================
+
+Add or improve:
+
+Profile
+→ Academic Details
+
+Example:
+
+Academic Details
+
+Current Class
+
+Class 11 ▼
+
+Your Subjects
+
+☑ Physics
+☑ Chemistry
+☐ Biology
+☑ Mathematics
+☑ Computer Science
+
+[Save Changes]
+
+Students must be able to update their academic profile later.
+
+========================================================
+21. CHANGING CLASS
+========================================================
+
+Students may move to the next class in a future academic year.
+
+Changing:
+
+Class 11
+→ Class 12
+
+must NOT delete:
+
+Class 11 quiz history
+Class 11 scores
+Class 11 bookmarks
+Class 11 attempts
+
+Historical data must remain intact.
+
+The new class only changes what becomes the student's DEFAULT current
+learning environment.
+
+========================================================
+22. CLASS CHANGE CONFIRMATION
+========================================================
+
+Changing class is more significant than changing a normal profile field.
+
+Use a confirmation dialog.
+
+Example:
+
+Change your current class?
+
+You're changing from:
+
+Class 11
+→ Class 12
+
+Your previous quiz history and progress will remain saved.
+
+Your dashboard and learning content will now focus on Class 12.
+
+[Cancel]
+
+[Change Class]
+
+========================================================
+23. SUBJECT CHANGES
+========================================================
+
+Allow students to add/remove their selected subjects.
+
+Removing a subject from their current selection must NOT delete previous
+attempts or progress.
+
+It only removes the subject from their normal personalized learning view.
+
+========================================================
+24. OPTIONAL EXPLORE OTHER CONTENT
+========================================================
+
+Personalization should reduce clutter.
+
+However:
+
+DO NOT necessarily hard-lock students from every other class forever.
+
+Provide a secondary, non-prominent option such as:
+
+Explore Other Classes
+
+This should NOT appear as the main learning flow.
+
+Example:
+
+Learn
+
+Your Subjects
+[Physics]
+[Chemistry]
+[Math]
+
+------------------------
+
+Explore Other Classes →
+
+========================================================
+25. EXPLORE MODE
+========================================================
+
+When explicitly entering Explore Other Classes:
+
+students may browse other published classes/subjects.
+
+Clearly indicate that this content is outside their current academic
+profile.
+
+Example:
+
+Exploring Class 10
+
+Your current class:
+Class 11
+
+[Return to My Learning]
+
+========================================================
+26. DO NOT AUTOMATICALLY CHANGE PROFILE
+========================================================
+
+Simply browsing another class MUST NOT change the student's current class.
+
+Example:
+
+Class 11 student explores Class 10 Science.
+
+Their profile remains:
+
+Class 11
+
+until they explicitly change it through Academic Details.
+
+========================================================
+27. QUIZZES FROM OTHER CLASSES
+========================================================
+
+If students are allowed to practice content from Explore mode:
+
+store those attempts normally.
+
+But DO NOT allow those attempts to distort current-class dashboard
+statistics unless intentionally designed.
+
+Prefer:
+
+Overall history:
+all attempts
+
+Current academic dashboard:
+current class attempts
+
+========================================================
+28. PROGRESS CONTEXT
+========================================================
+
+Progress should primarily reflect the student's current class.
+
+Example:
+
+Class 11 Progress
+
+Physics
+82%
+
+Chemistry
+76%
+
+Mathematics
+88%
+
+If the student previously studied Class 10:
+
+provide access to:
+
+Previous Learning
+
+Class 10
+→ historical attempts
+
+Do not mix everything into one confusing score.
+
+========================================================
+29. QUIZ HISTORY
+========================================================
+
+Quiz History can contain all historical attempts.
+
+Provide simple filters:
+
+Current Class
+Previous Classes
+Subject
+Topic
+
+Default:
+
+Current Class
+
+========================================================
+30. BOOKMARKS
+========================================================
+
+Saved questions should remain accessible even after changing class.
+
+Optionally group them:
+
+Current Class
+Previous Classes
+Other
+
+Do not delete bookmarks because the academic profile changed.
+
+========================================================
+31. PERSONALIZED ANNOUNCEMENTS
+========================================================
+
+Improve announcements so admins can optionally target:
+
+All Students
+
+OR
+
+Specific Class
+
+OR
+
+Specific Subject
+
+Examples:
+
+All Students:
+"Quizverse maintenance this weekend."
+
+Class 10:
+"New Class 10 Science questions added."
+
+Class 12 Physics:
+"New Electrostatics practice set available."
+
+Students should only receive announcements relevant to them.
+
+========================================================
+32. ADMIN — STUDENT ACADEMIC PROFILE
+========================================================
+
+Update admin user management where appropriate.
+
+When viewing a student:
+
+show:
+
+Current Class
+Selected Subjects
+
+Example:
+
+Student
+
+Current Class:
+Class 11
+
+Subjects:
+Physics
+Chemistry
+Mathematics
+Computer Science
+
+Do not expose unnecessary private information.
+
+========================================================
+33. ADMIN ACADEMIC STRUCTURE
+========================================================
+
+Admin remains responsible for defining:
+
+Classes
+Subjects
+Topics
+
+Example:
+
+Class 11
+├── Physics
+├── Chemistry
+├── Biology
+├── Mathematics
+└── Computer Science
+
+The student onboarding MUST consume this existing structure.
+
+Do NOT maintain a second hardcoded onboarding list.
+
+========================================================
+34. SUBJECT CONFIGURATION
+========================================================
+
+If useful, allow the academic structure to define whether a subject is:
+
+required/default
+optional
+
+Example concept:
+
+Class 11
+
+Physics         Required
+Chemistry       Required
+Mathematics     Optional
+Biology         Optional
+Computer Science Optional
+
+BUT:
+
+do not overcomplicate this if the current schema does not need it.
+
+A simpler implementation is acceptable.
+
+========================================================
+35. CONTENT COUNTS
+========================================================
+
+Do not show empty subjects/topics unnecessarily.
+
+Example:
+
+If Class 11 Chemistry exists but contains no published topics/questions,
+avoid presenting it as a fully available learning area.
+
+Possible state:
+
+Chemistry
+Coming Soon
+
+OR hide it based on existing product behaviour.
+
+Choose the approach most consistent with current Quizverse UX.
+
+========================================================
+36. EMPTY PERSONALIZED DASHBOARD
+========================================================
+
+If a student selects a class that currently has very little content:
+
+do NOT show a broken/empty dashboard.
+
+Example:
+
+Class 12
+
+Your learning space is being prepared.
+
+More Class 12 content will be available soon.
+
+[Explore Available Content]
+
+========================================================
+37. SMOOTH OPERATIONS
+========================================================
+
+The entire academic setup should feel fluid.
+
+Use:
+
+subtle page transitions
+smooth card selection
+small check animations
+skeleton loading
+optimistic UI where safe
+clear success feedback
+responsive buttons
+preserved form state
+
+Avoid:
+
+full-page reloads
+visible UI flickering
+duplicate requests
+jarring redirects
+long loading spinners
+unnecessary confirmation dialogs
+layout shifts
+
+========================================================
+38. ONBOARDING TRANSITIONS
+========================================================
+
+Example:
+
+Welcome
+   ↓ smooth transition
+
+Choose Class
+   ↓
+
+Choose Subjects
+   ↓
+
+Setup Complete
+   ↓
+
+Dashboard
+
+Prefer keeping onboarding inside a consistent layout instead of loading
+completely unrelated page designs between every step.
+
+========================================================
+39. ONBOARDING PROGRESS
+========================================================
+
+Use a minimal progress indicator.
+
+Example:
+
+● ━ ● ━ ○
+
+Class
+Subjects
+Done
+
+Do NOT show a progress indicator if only one setup step is necessary.
+
+========================================================
+40. SAVE OPERATIONS
+========================================================
+
+When saving academic preferences:
+
+disable duplicate submission.
+
+Example:
+
+[Saving...]
+
+Then:
+
+✓ Preferences saved
+
+Do not allow repeated clicks to create duplicate student-subject
+relationships.
+
+========================================================
+41. OPTIMISTIC UI
+========================================================
+
+Use optimistic UI only where failure is easy to recover from.
+
+For important academic profile changes:
+
+update the interface smoothly,
+but ensure the backend confirms the change.
+
+If saving fails:
+
+restore the previous state
+and show a clear message.
+
+========================================================
+42. ROUTE PROTECTION
+========================================================
+
+A student who has not completed required academic setup should not be able
+to accidentally bypass onboarding by manually entering dashboard URLs.
+
+Use the existing routing/auth architecture to enforce the flow.
+
+However:
+
+avoid redirect loops.
+
+========================================================
+43. SESSION / PROFILE LOADING
+========================================================
+
+Avoid this bad experience:
+
+Login
+→ Empty Dashboard
+→ Loading
+→ Redirect to Setup
+
+Prefer:
+
+Login
+→ Resolve authentication/profile
+→ Correct destination
+
+Use server-side/session-aware logic where appropriate for the existing
+architecture.
+
+========================================================
+44. DATABASE QUERY EFFICIENCY
+========================================================
+
+Do not make separate unnecessary queries for:
+
+student
+class
+subjects
+topics
+statistics
+
+when the existing backend can retrieve related information efficiently.
+
+Avoid N+1 query patterns.
+
+========================================================
+45. CACHING
+========================================================
+
+Academic structure such as:
+
+classes
+subjects
+topics
+
+changes much less frequently than quiz answers.
+
+Use the project's existing caching/revalidation strategy where
+appropriate.
+
+Do NOT cache private student data incorrectly.
+
+========================================================
+46. SECURITY
+========================================================
+
+Students must only modify:
+
+their own academic profile
+their own subject selections
+
+Students must NOT modify:
+
+class definitions
+subject definitions
+topic definitions
+other students' academic profiles
+
+If Supabase is being used:
+
+implement/maintain proper RLS.
+
+Do not rely only on frontend checks.
+
+========================================================
+47. URL / STATE DESIGN
+========================================================
+
+Keep URLs understandable where consistent with the existing router.
+
+Examples conceptually:
+
+/learn
+/learn/physics
+/learn/physics/kinematics
+
+or existing slug-based equivalents.
+
+Do NOT unnecessarily expose database IDs in user-facing URLs if the
+current project uses slugs.
+
+Do NOT rewrite all routes solely to match these examples.
+
+========================================================
+48. MOBILE-FIRST QUALITY
+========================================================
+
+Academic onboarding must work beautifully on phones.
+
+Class cards should:
+
+fit comfortably
+have large tap areas
+clearly show selected state
+
+Subject selection should not require tiny checkboxes.
+
+Use selectable cards/rows where appropriate.
+
+========================================================
+49. DESKTOP QUALITY
+========================================================
+
+On desktop:
+
+do not stretch onboarding forms across the entire screen.
+
+Use a focused centered container.
+
+Class cards can use a responsive grid.
+
+Subject selection can use a clean multi-column layout where appropriate.
+
+========================================================
+50. ACCESSIBILITY
+========================================================
+
+Selected class/subject states must not rely only on color.
+
+Use:
+
+check icon
+border/state change
+text indication where appropriate
+
+Support:
+
+keyboard navigation
+focus states
+semantic buttons
+screen readers
+
+Respect reduced-motion preferences.
+
+========================================================
+51. DESIGN LANGUAGE
+========================================================
+
+DO NOT create an entirely different visual style for onboarding.
+
+Study the existing Quizverse:
+
+colors
+gradients
+cards
+border radius
+shadows
+typography
+buttons
+icons
+spacing
+animations
+
+Use the SAME design language.
+
+The new flow should feel like it was always part of Quizverse.
+
+========================================================
+52. PERSONALIZATION WITHOUT LOCK-IN
+========================================================
+
+Important product principle:
+
+Personalization should make Quizverse simpler.
+
+It should NOT make Quizverse restrictive.
+
+DEFAULT:
+
+show content relevant to the student.
+
+OPTIONAL:
+
+allow intentional exploration of other content.
+
+This distinction is important.
+
+========================================================
+53. FUTURE QUESTION IMPORT COMPATIBILITY
+========================================================
+
+This architecture must prepare Quizverse for large question imports later.
+
+Future content may include:
+
+Class 9 Science
+Class 10 Science
+
+Class 11 Physics
+Class 11 Chemistry
+Class 11 Biology
+Class 11 Mathematics
+Class 11 Computer Science
+
+Class 12 Physics
+Class 12 Chemistry
+Class 12 Biology
+Class 12 Mathematics
+Class 12 Computer Science
+
+Potentially thousands of questions.
+
+The student UI must remain clean even when the database becomes large.
+
+========================================================
+54. DO NOT LOAD ALL CONTENT
+========================================================
+
+Never load:
+
+all classes
+all subjects
+all topics
+all questions
+
+onto the student dashboard.
+
+Load only what the current screen requires.
+
+Example:
+
+Dashboard
+→ student's subjects + summary
+
+Subject
+→ that subject's topics
+
+Quiz
+→ selected questions
+
+========================================================
+55. CONTENT SOURCE SHOULD NOT CHANGE UX
+========================================================
+
+Future questions may come from:
+
+manually created questions
+JSON imports
+open educational datasets
+original Quizverse questions
+
+Students should not experience different quiz engines based on source.
+
+All compatible questions should use the EXISTING Quizverse quiz system.
+
+========================================================
+56. FUTURE CURRICULUM METADATA
+========================================================
+
+Keep the architecture capable of distinguishing:
+
+curriculum-aligned content
+
+and
+
+extra practice content
+
+Example concept:
+
+content_type:
+curriculum
+extra_practice
+
+curriculum:
+Nepal CDC
+
+Do NOT implement a huge curriculum management system unless necessary now.
+
+Just avoid architecture that prevents this later.
+
+========================================================
+57. IMPORTANT DATA PRINCIPLE
+========================================================
+
+A student's:
+
+current class
+
+is a CURRENT PREFERENCE / ACADEMIC CONTEXT.
+
+Their quiz attempts are HISTORICAL RECORDS.
+
+Changing the current class must NEVER rewrite historical records.
+
+========================================================
+58. DO NOT ADD YET
+========================================================
+
+Do NOT add:
+
+AI recommendations
+AI tutors
+social features
+friends
+leaderboards
+XP
+coins
+streak pressure
+competitive rankings
+complex learning paths
+parent accounts
+teacher dashboards
+school organizations
+certificates
+payments
+subscriptions
+
+These are outside this update.
+
+========================================================
+IMPLEMENTATION STRATEGY
+========================================================
+
+Do not immediately start creating random new components.
+
+FIRST:
+
+1. Inspect the existing project.
+
+2. Identify:
+
+authentication flow
+profile schema
+classes table
+subjects table
+class-subject relationship
+topics
+student dashboard
+student navigation
+quiz history
+bookmarks
+admin users
+announcements
+existing RLS policies
+
+3. Determine what functionality already exists.
+
+4. Create the smallest safe database changes necessary.
+
+5. Reuse existing UI components.
+
+6. Implement incrementally.
+
+========================================================
+RECOMMENDED IMPLEMENTATION PHASES
+========================================================
+
+PHASE 1
+
+Academic profile data model
+
+Ensure Quizverse can represent:
+
+student
+→ current class
+
+student
+→ selected subjects
+
+
+PHASE 2
+
+First-time academic onboarding
+
+
+PHASE 3
+
+Personalized dashboard
+
+
+PHASE 4
+
+Personalized Learn page
+
+
+PHASE 5
+
+Academic Details profile management
+
+
+PHASE 6
+
+Class/subject-aware history and progress
+
+
+PHASE 7
+
+Targeted announcements
+
+
+PHASE 8
+
+Explore Other Classes
+
+
+PHASE 9
+
+Responsive/accessibility/performance polish
+
+========================================================
+TEST THESE USER JOURNEYS
+========================================================
+
+TEST 1 — NEW CLASS 9 STUDENT
+
+Register
+→ Choose Class 9
+→ Appropriate subject setup
+→ Dashboard
+→ Science
+→ Topic
+→ Quiz
+
+Verify no unrelated Class 10–12 content appears.
+
+
+TEST 2 — NEW CLASS 11 STUDENT
+
+Register
+→ Class 11
+→ Select Physics
+→ Chemistry
+→ Mathematics
+→ Computer Science
+→ Dashboard
+
+Verify only selected subjects appear normally.
+
+
+TEST 3 — RETURNING STUDENT
+
+Login
+→ Dashboard
+
+Verify onboarding does not appear again.
+
+
+TEST 4 — EXISTING USER WITHOUT ACADEMIC PROFILE
+
+Login
+→ Academic Setup
+→ Save
+→ Dashboard
+
+Verify previous quiz history remains.
+
+
+TEST 5 — CLASS CHANGE
+
+Class 11
+→ Profile
+→ Academic Details
+→ Change to Class 12
+
+Verify:
+
+Class 11 history remains
+Class 11 attempts remain
+Class 11 bookmarks remain
+Dashboard now focuses on Class 12
+
+
+TEST 6 — SUBJECT CHANGE
+
+Remove Biology.
+
+Verify:
+
+Biology disappears from normal learning view.
+
+Historical Biology attempts remain.
+
+
+TEST 7 — EXPLORE OTHER CLASS
+
+Class 11 student
+→ Explore Other Classes
+→ Class 10
+→ Science
+
+Verify:
+
+profile still says Class 11.
+
+
+TEST 8 — SECURITY
+
+Student A attempts to access Student B academic profile.
+
+Access must fail.
+
+
+TEST 9 — MOBILE
+
+Complete:
+
+registration
+academic setup
+dashboard
+subject navigation
+topic selection
+
+on narrow mobile width.
+
+Everything must remain usable.
+
+
+TEST 10 — LARGE CONTENT SCALE
+
+Assume:
+
+4 classes
+20 subjects
+300 topics
+10,000+ questions
+
+Verify the dashboard still loads only relevant student content.
+
+========================================================
+FINAL PRODUCT EXPERIENCE
+========================================================
+
+The finished experience should feel like:
+
+"I log into Quizverse and it already knows what I'm studying."
+
+NOT:
+
+"I log into Quizverse and have to navigate through every class and every
+subject every time."
+
+For a Class 11 Physics/Chemistry/Math student:
+
+HOME
+
+Welcome back
+
+Class 11
+
+Continue Learning
+→ Physics / Kinematics
+
+Your Subjects
+→ Physics
+→ Chemistry
+→ Mathematics
+
+Recent Practice
+→ Chemistry 8/10
+→ Physics 7/10
+
+Progress
+→ 78% average
+
+
+LEARN
+
+Physics
+Chemistry
+Mathematics
+
+
+PROFILE
+
+Academic Details
+Class 11
+
+Physics ✓
+Chemistry ✓
+Mathematics ✓
+
+
+And if they intentionally want something else:
+
+Explore Other Classes →
+
+========================================================
+MOST IMPORTANT RULE
+========================================================
+
+DO NOT REBUILD QUIZVERSE.
+
+This update must integrate into the EXISTING application.
+
+Preserve working functionality.
+
+Preserve existing design.
+
+Preserve historical student data.
+
+Keep academic entities dynamic.
+
+Personalize the normal student experience around:
+
+CURRENT CLASS
++
+SELECTED SUBJECTS
+
+while still allowing intentional exploration.
+
+The experience must remain smooth, modern, fast and simple even after
+Quizverse contains thousands of questions.

@@ -19,6 +19,8 @@ export type View =
   // auth
   | { name: "login" }
   | { name: "register" }
+  // onboarding
+  | { name: "onboarding" }
   // student
   | { name: "student-home" }
   | { name: "student-classes" }

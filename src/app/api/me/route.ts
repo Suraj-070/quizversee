@@ -5,8 +5,9 @@ import type { PublicUser } from "@/types";
 
 /**
  * GET /api/me
- * Returns the currently authenticated user's public profile.
- * Used by the AppShell on initial load to hydrate the client.
+ * Returns the currently authenticated user's public profile + academic profile.
+ * Used by the AppShell on initial load to hydrate the client and decide
+ * whether to show onboarding.
  */
 export async function GET() {
   const sessionUser = await getCurrentUser();
@@ -22,6 +23,8 @@ export async function GET() {
       name: true,
       role: true,
       createdAt: true,
+      onboardingCompleted: true,
+      currentClassId: true,
     },
   });
 
@@ -29,12 +32,17 @@ export async function GET() {
     return NextResponse.json({ user: null }, { status: 200 });
   }
 
-  const user: PublicUser = {
+  const user: PublicUser & {
+    onboardingCompleted: boolean;
+    currentClassId: string | null;
+  } = {
     id: userRecord.id,
     email: userRecord.email,
     name: userRecord.name,
     role: userRecord.role as "user" | "admin",
     createdAt: userRecord.createdAt.toISOString(),
+    onboardingCompleted: userRecord.onboardingCompleted,
+    currentClassId: userRecord.currentClassId,
   };
 
   return NextResponse.json({ user });
