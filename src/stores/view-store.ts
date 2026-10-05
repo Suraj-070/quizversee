@@ -26,6 +26,8 @@ export type View =
   | { name: "student-topics"; classId: string; subjectId: string }
   | { name: "student-quiz-sets"; classId?: string }
   | { name: "student-flagged" }
+  | { name: "student-progress" }
+  | { name: "student-profile" }
   | { name: "quiz-setup"; topicId: string }
   | { name: "subject-quiz-setup"; subjectId: string }
   | { name: "quiz-set-setup"; quizSetId: string }

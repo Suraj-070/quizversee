@@ -11,12 +11,14 @@ import {
   ChevronLeft,
   Trophy,
   Loader2,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
 import { useQuizSessionStore } from "@/stores/quiz-session-store";
 import { StudentHeader } from "@/components/student/student-header";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 /**
@@ -36,6 +38,8 @@ export function QuizResults({ user }: { user: PublicUser }) {
   const view = useViewStore((s) => s.view);
   const setView = useViewStore((s) => s.setView);
   const clearSession = useQuizSessionStore((s) => s.clear);
+  const startQuiz = useQuizSessionStore((s) => s.start);
+  const [practicingWrong, setPracticingWrong] = useState(false);
 
   const attemptId = view.name === "quiz-results" ? view.attemptId : "";
 
@@ -317,6 +321,53 @@ export function QuizResults({ user }: { user: PublicUser }) {
             <ListChecks className="size-4" />
             Review answers
           </Button>
+          {/* Practice Wrong Answers — only show if there are wrong answers */}
+          {result.correctAnswers < result.totalQuestions && (
+            <Button
+              variant="outline"
+              className="flex-1 border-violet-300 text-violet-600 hover:bg-violet-50 hover:text-violet-700"
+              disabled={practicingWrong}
+              onClick={async () => {
+                setPracticingWrong(true);
+                try {
+                  const res = await fetch("/api/student/attempts/practice-wrong", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fromAttemptId: result.attemptId }),
+                  });
+                  if (!res.ok) {
+                    const d = await res.json().catch(() => ({}));
+                    throw new Error(d.error ?? "Failed to start practice");
+                  }
+                  const data = (await res.json()) as {
+                    attemptId: string;
+                    questions: Array<{
+                      id: string; questionText: string;
+                      optionA: string; optionB: string; optionC: string; optionD: string;
+                      explanation: string | null;
+                      userAnswerId: string;
+                      questionImage: string | null;
+                      optionAImage: string | null; optionBImage: string | null;
+                      optionCImage: string | null; optionDImage: string | null;
+                    }>;
+                  };
+                  startQuiz(data.attemptId, data.questions, "immediate");
+                  setView({ name: "quiz-active", attemptId: data.attemptId });
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Failed to start practice");
+                } finally {
+                  setPracticingWrong(false);
+                }
+              }}
+            >
+              {practicingWrong ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Target className="size-4" />
+              )}
+              Practice {result.totalQuestions - result.correctAnswers} wrong
+            </Button>
+          )}
           <Button
             className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
             onClick={() => {

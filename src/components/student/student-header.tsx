@@ -9,6 +9,8 @@ import {
   History,
   ListChecks,
   Flag,
+  TrendingUp,
+  UserCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
@@ -35,7 +37,9 @@ export function StudentHeader({ user }: { user: PublicUser }) {
     view.name === "quiz-set-setup" ||
     view.name === "student-history" ||
     view.name === "student-quiz-sets" ||
-    view.name === "student-flagged";
+    view.name === "student-flagged" ||
+    view.name === "student-progress" ||
+    view.name === "student-profile";
 
   return (
     <header className="border-b border-slate-200/60 bg-white/85 backdrop-blur-md sticky top-0 z-10">
@@ -64,7 +68,16 @@ export function StudentHeader({ user }: { user: PublicUser }) {
             </span>
           </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setView({ name: "student-progress" })}
+            className="text-slate-600"
+          >
+            <TrendingUp className="size-4" />
+            <span className="hidden md:inline">Progress</span>
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -72,7 +85,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
             className="text-slate-600"
           >
             <Flag className="size-4" />
-            <span className="hidden sm:inline">Flagged</span>
+            <span className="hidden md:inline">Saved</span>
           </Button>
           <Button
             variant="ghost"
@@ -81,7 +94,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
             className="text-slate-600"
           >
             <ListChecks className="size-4" />
-            <span className="hidden sm:inline">Quiz Sets</span>
+            <span className="hidden lg:inline">Quiz Sets</span>
           </Button>
           <Button
             variant="ghost"
@@ -90,7 +103,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
             className="text-slate-600"
           >
             <History className="size-4" />
-            <span className="hidden sm:inline">History</span>
+            <span className="hidden md:inline">History</span>
           </Button>
           {user.role === "admin" && (
             <Button
@@ -100,9 +113,18 @@ export function StudentHeader({ user }: { user: PublicUser }) {
               className="text-slate-600"
             >
               <Settings className="size-4" />
-              <span className="hidden sm:inline">Admin</span>
+              <span className="hidden lg:inline">Admin</span>
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setView({ name: "student-profile" })}
+            className="text-slate-600"
+          >
+            <UserCircle className="size-4" />
+            <span className="hidden md:inline">Profile</span>
+          </Button>
           <Button
             variant="ghost"
             size="sm"
