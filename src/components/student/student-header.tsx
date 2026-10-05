@@ -11,6 +11,10 @@ import {
   Flag,
   TrendingUp,
   UserCircle,
+  BookOpen,
+  Dumbbell,
+  Compass,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
@@ -39,7 +43,10 @@ export function StudentHeader({ user }: { user: PublicUser }) {
     view.name === "student-quiz-sets" ||
     view.name === "student-flagged" ||
     view.name === "student-progress" ||
-    view.name === "student-profile";
+    view.name === "student-profile" ||
+    view.name === "my-learning" ||
+    view.name === "extra-practice" ||
+    view.name === "explore";
 
   return (
     <header className="border-b border-slate-200/60 bg-white/85 backdrop-blur-md sticky top-0 z-10">
@@ -68,63 +75,38 @@ export function StudentHeader({ user }: { user: PublicUser }) {
             </span>
           </button>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setView({ name: "student-progress" })}
-            className="text-slate-600"
-          >
-            <TrendingUp className="size-4" />
-            <span className="hidden md:inline">Progress</span>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setView({ name: "my-learning" })} className="text-slate-600">
+            <BookOpen className="size-4" />
+            <span className="hidden md:inline">My Learning</span>
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setView({ name: "student-flagged" })}
-            className="text-slate-600"
-          >
-            <Flag className="size-4" />
-            <span className="hidden md:inline">Saved</span>
+          <Button variant="ghost" size="sm" onClick={() => setView({ name: "extra-practice" })} className="text-slate-600">
+            <Dumbbell className="size-4" />
+            <span className="hidden md:inline">Practice</span>
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setView({ name: "student-quiz-sets" })}
-            className="text-slate-600"
-          >
-            <ListChecks className="size-4" />
-            <span className="hidden lg:inline">Quiz Sets</span>
+          <Button variant="ghost" size="sm" onClick={() => setView({ name: "explore" })} className="text-slate-600">
+            <Compass className="size-4" />
+            <span className="hidden lg:inline">Explore</span>
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setView({ name: "student-history" })}
-            className="text-slate-600"
-          >
+          <div className="hidden sm:block w-px h-6 bg-slate-200 mx-1" />
+          <Button variant="ghost" size="sm" onClick={() => setView({ name: "student-history" })} className="text-slate-600">
             <History className="size-4" />
-            <span className="hidden md:inline">History</span>
+            <span className="hidden lg:inline">History</span>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setView({ name: "student-progress" })} className="text-slate-600">
+            <TrendingUp className="size-4" />
+            <span className="hidden lg:inline">Progress</span>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setView({ name: "student-profile" })} className="text-slate-600">
+            <UserCircle className="size-4" />
+            <span className="hidden md:inline">Profile</span>
           </Button>
           {user.role === "admin" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setView({ name: "admin-dashboard" })}
-              className="text-slate-600"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setView({ name: "admin-dashboard" })} className="text-slate-600">
               <Settings className="size-4" />
               <span className="hidden lg:inline">Admin</span>
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setView({ name: "student-profile" })}
-            className="text-slate-600"
-          >
-            <UserCircle className="size-4" />
-            <span className="hidden md:inline">Profile</span>
-          </Button>
           <Button
             variant="ghost"
             size="sm"

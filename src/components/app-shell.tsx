@@ -5,6 +5,9 @@ import type { PublicUser } from "@/types";
 import { AuthScreen } from "@/components/auth/auth-screen";
 import { AcademicOnboarding } from "@/components/student/academic-onboarding";
 import { StudentHome } from "@/components/student/student-home";
+import { MyLearning } from "@/components/student/my-learning";
+import { ExtraPractice } from "@/components/student/extra-practice";
+import { Explore } from "@/components/student/explore";
 import { StudentSubjects } from "@/components/student/student-subjects";
 import { StudentTopics } from "@/components/student/student-topics";
 import { StudentHeader } from "@/components/student/student-header";
@@ -271,6 +274,12 @@ export function AppShell() {
       return <StudentProgress user={user} />;
     case "student-profile":
       return <StudentProfile user={user} />;
+    case "my-learning":
+      return <MyLearning user={user} />;
+    case "extra-practice":
+      return <ExtraPractice user={user} />;
+    case "explore":
+      return <Explore user={user} />;
     case "student-home":
     default:
       return <StudentHome user={user} />;

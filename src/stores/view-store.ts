@@ -21,8 +21,11 @@ export type View =
   | { name: "register" }
   // onboarding
   | { name: "onboarding" }
-  // student
+  // student — main areas
   | { name: "student-home" }
+  | { name: "my-learning" }
+  | { name: "extra-practice" }
+  | { name: "explore" }
   | { name: "student-classes" }
   | { name: "student-subjects"; classId: string }
   | { name: "student-topics"; classId: string; subjectId: string }

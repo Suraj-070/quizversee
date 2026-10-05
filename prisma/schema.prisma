@@ -100,6 +100,7 @@ model Topic {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   archivedAt    DateTime?
+  contentType   String    @default("curriculum") // "curriculum" | "extra_practice"
 
   subject       Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   questions     Question[]
@@ -124,15 +125,22 @@ model Question {
   updatedAt      DateTime  @updatedAt
   archivedAt     DateTime?
 
-  // Optional images (base64 data URIs or URLs). When set, the option or
-  // question renders with the image instead of (or in addition to) text.
-  // This lets admins create geometry / diagram / chart questions where
-  // the options are figures rather than words.
+  // Content classification: "curriculum" (My Learning) or "extra_practice" (Extra Practice/Explore)
+  contentType    String    @default("curriculum")
+
+  // Optional images
   questionImage  String?
   optionAImage   String?
   optionBImage   String?
   optionCImage   String?
   optionDImage   String?
+
+  // External source metadata (only set for imported/external questions)
+  sourceType     String?   // "dataset" | "api" | "manual"
+  sourceName     String?   // e.g. "ScienceQA"
+  sourceQuestionId String? // original ID from the source
+  sourceLicense  String?   // license info if required
+  suitableLevels String?   // JSON array of class IDs, e.g. "[\"class-9-id\",\"class-10-id\"]"
 
   topic          Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
   quizSetLinks   QuizSetQuestion[]
