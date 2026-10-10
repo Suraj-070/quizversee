@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "grade": 12,
+  "subject": "Chemistry",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "edition": "CDC Secondary Level Chemistry curriculum 2078; compare with current 2082 feedback edition",
+  "sources": [
+    {
+      "url": "https://moecdc.gov.np/storage/gallery/1674713655.pdf",
+      "type": "official CDC curriculum"
+    },
+    {
+      "url": "https://moecdc.gov.np/content/603/chemistry-grade---12/",
+      "type": "official CDC 2082 feedback material"
+    },
+    {
+      "url": "https://prakashthapa617.com.np/note/chapter_list/chemistry-class-12/",
+      "type": "third-party 21-chapter list"
+    }
+  ],
+  "reviewNotes": [
+    "The 21 names track published NEB course-unit headings, not necessarily the latest 2082 textbook's chapter headings.",
+    "Check official latest edition and whether unit count or titles changed before promoting."
+  ],
+  "chapters": [
+    {
+      "name": "Volumetric Analysis",
+      "displayOrder": 1,
+      "verified": false
+    },
+    {
+      "name": "Ionic Equilibrium",
+      "displayOrder": 2,
+      "verified": false
+    },
+    {
+      "name": "Chemical Kinetics",
+      "displayOrder": 3,
+      "verified": false
+    },
+    {
+      "name": "Thermodynamics",
+      "displayOrder": 4,
+      "verified": false
+    },
+    {
+      "name": "Electrochemistry",
+      "displayOrder": 5,
+      "verified": false
+    },
+    {
+      "name": "Transition Metals",
+      "displayOrder": 6,
+      "verified": false
+    },
+    {
+      "name": "Studies of Heavy Metals",
+      "displayOrder": 7,
+      "verified": false
+    },
+    {
+      "name": "Haloalkanes",
+      "displayOrder": 8,
+      "verified": false
+    },
+    {
+      "name": "Haloarenes",
+      "displayOrder": 9,
+      "verified": false
+    },
+    {
+      "name": "Alcohols",
+      "displayOrder": 10,
+      "verified": false
+    },
+    {
+      "name": "Phenols",
+      "displayOrder": 11,
+      "verified": false
+    },
+    {
+      "name": "Ethers",
+      "displayOrder": 12,
+      "verified": false
+    },
+    {
+      "name": "Aldehydes and Ketones",
+      "displayOrder": 13,
+      "verified": false
+    },
+    {
+      "name": "Carboxylic Acid and its Derivatives",
+      "displayOrder": 14,
+      "verified": false
+    },
+    {
+      "name": "Nitro Compounds",
+      "displayOrder": 15,
+      "verified": false
+    },
+    {
+      "name": "Amines",
+      "displayOrder": 16,
+      "verified": false
+    },
+    {
+      "name": "Organometallic Compounds",
+      "displayOrder": 17,
+      "verified": false
+    },
+    {
+      "name": "Chemistry in the Service of Mankind",
+      "displayOrder": 18,
+      "verified": false
+    },
+    {
+      "name": "Cement",
+      "displayOrder": 19,
+      "verified": false
+    },
+    {
+      "name": "Paper and Pulp",
+      "displayOrder": 20,
+      "verified": false
+    },
+    {
+      "name": "Nuclear Chemistry and Applications of Radioactivity",
+      "displayOrder": 21,
+      "verified": false
+    }
+  ]
+}
