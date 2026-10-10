@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "grade": 11,
+  "subject": "Computer Science",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "candidate-sequence",
+  "sources": [
+    {
+      "url": "https://www.examkura.com/neb-class-11-computer-guide/",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://notesharu.com/neb/class-11/computer-science/syllabus",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Eight curriculum units; verify punctuation and titles against CDC.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Computer System",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Number System and Conversion Boolean Logic",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Computer Software and Operating System",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "Application Package",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Programming Concepts and Logics",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Web Technology I",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "Multimedia",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "Information Security and Cyber Law",
+      "verified": false
+    }
+  ]
+}
