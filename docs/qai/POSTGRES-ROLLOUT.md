@@ -24,3 +24,19 @@ This branch is **NOT deployed to production**. Source branch: `qai/answer-integr
 - Other GET endpoints may still expose answer keys on unfinished attempts and need a separate authorization/reveal review.
 - Full API integration tests are **not** completed simply by adding the disposable database test; they require a staging database and running server.
 - Do not promote this branch to `main` until the database migration is confirmed. Deploying the new Prisma client before its SQL migration can break reads/writes.
+
+## Updated after verified Supabase migration
+- The additive production migration `add_user_answer_submitted_at_for_qai` was applied successfully and verified against project `ioirxsnpbfrtsryxhhrv`: nullable column and index exist; 65 answer records and 2 unfinished attempts remained.
+- **No app deployment has been made.**
+- `src/app/api/student/attempts/route.ts` now redacts correctness, explanations, and correct options for unfinished attempts.
+- `src/components/student/quiz-active.tsx` retains the submitted choice in immediate-feedback state.
+- `QAI_ANSWER_ACTIVATION_AT` is a required ISO date-time for the **staged** transactional routes. Set it to the actual rollout time before deploying, never a time before the old app stopped accepting submissions. Existing unfinished pre-rollout attempts must be restarted; historical completed results remain accessible.
+- `npm run test:qai` runs selector, answer-visibility, and legacy-cutoff unit tests; `npm run test:qai:postgres` runs the disposable-database test and intentionally skips without its opt-in.
+- Apply PostgreSQL-specific changes to the owner's local branch only after reconciling their real schema, which may contain custom database settings absent from GitHub `main`.
+
+## Remaining release blockers
+1. Complete `npm run test:qai` and `npx tsc --noEmit` in a checkout with dependencies installed and Prisma generated **from the local PostgreSQL schema**.
+2. Execute actual authenticated API integration tests in a staging server against disposable Postgres, including simultaneous submissions and completion races. The current DB-level test is insufficient to prove full route behavior.
+3. Verify previously completed attempt review works and in-progress GET never contains answer keys.
+4. Confirm deployment configuration and the activation cutoff; announce restarting previously unfinished attempts before enabling.
+5. Keep `QAI_SMART_PRACTICE_V1` off until those checks pass.
