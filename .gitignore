@@ -67,3 +67,6 @@ server.log
 
 node_modules/
 .next/
+# Local database backups
+db/backups/
+*.db.before-supabase

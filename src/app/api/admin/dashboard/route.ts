@@ -13,16 +13,18 @@ export async function GET() {
   if (error) return error;
 
   const [
-    classes,
-    subjects,
-    topics,
-    questions,
-    publishedQuestions,
-    users,
-    quizAttempts,
-    quizSets,
-    publishedQuizSets,
-  ] = await Promise.all([
+  classes,
+  subjects,
+  topics,
+  questions,
+  publishedQuestions,
+  draftQuestions,
+  users,
+  quizAttempts,
+  quizAttemptsToday,
+  quizSets,
+  publishedQuizSets,
+] = await Promise.all([
     db.class.count(),
     db.subject.count(),
     db.topic.count(),
