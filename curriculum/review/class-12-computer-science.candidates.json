@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "grade": 12,
+  "subject": "Computer Science",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "candidate-sequence",
+  "sources": [
+    {
+      "url": "https://prakashthapa617.com.np/note/chapter_list/computer-science-class-12/",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://cssnepal.com/class-12-computer-science-notes/",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Seven course units; individual guides vary names slightly.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Database Management System (DBMS)",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Data Communication and Networking",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Web Technology II",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "Programming in C",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Object-Oriented Programming (OOP)",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Software Process Model",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "Recent Trends in Technology",
+      "verified": false
+    }
+  ]
+}
