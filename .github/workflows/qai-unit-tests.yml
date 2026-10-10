@@ -1,0 +1,21 @@
+name: QAI Phase 1 Unit Tests
+on:
+  push:
+    branches:
+      - qai/answer-integrity-postgres
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run isolated adaptive learning regression suite
+        run: npm run test:qai
