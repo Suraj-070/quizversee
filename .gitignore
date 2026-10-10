@@ -52,3 +52,18 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+
+.env
+.env.*
+!.env.example
+
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+node_modules/
+.next/
