@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "grade": 12,
+  "subject": "Biology",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "candidate-sequence",
+  "sources": [
+    {
+      "url": "https://www.nebexam.com/class-12/biology/syllabus",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://webnotee.com/neb-class-12-biology-notes/",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "10 syllabus units (Botany 5, Zoology 5) NOT the 14+ book subchapters.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Plant Anatomy",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Plant Physiology",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Genetics",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "Embryology",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Biotechnology",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Animal Tissues",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "Development Biology",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "Human Biology",
+      "verified": false
+    },
+    {
+      "displayOrder": 9,
+      "name": "Human Population and Health Disorders",
+      "verified": false
+    },
+    {
+      "displayOrder": 10,
+      "name": "Applied Biology",
+      "verified": false
+    }
+  ]
+}
