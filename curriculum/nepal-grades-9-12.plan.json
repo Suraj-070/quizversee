@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "curriculum": "Nepal CDC/NEB",
+  "status": "subject-plan-awaiting-official-chapter-verification",
+  "notes": [
+    "Planning manifest only. No chapters have been asserted as officially verified.",
+    "Grade 9-10 Computer Science and Optional Mathematics are elective offerings; school availability varies.",
+    "Grade 11-12 Science-stream subjects listed here are available subject banks, not a compulsory combination for every learner.",
+    "Do not import chapter lists until checked against the current CDC curriculum/textbook edition.",
+    "Importer must be idempotent, support dry-run, and never delete existing Quizverse records."
+  ],
+  "grades": [
+    {
+      "name": "Class 9",
+      "grade": 9,
+      "subjects": [
+        {
+          "name": "Science and Technology",
+          "displayOrder": 1,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Compulsory Mathematics",
+          "displayOrder": 2,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Optional Mathematics",
+          "displayOrder": 3,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Computer Science",
+          "displayOrder": 4,
+          "chapters": [],
+          "chapterVerification": "pending"
+        }
+      ]
+    },
+    {
+      "name": "Class 10",
+      "grade": 10,
+      "subjects": [
+        {
+          "name": "Science and Technology",
+          "displayOrder": 1,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Compulsory Mathematics",
+          "displayOrder": 2,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Optional Mathematics",
+          "displayOrder": 3,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Computer Science",
+          "displayOrder": 4,
+          "chapters": [],
+          "chapterVerification": "pending"
+        }
+      ]
+    },
+    {
+      "name": "Class 11",
+      "grade": 11,
+      "subjects": [
+        {
+          "name": "Physics",
+          "displayOrder": 1,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Chemistry",
+          "displayOrder": 2,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Biology",
+          "displayOrder": 3,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Mathematics",
+          "displayOrder": 4,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Computer Science",
+          "displayOrder": 5,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "English",
+          "displayOrder": 6,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Nepali",
+          "displayOrder": 7,
+          "chapters": [],
+          "chapterVerification": "pending"
+        }
+      ]
+    },
+    {
+      "name": "Class 12",
+      "grade": 12,
+      "subjects": [
+        {
+          "name": "Physics",
+          "displayOrder": 1,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Chemistry",
+          "displayOrder": 2,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Biology",
+          "displayOrder": 3,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Mathematics",
+          "displayOrder": 4,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Computer Science",
+          "displayOrder": 5,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "English",
+          "displayOrder": 6,
+          "chapters": [],
+          "chapterVerification": "pending"
+        },
+        {
+          "name": "Nepali",
+          "displayOrder": 7,
+          "chapters": [],
+          "chapterVerification": "pending"
+        }
+      ]
+    }
+  ],
+  "sourceReferences": [
+    {
+      "publisher": "Curriculum Development Centre, Nepal",
+      "url": "https://moecdc.gov.np/"
+    },
+    {
+      "publisher": "CDC E-Library",
+      "url": "https://lib.moecdc.gov.np/elibrary/"
+    }
+  ]
+}
