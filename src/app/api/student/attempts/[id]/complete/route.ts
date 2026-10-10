@@ -28,7 +28,6 @@ export async function POST(_req: Request, { params }: Params) {
           FOR UPDATE
         `;
         if (!locked.length) throw new AttemptMissing();
-        if (isLegacyAttempt(locked[0].startedAt, activationAt)) throw new LegacyAttempt();
 
         const attempt = await tx.quizAttempt.findFirst({
           where: { id: attemptId, userId: user.id },
@@ -43,6 +42,7 @@ export async function POST(_req: Request, { params }: Params) {
           },
         });
         if (!attempt) throw new AttemptMissing();
+        if (!attempt.completedAt && isLegacyAttempt(locked[0].startedAt, activationAt)) throw new LegacyAttempt();
         if (attempt.completedAt) {
           return {
             attemptId: attempt.id, correctAnswers: attempt.correctAnswers,
