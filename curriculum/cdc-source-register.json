@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Source register for Quizverse Nepal curriculum research; NOT an import manifest.",
+  "recordedOn": "2026-10-11",
+  "policy": "An identified publication is not evidence that its table of contents has been checked. Only mark individual chapters verified after direct comparison with the official contents page. Do not import this file.",
+  "sources": [
+    {
+      "grade": 9,
+      "subject": "Science and Technology",
+      "publisher": "Curriculum Development Centre",
+      "title": "Science and Technology Grade -9 (English Translation)",
+      "url": "https://lib.moecdc.gov.np/elibrary/pages/search.php?search=Science%20and%20Technology%20Grade%20-9",
+      "sourceType": "official-library-search",
+      "tableOfContentsVerified": false,
+      "notes": "The library indexes resource 10818; verify whether a newer Grade 9 edition applies."
+    },
+    {
+      "grade": 10,
+      "subject": "Computer Science",
+      "publisher": "Curriculum Development Centre",
+      "title": "Computer Science Class 10 (First Edition-2082)",
+      "url": "https://lib.moecdc.gov.np/elibrary/pages/search.php?search=Computer%20Science%20Class%2010",
+      "sourceType": "official-library-search",
+      "tableOfContentsVerified": false,
+      "notes": "CDC E-Library lists resource 11301; download and inspect the contents page."
+    },
+    {
+      "grade": 10,
+      "subject": "Compulsory Mathematics",
+      "publisher": "Curriculum Development Centre",
+      "title": "Mathematics Grade 10 (2079 BS)",
+      "url": "https://lib.moecdc.gov.np/catalog/opac_css/index.php?id=15108&lvl=notice_display",
+      "sourceType": "official-library-catalog",
+      "tableOfContentsVerified": false,
+      "notes": "Catalog confirms bibliographic metadata, not chapter listing."
+    },
+    {
+      "grade": 10,
+      "subject": "Science and Technology",
+      "publisher": "Curriculum Development Centre",
+      "title": "Teacher guide: Science and Technology Grade 10 (2081 BS)",
+      "url": "https://lib.moecdc.gov.np/elibrary/pages/search.php?search=Teacher%20Guide%20Science%20and%20Technology%20Grade%2010",
+      "sourceType": "official-library-search",
+      "tableOfContentsVerified": false,
+      "notes": "Teacher guide is a supporting source, not a substitute for current textbook chapter names."
+    },
+    {
+      "grade": 11,
+      "subject": "Physics",
+      "publisher": "Curriculum Development Centre",
+      "title": "Secondary Level Curriculum 2078",
+      "url": "https://moecdc.gov.np/storage/gallery/1674713459.pdf",
+      "sourceType": "official-curriculum-pdf-search-index",
+      "tableOfContentsVerified": false,
+      "notes": "Search-index excerpts show Grade 11 and 12 scope-and-sequence; linked PDF currently may be inaccessible. Do not label textbook chapters verified."
+    },
+    {
+      "grade": 12,
+      "subject": "Physics",
+      "publisher": "Curriculum Development Centre",
+      "title": "Secondary Level Curriculum 2078",
+      "url": "https://moecdc.gov.np/storage/gallery/1674713459.pdf",
+      "sourceType": "official-curriculum-pdf-search-index",
+      "tableOfContentsVerified": false,
+      "notes": "Search-index excerpts show scope-and-sequence, but PDF retrieval and completeness need confirmation."
+    }
+  ]
+}
