@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth-guard";
+import { chooseAdaptiveQuestions } from "@/lib/qai-smart-selector.mjs";
 
 /**
  * POST /api/student/smart-practice
@@ -60,69 +61,95 @@ export async function POST(request: Request) {
     );
   }
 
-  // 1. Fetch previously incorrect questions (from mastery)
-  const incorrectMastery = await db.questionMastery.findMany({
-    where: {
-      userId: user.id,
-      timesSeen: { gte: 1 },
-      timesCorrect: 0,
-      question: { topicId, status: "published", archivedAt: null },
-    },
-    select: { questionId: true },
-  });
-  const incorrectIds = incorrectMastery.map((m) => m.questionId);
-
-  // 2. Fetch less-practiced questions (low timesSeen, including never-seen)
-  const masteryRecords = await db.questionMastery.findMany({
-    where: { userId: user.id, question: { topicId } },
-    select: { questionId: true, timesSeen: true },
-  });
-  const seenMap = new Map(masteryRecords.map((m) => [m.questionId, m.timesSeen]));
-  const neverSeenIds = allQuestions
-    .map((q) => q.id)
-    .filter((id) => !seenMap.has(id));
-  const lessPracticedIds = masteryRecords
-    .filter((m) => m.timesSeen <= 2)
-    .map((m) => m.questionId);
-
-  // 3. All remaining questions for random selection
-  const allIds = allQuestions.map((q) => q.id);
-
-  // Calculate counts (flexible — don't exceed available)
-  const wrongTarget = Math.min(
-    Math.floor(totalQuestions * 0.4),
-    incorrectIds.length
-  );
-  const lessPracticedTarget = Math.min(
-    Math.floor(totalQuestions * 0.3),
-    lessPracticedIds.length + neverSeenIds.length
-  );
-  const randomTarget = totalQuestions - wrongTarget - lessPracticedTarget;
-
-  // Select questions
-  const shuffle = <T>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5);
-
-  const selectedIds = new Set<string>();
-
-  // Add incorrect questions
-  for (const id of shuffle(incorrectIds).slice(0, wrongTarget)) {
-    selectedIds.add(id);
-  }
-
-  // Add less-practiced + never-seen
-  const lessPracticedPool = shuffle([...lessPracticedIds, ...neverSeenIds]);
-  for (const id of lessPracticedPool.slice(0, lessPracticedTarget)) {
-    if (selectedIds.size < totalQuestions) selectedIds.add(id);
-  }
-
-  // Fill remaining with random
-  const remainingPool = shuffle(allIds.filter((id) => !selectedIds.has(id)));
-  for (const id of remainingPool) {
-    if (selectedIds.size >= totalQuestions) break;
-    selectedIds.add(id);
-  }
-
-  const finalIds = Array.from(selectedIds).slice(0, totalQuestions);
+  // QAI is opt-in. With the flag off, preserve the original Smart Practice mix.
+  // Both branches feed the existing attempt creation and answer APIs.
+  const finalIds: string[] = process.env.QAI_SMART_PRACTICE_V1 === "true"
+    ? await (async () => {
+        const ids = allQuestions.map(q => q.id);
+        const [mastery, recentlyAnswered] = await Promise.all([
+          db.questionMastery.findMany({
+            where: { userId: user.id, questionId: { in: ids } },
+            select: { questionId: true, timesSeen: true, timesCorrect: true, nextDueAt: true, lastSeenAt: true },
+          }),
+          db.userAnswer.findMany({
+            where: { userId: user.id, questionId: { in: ids }, attempt: { completedAt: { not: null } } },
+            orderBy: { answeredAt: "desc" },
+            take: 30,
+            select: { questionId: true },
+          }),
+        ]);
+        return chooseAdaptiveQuestions({
+          questions: allQuestions, mastery, count: totalQuestions,
+          recentIds: recentlyAnswered.map(answer => answer.questionId),
+        });
+      })()
+    : await (async () => {
+      // 1. Fetch previously incorrect questions (from mastery)
+      const incorrectMastery = await db.questionMastery.findMany({
+        where: {
+          userId: user.id,
+          timesSeen: { gte: 1 },
+          timesCorrect: 0,
+          question: { topicId, status: "published", archivedAt: null },
+        },
+        select: { questionId: true },
+      });
+      const incorrectIds = incorrectMastery.map((m) => m.questionId);
+    
+      // 2. Fetch less-practiced questions (low timesSeen, including never-seen)
+      const masteryRecords = await db.questionMastery.findMany({
+        where: { userId: user.id, question: { topicId } },
+        select: { questionId: true, timesSeen: true },
+      });
+      const seenMap = new Map(masteryRecords.map((m) => [m.questionId, m.timesSeen]));
+      const neverSeenIds = allQuestions
+        .map((q) => q.id)
+        .filter((id) => !seenMap.has(id));
+      const lessPracticedIds = masteryRecords
+        .filter((m) => m.timesSeen <= 2)
+        .map((m) => m.questionId);
+    
+      // 3. All remaining questions for random selection
+      const allIds = allQuestions.map((q) => q.id);
+    
+      // Calculate counts (flexible — don't exceed available)
+      const wrongTarget = Math.min(
+        Math.floor(totalQuestions * 0.4),
+        incorrectIds.length
+      );
+      const lessPracticedTarget = Math.min(
+        Math.floor(totalQuestions * 0.3),
+        lessPracticedIds.length + neverSeenIds.length
+      );
+      const randomTarget = totalQuestions - wrongTarget - lessPracticedTarget;
+    
+      // Select questions
+      const shuffle = <T>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5);
+    
+      const selectedIds = new Set<string>();
+    
+      // Add incorrect questions
+      for (const id of shuffle(incorrectIds).slice(0, wrongTarget)) {
+        selectedIds.add(id);
+      }
+    
+      // Add less-practiced + never-seen
+      const lessPracticedPool = shuffle([...lessPracticedIds, ...neverSeenIds]);
+      for (const id of lessPracticedPool.slice(0, lessPracticedTarget)) {
+        if (selectedIds.size < totalQuestions) selectedIds.add(id);
+      }
+    
+      // Fill remaining with random
+      const remainingPool = shuffle(allIds.filter((id) => !selectedIds.has(id)));
+      for (const id of remainingPool) {
+        if (selectedIds.size >= totalQuestions) break;
+        selectedIds.add(id);
+      }
+    
+      return Array.from(selectedIds).slice(0, totalQuestions);
+    
+    
+    })();
 
   // Fetch full question data
   const questions = await db.question.findMany({
