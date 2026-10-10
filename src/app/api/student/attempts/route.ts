@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth-guard";
+import { visibleAttemptAnswers } from "@/lib/qai-attempt-visibility.mjs";
 
 /**
  * POST /api/student/attempts
@@ -502,12 +503,7 @@ export async function GET(request: Request) {
       };
     }
 
-    const visibleAnswers = attempt.completedAt ? attempt.answers : attempt.answers.map((a) => ({
-      ...a,
-      selectedOption: a.submittedAt ? a.selectedOption : null,
-      isCorrect: null,
-      question: { ...a.question, correctOption: null, explanation: null },
-    }));
+    const visibleAnswers = visibleAttemptAnswers(attempt.answers, attempt.completedAt);
     return NextResponse.json({
       attempt: { ...attempt, answers: visibleAnswers, quizSet: quizSetWithRelations },
     });
