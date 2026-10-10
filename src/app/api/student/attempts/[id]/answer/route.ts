@@ -3,10 +3,12 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth-guard";
+import { isLegacyAttempt } from "@/lib/qai-legacy-attempt.mjs";
 
 type Params = { params: Promise<{ id: string }> };
 class AnswerConflict extends Error {}
 class AnswerMissing extends Error {}
+class LegacyAttempt extends Error {}
 
 const schema = z.object({
   userAnswerId: z.string().min(1),
@@ -30,17 +32,23 @@ export async function PATCH(request: Request, { params }: Params) {
   }
   const { userAnswerId, selectedOption, reveal } = parsed.data;
 
+  // Deployment gate: the new API must not accept ambiguous pre-rollout attempts.
+  const activationAt = process.env.QAI_ANSWER_ACTIVATION_AT;
+  if (!activationAt || !Number.isFinite(Date.parse(activationAt))) {
+    return NextResponse.json({ error: "Answer integrity upgrade is not activated" }, { status: 503 });
+  }
   for (let retry = 0; retry < 3; retry++) {
     try {
       const result = await db.$transaction(async (tx) => {
         // All submit/complete operations serialize on the same attempt lock.
-        const unlocked = await tx.$queryRaw<{ id: string }[]>`
-          SELECT "id" FROM "QuizAttempt"
+        const unlocked = await tx.$queryRaw<{ id: string; startedAt: Date }[]>`
+          SELECT "id", "startedAt" FROM "QuizAttempt"
           WHERE "id" = ${attemptId} AND "userId" = ${user.id}
           AND "completedAt" IS NULL
           FOR UPDATE
         `;
         if (!unlocked.length) throw new AnswerMissing();
+        if (isLegacyAttempt(unlocked[0].startedAt, activationAt)) throw new LegacyAttempt();
 
         const answer = await tx.userAnswer.findFirst({
           where: { id: userAnswerId, attemptId, userId: user.id },
@@ -101,6 +109,8 @@ export async function PATCH(request: Request, { params }: Params) {
       if (!reveal) return NextResponse.json({ recorded: true });
       return NextResponse.json(result);
     } catch (err) {
+      if (err instanceof LegacyAttempt)
+        return NextResponse.json({ error: "This quiz was started before the answer upgrade. Please start a new quiz." }, { status: 409 });
       if (err instanceof AnswerConflict)
         return NextResponse.json({ error: "This answer was already submitted" }, { status: 409 });
       if (err instanceof AnswerMissing)
