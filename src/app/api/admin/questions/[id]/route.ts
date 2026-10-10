@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-guard";
+import { ADMIN_ACTIONS } from "@/lib/admin-activity";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -62,7 +63,7 @@ const UpdateQuestionSchema = z.object({
  * which is how the publish/unpublish action works.
  */
 export async function PATCH(request: Request, { params }: Params) {
-  const { error } = await requireAdmin();
+  const { user, error } = await requireAdmin();
   if (error) return error;
 
   const { id } = await params;
@@ -106,6 +107,19 @@ export async function PATCH(request: Request, { params }: Params) {
     }
   }
 
+  // Capture pre-update status so we can log status transitions specifically.
+  let previousStatus: string | undefined;
+  if (data.status !== undefined) {
+    const existing = await db.question.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Question not found" }, { status: 404 });
+    }
+    previousStatus = existing.status;
+  }
+
   try {
     const updated = await db.question.update({
       where: { id },
@@ -126,6 +140,27 @@ export async function PATCH(request: Request, { params }: Params) {
         },
       },
     });
+
+    // Log status transitions distinctly so the activity feed is informative.
+    if (data.status && data.status !== previousStatus) {
+      try {
+        await db.adminActivity.create({
+          data: {
+            adminId: user.id,
+            action:
+              data.status === "published"
+                ? ADMIN_ACTIONS.QUESTION_PUBLISHED
+                : ADMIN_ACTIONS.QUESTION_UNPUBLISHED,
+            entity: "Question",
+            entityId: id,
+            description: `${data.status === "published" ? "Published" : "Unpublished"} question: ${updated.questionText.slice(0, 80)}`,
+          },
+        });
+      } catch {
+        // ignore logging failures
+      }
+    }
+
     return NextResponse.json({ question: updated });
   } catch {
     return NextResponse.json({ error: "Question not found" }, { status: 404 });

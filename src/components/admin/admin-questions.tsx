@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   FileQuestion,
@@ -12,6 +12,13 @@ import {
   Search,
   Eye,
   EyeOff,
+  CheckSquare,
+  Square,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Send,
+  Archive,
 } from "lucide-react";
 import type {
   AcademicClass,
@@ -25,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -40,6 +48,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
@@ -60,18 +78,29 @@ type QuestionWithChain = Question & {
   };
 };
 
-const PAGE_SIZE = 20;
+type BulkPublishResult = {
+  selected: number;
+  published: number;
+  unpublished: number;
+  alreadyTarget: number;
+  notFound: number;
+  needsReview: number;
+  failed: number;
+  failures: Array<{ questionId: string; reason: string }>;
+};
+
+const PAGE_SIZE = 50;
 
 /**
  * AdminQuestions — full CRUD UI for the Question entity.
  *
- * Per PRD §10:
- *   Columns: Question | Class | Subject | Topic | Status | Created | Actions
- *   Filters: Search + Class + Subject + Topic + Status
- *   Actions: Edit, Delete, Publish/Unpublish
- *
- * Per PRD §11, the create/edit form has 3-level dependent selectors:
- *   Class → Subject → Topic
+ * Key behaviors:
+ *   - Server-side pagination (default 50/page). Total count returned by API.
+ *   - Bulk selection: per-row checkbox, "select all on page", and
+ *     "select all matching across pages" (resolved server-side via filter).
+ *   - Single-question publish: optimistic UI update on success; no full refetch,
+ *     no page reload, scroll position preserved.
+ *   - Bulk publish: server-side transaction with partial-success reporting.
  */
 export function AdminQuestions() {
   const [classes, setClasses] = useState<AcademicClass[]>([]);
@@ -83,11 +112,28 @@ export function AdminQuestions() {
   const [filterTopicId, setFilterTopicId] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const [questions, setQuestions] = useState<QuestionWithChain[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<QuestionWithChain | null>(null);
   const [creating, setCreating] = useState(false);
+
+  // Selection state. `selectedIds` is a Set so it survives page navigation.
+  // `selectAllMatching` is a virtual flag — when true, the bulk operation
+  // uses the server-side filter instead of an explicit ID list.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectAllMatching, setSelectAllMatching] = useState(false);
+
+  // Bulk-publish dialog state
+  const [bulkTarget, setBulkTarget] = useState<"published" | "draft" | null>(null);
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
+
+  // Scroll position preservation: capture the table container scroll position
+  // before any data mutation and restore it after, so the visible viewport
+  // stays put even if the row contents change.
+  const tableScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Load classes once for the class filter dropdown
   useEffect(() => {
@@ -162,34 +208,89 @@ export function AdminQuestions() {
     };
   }, [filterSubjectId]);
 
+  // When any filter changes, reset to page 1 and clear "select all matching".
+  // Existing per-ID selection is preserved (so admin can move between pages
+  // without losing their picks).
+  useEffect(() => {
+    setPage(1);
+    setSelectAllMatching(false);
+  }, [filterClassId, filterSubjectId, filterTopicId, filterStatus, search]);
+
+  // Build the URL query for the questions API. Memoised so it's stable
+  // across renders unless filters actually change.
+  const apiQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("pageSize", String(PAGE_SIZE));
+    if (filterClassId !== "all") params.set("classId", filterClassId);
+    if (filterSubjectId !== "all") params.set("subjectId", filterSubjectId);
+    if (filterTopicId !== "all") params.set("topicId", filterTopicId);
+    if (filterStatus !== "all") params.set("status", filterStatus);
+    if (search.trim()) params.set("search", search.trim());
+    return params.toString();
+  }, [page, filterClassId, filterSubjectId, filterTopicId, filterStatus, search]);
+
+  // Build a serializable filter spec used for "select all matching" bulk
+  // operations. Empty filters are omitted so the server treats them as
+  // "no constraint".
+  const filterSpec = useMemo(() => {
+    const f: Record<string, string> = {};
+    if (filterClassId !== "all") f.classId = filterClassId;
+    if (filterSubjectId !== "all") f.subjectId = filterSubjectId;
+    if (filterTopicId !== "all") f.topicId = filterTopicId;
+    if (filterStatus !== "all") f.status = filterStatus;
+    if (search.trim()) f.search = search.trim();
+    return f;
+  }, [filterClassId, filterSubjectId, filterTopicId, filterStatus, search]);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const url = new URL("/api/admin/questions", window.location.origin);
-      if (filterClassId !== "all") url.searchParams.set("classId", filterClassId);
-      if (filterSubjectId !== "all")
-        url.searchParams.set("subjectId", filterSubjectId);
-      if (filterTopicId !== "all") url.searchParams.set("topicId", filterTopicId);
-      if (filterStatus !== "all") url.searchParams.set("status", filterStatus);
-      if (search.trim()) url.searchParams.set("search", search.trim());
-      const res = await fetch(url.toString(), { cache: "no-store" });
+      const url = `/api/admin/questions?${apiQuery}`;
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load questions");
-      const data = (await res.json()) as { questions: QuestionWithChain[] };
+      const data = (await res.json()) as {
+        questions: QuestionWithChain[];
+        total: number;
+        page: number;
+        pageSize: number;
+      };
       setQuestions(data.questions);
+      setTotal(data.total);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load questions");
       setQuestions([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
-  }, [filterClassId, filterSubjectId, filterTopicId, filterStatus, search]);
+  }, [apiQuery]);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  // ── Single-question publish — TASK A ──────────────────────────────────
+  // No full refetch. Just patch the matching row in local state using the
+  // server's response. Scroll position is untouched (we don't touch the DOM).
+  // Search query, filters, page, sorting, and selection are all preserved.
   async function togglePublish(q: QuestionWithChain) {
     const next: QuestionStatus = q.status === "published" ? "draft" : "published";
+
+    // Snapshot for rollback if the request fails.
+    const previousQuestions = questions;
+
+    // Optimistic update — flip the visible status immediately so the admin
+    // sees instant feedback. If the server returns a different shape, we
+    // replace the row with the authoritative version.
+    setQuestions((prev) =>
+      prev
+        ? prev.map((row) =>
+            row.id === q.id ? { ...row, status: next } : row
+          )
+        : prev
+    );
+
     try {
       const res = await fetch(`/api/admin/questions/${q.id}`, {
         method: "PATCH",
@@ -200,17 +301,156 @@ export function AdminQuestions() {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error ?? "Failed to update status");
       }
+      const data = (await res.json()) as { question: QuestionWithChain };
+      // Replace with the server's authoritative version (preserves updatedAt,
+      // any server-side normalisation, etc.) without losing other rows.
+      setQuestions((prev) =>
+        prev
+          ? prev.map((row) => (row.id === q.id ? data.question : row))
+          : prev
+      );
       toast.success(
         next === "published" ? "Question published" : "Question moved to draft"
       );
-      await load();
     } catch (e) {
+      // Roll back to the previous state — never show a successful status
+      // if the backend hasn't confirmed.
+      setQuestions(previousQuestions);
       toast.error(e instanceof Error ? e.message : "Failed to update status");
     }
   }
 
-  const visible = (questions ?? []).slice(0, PAGE_SIZE);
-  const hiddenCount = (questions?.length ?? 0) - visible.length;
+  // ── Bulk selection helpers — TASK B ────────────────────────────────────
+  function toggleRowSelection(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    // Explicit ID selection overrides "select all matching" mode.
+    setSelectAllMatching(false);
+  }
+
+  function selectAllOnPage(checked: boolean) {
+    if (!questions) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        for (const q of questions) next.add(q.id);
+      } else {
+        for (const q of questions) next.delete(q.id);
+      }
+      return next;
+    });
+    setSelectAllMatching(false);
+  }
+
+  function activateSelectAllMatching() {
+    if (total === 0) return;
+    setSelectAllMatching(true);
+    // Clear explicit IDs — we now operate via filter.
+    setSelectedIds(new Set());
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+    setSelectAllMatching(false);
+  }
+
+  const pageIds = useMemo(
+    () => new Set((questions ?? []).map((q) => q.id)),
+    [questions]
+  );
+  const allOnPageSelected =
+    questions !== null &&
+    questions.length > 0 &&
+    questions.every((q) => selectedIds.has(q.id));
+  const someOnPageSelected =
+    questions !== null && questions.some((q) => selectedIds.has(q.id));
+
+  const selectedCount = selectAllMatching
+    ? total
+    : selectedIds.size;
+  const hasSelection = selectedCount > 0;
+
+  // ── Bulk publish — TASK C ─────────────────────────────────────────────
+  async function executeBulk(target: "published" | "draft") {
+    if (!hasSelection) return;
+    setBulkSubmitting(true);
+
+    // Capture scroll position so we can restore it after the dialog closes.
+    const scrollEl = tableScrollRef.current;
+    const scrollY = scrollEl ? scrollEl.scrollTop : 0;
+    const scrollX = scrollEl ? scrollEl.scrollLeft : 0;
+
+    try {
+      const body: Record<string, unknown> = { targetStatus: target };
+      if (selectAllMatching) {
+        body.filter = filterSpec;
+      } else {
+        body.questionIds = Array.from(selectedIds);
+      }
+
+      const res = await fetch("/api/admin/questions/bulk-publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? "Bulk publish failed");
+      }
+      const data = (await res.json()) as { result: BulkPublishResult };
+      const r = data.result;
+
+      const verb = target === "published" ? "published" : "moved to draft";
+      const changed = target === "published" ? r.published : r.unpublished;
+      toast.success(
+        `${changed} question(s) ${verb}. ` +
+          (r.alreadyTarget > 0 ? `${r.alreadyTarget} already in target status. ` : "") +
+          (r.needsReview > 0 ? `${r.needsReview} need review. ` : "") +
+          (r.failed > 0 ? `${r.failed} failed. ` : "")
+      );
+
+      // Refresh the current page so the table reflects the new statuses.
+      // We DO NOT clear selection automatically — admin may want to
+      // immediately operate on a different status. But if they were in
+      // "select all matching" mode, clear it because the filter result set
+      // has now changed.
+      await load();
+      if (selectAllMatching) {
+        // After bulk op, the set of matching questions changed (e.g. if they
+        // were drafts and got published, "all draft" no longer matches them).
+        // Clear the virtual flag and any IDs.
+        setSelectAllMatching(false);
+        setSelectedIds(new Set());
+      } else {
+        // Keep selection across pages. Already-updated questions remain
+        // selected in case admin wants to bulk-unpublish back.
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Bulk publish failed");
+    } finally {
+      setBulkSubmitting(false);
+      setBulkTarget(null);
+      // Restore scroll position
+      if (scrollEl) {
+        scrollEl.scrollTop = scrollY;
+        scrollEl.scrollLeft = scrollX;
+      }
+    }
+  }
+
+  // ── Pagination helpers ─────────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const showingFrom = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const showingTo = Math.min(page * PAGE_SIZE, total);
+
+  function gotoPage(p: number) {
+    if (p < 1 || p > totalPages || p === page) return;
+    setPage(p);
+  }
 
   return (
     <div className="space-y-6">
@@ -315,6 +555,95 @@ export function AdminQuestions() {
         </Select>
       </div>
 
+      {/* Bulk action toolbar — TASK B/C */}
+      {hasSelection && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-2.5">
+          <div className="flex items-center gap-3 text-sm text-slate-700">
+            {selectAllMatching ? (
+              <span className="flex items-center gap-2">
+                <CheckSquare className="size-4 text-emerald-600" />
+                <span>
+                  <strong>All {total} matching</strong> questions selected across
+                  all pages
+                </span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <CheckSquare className="size-4 text-emerald-600" />
+                <span>
+                  <strong>{selectedIds.size}</strong> selected
+                  {selectedIds.size > 0 && (
+                    <span className="text-slate-500">
+                      {" "}
+                      · {selectedIds.size > PAGE_SIZE
+                        ? "across pages"
+                        : "on this page"}
+                    </span>
+                  )}
+                </span>
+              </span>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={clearSelection}
+              className="h-7 px-2 text-slate-500 hover:text-slate-700"
+            >
+              <X className="size-3.5" />
+              Clear
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+              onClick={() => setBulkTarget("published")}
+              disabled={bulkSubmitting}
+            >
+              <Send className="size-4" />
+              Bulk Publish
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setBulkTarget("draft")}
+              disabled={bulkSubmitting}
+            >
+              <Archive className="size-4" />
+              Bulk Move to Draft
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* "Select all matching" prompt — appears when there are more
+          matching questions than the current page shows. */}
+      {!selectAllMatching &&
+        total > PAGE_SIZE &&
+        selectedIds.size > 0 &&
+        selectedIds.size < total &&
+        pageIds.size > 0 &&
+        allOnPageSelected && (
+          <div className="rounded-md bg-slate-50 border border-slate-200 px-4 py-2 text-sm text-slate-700 flex items-center justify-between">
+            <span>
+              {selectedIds.size} selected on this page.{" "}
+              <strong>{total}</strong> questions match the current filter
+              across {totalPages} pages.
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={activateSelectAllMatching}
+            >
+              Select all {total} matching
+            </Button>
+          </div>
+        )}
+
       {/* List */}
       {loading ? (
         <ListSkeleton rows={6} />
@@ -342,10 +671,21 @@ export function AdminQuestions() {
         />
       ) : (
         <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" ref={tableScrollRef}>
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
                 <tr>
+                  <th className="px-4 py-3 w-10 text-left">
+                    <Checkbox
+                      checked={allOnPageSelected}
+                      // Radix Checkbox uses "indeterminate" via a data attr; we
+                      // simulate by passing a boolean — fully checked or not.
+                      // For "some selected", the visual hint is the row-level
+                      // checkboxes themselves.
+                      onCheckedChange={(v) => selectAllOnPage(Boolean(v))}
+                      aria-label="Select all on page"
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left font-medium">Question</th>
                   <th className="px-4 py-3 text-left font-medium hidden lg:table-cell">
                     Class
@@ -364,14 +704,24 @@ export function AdminQuestions() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {visible.map((q, idx) => (
+                {questions.map((q, idx) => (
                   <motion.tr
                     key={q.id}
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.15, delay: Math.min(idx * 0.02, 0.3) }}
-                    className="hover:bg-slate-50/60 align-top"
+                    className={
+                      "hover:bg-slate-50/60 align-top " +
+                      (selectedIds.has(q.id) ? "bg-emerald-50/40" : "")
+                    }
                   >
+                    <td className="px-4 py-3">
+                      <Checkbox
+                        checked={selectedIds.has(q.id)}
+                        onCheckedChange={() => toggleRowSelection(q.id)}
+                        aria-label={`Select question ${q.id}`}
+                      />
+                    </td>
                     <td className="px-4 py-3 font-medium text-slate-900 max-w-md">
                       <div className="line-clamp-2">{q.questionText}</div>
                       <div className="mt-1 sm:hidden text-xs text-slate-500">
@@ -458,7 +808,17 @@ export function AdminQuestions() {
                               );
                             }
                             toast.success("Question deleted");
-                            await load();
+                            // Remove from local state without full refetch
+                            setQuestions((prev) =>
+                              prev ? prev.filter((row) => row.id !== q.id) : prev
+                            );
+                            setTotal((t) => Math.max(0, t - 1));
+                            // Also remove from selection if present
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              next.delete(q.id);
+                              return next;
+                            });
                           }}
                         />
                       </div>
@@ -468,12 +828,37 @@ export function AdminQuestions() {
               </tbody>
             </table>
           </div>
-          {hiddenCount > 0 && (
-            <div className="px-4 py-3 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 text-center">
-              Showing {visible.length} of {questions.length} questions. Narrow
-              your filters to see more.
+
+          {/* Pagination footer */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50">
+            <div className="text-xs text-slate-600">
+              Showing <strong>{showingFrom}</strong>–<strong>{showingTo}</strong>{" "}
+              of <strong>{total}</strong> questions
             </div>
-          )}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => gotoPage(page - 1)}
+                disabled={page <= 1 || loading}
+              >
+                <ChevronLeft className="size-4" />
+                <span className="hidden sm:inline">Previous</span>
+              </Button>
+              <span className="text-xs text-slate-600 px-2">
+                Page <strong>{page}</strong> of <strong>{totalPages}</strong>
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => gotoPage(page + 1)}
+                disabled={page >= totalPages || loading}
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -489,9 +874,84 @@ export function AdminQuestions() {
         onSaved={async () => {
           setCreating(false);
           setEditing(null);
+          // After create/edit, refetch the current page to reflect changes.
+          // (This is the ONLY mutation that triggers a refetch — single-question
+          // publish/unpublish no longer does.)
           await load();
         }}
       />
+
+      {/* Bulk publish confirmation dialog */}
+      <AlertDialog
+        open={bulkTarget !== null}
+        onOpenChange={(v) => {
+          if (!v && !bulkSubmitting) {
+            setBulkTarget(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {bulkTarget === "published"
+                ? "Publish selected questions?"
+                : "Move selected questions to draft?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm text-slate-600">
+                <p>
+                  You are about to{" "}
+                  {bulkTarget === "published" ? "publish" : "move to draft"}{" "}
+                  <strong>
+                    {selectAllMatching
+                      ? `all ${total} matching`
+                      : `${selectedIds.size} selected`}
+                  </strong>{" "}
+                  question(s).
+                </p>
+                {bulkTarget === "published" && (
+                  <p>
+                    Only valid questions (with all four options + a correct
+                    answer + non-empty question text) will be published.
+                    Invalid questions will be reported as needing review.
+                  </p>
+                )}
+                {selectAllMatching && (
+                  <p className="text-xs text-slate-500">
+                    The selection uses the current filters:{" "}
+                    {Object.entries(filterSpec).length === 0
+                      ? "no filters (all questions)"
+                      : Object.entries(filterSpec)
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join(", ")}
+                  </p>
+                )}
+                <p className="text-xs text-slate-500">
+                  This operation is idempotent — running it twice is safe.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={bulkSubmitting}
+              onClick={(e) => {
+                e.preventDefault();
+                if (bulkTarget) executeBulk(bulkTarget);
+              }}
+              className={
+                bulkTarget === "published"
+                  ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                  : "bg-amber-500 hover:bg-amber-600 text-white"
+              }
+            >
+              {bulkSubmitting && <Loader2 className="size-4 animate-spin" />}
+              {bulkTarget === "published" ? "Publish" : "Move to Draft"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

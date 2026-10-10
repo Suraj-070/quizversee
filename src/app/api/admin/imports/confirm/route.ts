@@ -11,7 +11,12 @@ import { logAdminActivity, ADMIN_ACTIONS } from "@/lib/admin-activity";
  * confirmation. Parses, validates again (safety), finds-or-creates the
  * Class/Subject/Topic hierarchy, and inserts valid questions.
  *
- * Body: { rawJson: string (base64) }
+ * Body:
+ *   { rawJson: string (base64), filename: string, importAsDraft?: boolean }
+ *
+ * If importAsDraft=true (default false), questions are inserted with
+ * status="draft" and an importBatchId stamp so they can be bulk-published
+ * later from the Import Center.
  */
 export async function POST(request: Request) {
   const { user, error } = await requireAdmin();
@@ -21,6 +26,11 @@ export async function POST(request: Request) {
   if (!body?.rawJson) {
     return NextResponse.json({ error: "Missing rawJson" }, { status: 400 });
   }
+
+  const importAsDraft = Boolean(body.importAsDraft);
+  // Generate a stable batch identifier for this import run so admins can
+  // later filter the Import Center by batch.
+  const importBatchId = `json-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   let raw: string;
   try {
@@ -110,12 +120,19 @@ export async function POST(request: Request) {
           optionD: q.options.D.text,
           correctOption: q.answer,
           explanation: q.explanation?.trim() || null,
-          status: "published",
+          // When importAsDraft is true, insert as draft so the admin can
+          // review and bulk-publish from the Import Center. Otherwise
+          // preserve the legacy behavior of publishing directly.
+          status: importAsDraft ? "draft" : "published",
           questionImage: q.questionImage || null,
           optionAImage: q.options.A.image || null,
           optionBImage: q.options.B.image || null,
           optionCImage: q.options.C.image || null,
           optionDImage: q.options.D.image || null,
+          // Tag with the batch ID for later filtering.
+          importBatchId,
+          sourceType: "manual",
+          sourceName: body.filename || "json-import",
         },
       });
       imported++;
@@ -147,7 +164,8 @@ export async function POST(request: Request) {
     ADMIN_ACTIONS.QUESTIONS_IMPORTED,
     "Question",
     topic.id,
-    `Imported ${imported} ${data.topic} questions`
+    `Imported ${imported} ${data.topic} questions` +
+      (importAsDraft ? " (as draft, batch=" + importBatchId + ")" : "")
   );
 
   return NextResponse.json({
@@ -158,6 +176,8 @@ export async function POST(request: Request) {
     imagesCount,
     failures,
     topicName: data.topic,
+    importBatchId,
+    status: importAsDraft ? "draft" : "published",
   });
 }
 

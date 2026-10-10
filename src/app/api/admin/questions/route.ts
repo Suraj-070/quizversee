@@ -12,9 +12,19 @@ import { requireAdmin } from "@/lib/auth-guard";
  *   - topicId   — filter by topic
  *   - status    — "draft" | "published"
  *   - search    — search question text
+ *   - sourceType    — filter by source type (e.g. "dataset")
+ *   - sourceName    — filter by source name (e.g. "textbooks-qa-nepali")
+ *   - importBatchId — filter by import batch identifier
+ *   - page     — 1-indexed page number (default 1)
+ *   - pageSize — items per page (default 50, max 200)
+ *   - paginate — "1" to enable pagination (default "1"); "0" returns all
+ *                matching (kept for backwards compat with old callers)
  *
- * Returns questions joined with their topic → subject → class chain for
- * display in the admin table.
+ * Returns:
+ *   { questions: [...], total: number, page: number, pageSize: number }
+ *
+ * When paginate=0 (legacy), `total` equals questions.length and `page`/`pageSize`
+ * are still present but informational only.
  */
 export async function GET(request: Request) {
   const { error } = await requireAdmin();
@@ -26,12 +36,24 @@ export async function GET(request: Request) {
   const topicId = url.searchParams.get("topicId");
   const status = url.searchParams.get("status");
   const search = url.searchParams.get("search");
+  const sourceType = url.searchParams.get("sourceType");
+  const sourceName = url.searchParams.get("sourceName");
+  const importBatchId = url.searchParams.get("importBatchId");
+  const paginate = url.searchParams.get("paginate") ?? "1";
+  const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10) || 1);
+  const pageSize = Math.min(
+    200,
+    Math.max(1, parseInt(url.searchParams.get("pageSize") ?? "50", 10) || 50)
+  );
 
   const where: {
     topicId?: string;
     status?: string;
     questionText?: { contains: string };
     topic?: { subjectId?: string; subject?: { classId?: string } };
+    sourceType?: string;
+    sourceName?: string;
+    importBatchId?: string;
   } = {};
 
   if (topicId) where.topicId = topicId;
@@ -39,33 +61,58 @@ export async function GET(request: Request) {
     where.status = status;
   }
   if (search) where.questionText = { contains: search };
+  if (sourceType) where.sourceType = sourceType;
+  if (sourceName) where.sourceName = sourceName;
+  if (importBatchId) where.importBatchId = importBatchId;
   if (subjectId || classId) {
     where.topic = {};
     if (subjectId) where.topic.subjectId = subjectId;
     if (classId) where.topic.subject = { classId };
   }
 
-  const questions = await db.question.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    include: {
-      topic: {
-        select: {
-          id: true,
-          name: true,
-          subject: {
-            select: {
-              id: true,
-              name: true,
-              class: { select: { id: true, name: true } },
-            },
+  const include = {
+    topic: {
+      select: {
+        id: true,
+        name: true,
+        subject: {
+          select: {
+            id: true,
+            name: true,
+            class: { select: { id: true, name: true } },
           },
         },
       },
     },
-  });
+  };
 
-  return NextResponse.json({ questions });
+  // Always compute total so the client can render "All N matching" affordances.
+  const total = await db.question.count({ where });
+
+  let questions;
+  if (paginate === "0") {
+    // Legacy: return all (used by older callers; avoid on large datasets).
+    questions = await db.question.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include,
+    });
+  } else {
+    questions = await db.question.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+  }
+
+  return NextResponse.json({
+    questions,
+    total,
+    page,
+    pageSize,
+  });
 }
 
 const CreateQuestionSchema = z.object({
@@ -92,7 +139,7 @@ const CreateQuestionSchema = z.object({
  * Creates a new question.
  */
 export async function POST(request: Request) {
-  const { error } = await requireAdmin();
+  const { user, error } = await requireAdmin();
   if (error) return error;
 
   const body = await request.json().catch(() => null);
@@ -166,6 +213,21 @@ export async function POST(request: Request) {
       },
     },
   });
+
+  // Log activity
+  try {
+    await db.adminActivity.create({
+      data: {
+        adminId: user.id,
+        action: "question.created",
+        entity: "Question",
+        entityId: question.id,
+        description: `Created question: ${questionText.slice(0, 80)}`,
+      },
+    });
+  } catch {
+    // ignore logging failures
+  }
 
   return NextResponse.json({ question }, { status: 201 });
 }

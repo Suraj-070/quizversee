@@ -142,12 +142,26 @@ model Question {
   sourceLicense  String?   // license info if required
   suitableLevels String?   // JSON array of class IDs, e.g. "[\"class-9-id\",\"class-10-id\"]"
 
+  // Optional batch identifier grouping questions from the same import run
+  // (e.g. "nepal-2026-10-10-001"). Used by Import Center to filter by batch.
+  importBatchId  String?
+
   topic          Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
   quizSetLinks   QuizSetQuestion[]
   answers        UserAnswer[]
   flags          QuestionFlag[]
   mastery        QuestionMastery[]
   aiExplanations AIExplanation[]
+
+  // Indexes for admin filtering and student quiz queries.
+  @@index([status])
+  @@index([topicId])
+  @@index([contentType])
+  @@index([status, contentType])
+  @@index([sourceType, sourceQuestionId])
+  @@index([sourceName])
+  @@index([importBatchId])
+  @@index([createdAt])
 }
 
 // ---------------------------------------------------------------------------

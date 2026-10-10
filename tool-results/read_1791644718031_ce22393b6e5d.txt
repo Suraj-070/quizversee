@@ -1,0 +1,1015 @@
+     1→"use client";
+     2→
+     3→import { useCallback, useEffect, useState } from "react";
+     4→import { motion } from "framer-motion";
+     5→import {
+     6→  FileQuestion,
+     7→  Plus,
+     8→  Pencil,
+     9→  Trash2,
+    10→  RefreshCw,
+    11→  Loader2,
+    12→  Search,
+    13→  Eye,
+    14→  EyeOff,
+    15→} from "lucide-react";
+    16→import type {
+    17→  AcademicClass,
+    18→  AcademicSubject,
+    19→  AcademicTopic,
+    20→  Question,
+    21→  QuestionStatus,
+    22→} from "@/types";
+    23→import { Button } from "@/components/ui/button";
+    24→import { Input } from "@/components/ui/input";
+    25→import { Label } from "@/components/ui/label";
+    26→import { Textarea } from "@/components/ui/textarea";
+    27→import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+    28→import {
+    29→  Select,
+    30→  SelectContent,
+    31→  SelectItem,
+    32→  SelectTrigger,
+    33→  SelectValue,
+    34→} from "@/components/ui/select";
+    35→import {
+    36→  Dialog,
+    37→  DialogContent,
+    38→  DialogDescription,
+    39→  DialogFooter,
+    40→  DialogHeader,
+    41→  DialogTitle,
+    42→} from "@/components/ui/dialog";
+    43→import { toast } from "sonner";
+    44→import { StatusBadge } from "@/components/admin/status-badge";
+    45→import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+    46→import { FormField } from "@/components/admin/form-field";
+    47→import { EmptyState } from "@/components/shared/empty-state";
+    48→import { ListSkeleton } from "@/components/shared/list-skeleton";
+    49→import { ImageUpload } from "@/components/admin/image-upload";
+    50→
+    51→type QuestionWithChain = Question & {
+    52→  topic: {
+    53→    id: string;
+    54→    name: string;
+    55→    subject: {
+    56→      id: string;
+    57→      name: string;
+    58→      class: { id: string; name: string };
+    59→    };
+    60→  };
+    61→};
+    62→
+    63→const PAGE_SIZE = 20;
+    64→
+    65→/**
+    66→ * AdminQuestions — full CRUD UI for the Question entity.
+    67→ *
+    68→ * Per PRD §10:
+    69→ *   Columns: Question | Class | Subject | Topic | Status | Created | Actions
+    70→ *   Filters: Search + Class + Subject + Topic + Status
+    71→ *   Actions: Edit, Delete, Publish/Unpublish
+    72→ *
+    73→ * Per PRD §11, the create/edit form has 3-level dependent selectors:
+    74→ *   Class → Subject → Topic
+    75→ */
+    76→export function AdminQuestions() {
+    77→  const [classes, setClasses] = useState<AcademicClass[]>([]);
+    78→  const [subjects, setSubjects] = useState<AcademicSubject[]>([]);
+    79→  const [topics, setTopics] = useState<AcademicTopic[]>([]);
+    80→
+    81→  const [filterClassId, setFilterClassId] = useState<string>("all");
+    82→  const [filterSubjectId, setFilterSubjectId] = useState<string>("all");
+    83→  const [filterTopicId, setFilterTopicId] = useState<string>("all");
+    84→  const [filterStatus, setFilterStatus] = useState<string>("all");
+    85→  const [search, setSearch] = useState("");
+    86→
+    87→  const [questions, setQuestions] = useState<QuestionWithChain[] | null>(null);
+    88→  const [loading, setLoading] = useState(true);
+    89→  const [editing, setEditing] = useState<QuestionWithChain | null>(null);
+    90→  const [creating, setCreating] = useState(false);
+    91→
+    92→  // Load classes once for the class filter dropdown
+    93→  useEffect(() => {
+    94→    async function loadClasses() {
+    95→      try {
+    96→        const res = await fetch("/api/admin/classes", { cache: "no-store" });
+    97→        if (!res.ok) return;
+    98→        const data = (await res.json()) as { classes: AcademicClass[] };
+    99→        setClasses(data.classes);
+   100→      } catch {
+   101→        // ignore
+   102→      }
+   103→    }
+   104→    loadClasses();
+   105→  }, []);
+   106→
+   107→  // Load subjects when filter class changes (dependent dropdown)
+   108→  useEffect(() => {
+   109→    if (filterClassId === "all") {
+   110→      setSubjects([]);
+   111→      setFilterSubjectId("all");
+   112→      return;
+   113→    }
+   114→    let cancelled = false;
+   115→    async function load() {
+   116→      try {
+   117→        const res = await fetch(
+   118→          `/api/admin/subjects?classId=${filterClassId}`,
+   119→          { cache: "no-store" }
+   120→        );
+   121→        if (!res.ok) return;
+   122→        const data = (await res.json()) as { subjects: AcademicSubject[] };
+   123→        if (cancelled) return;
+   124→        setSubjects(data.subjects);
+   125→        setFilterSubjectId("all");
+   126→      } catch {
+   127→        // ignore
+   128→      }
+   129→    }
+   130→    load();
+   131→    return () => {
+   132→      cancelled = true;
+   133→    };
+   134→  }, [filterClassId]);
+   135→
+   136→  // Load topics when filter subject changes (dependent dropdown)
+   137→  useEffect(() => {
+   138→    if (filterSubjectId === "all") {
+   139→      setTopics([]);
+   140→      setFilterTopicId("all");
+   141→      return;
+   142→    }
+   143→    let cancelled = false;
+   144→    async function load() {
+   145→      try {
+   146→        const res = await fetch(
+   147→          `/api/admin/topics?subjectId=${filterSubjectId}`,
+   148→          { cache: "no-store" }
+   149→        );
+   150→        if (!res.ok) return;
+   151→        const data = (await res.json()) as { topics: AcademicTopic[] };
+   152→        if (cancelled) return;
+   153→        setTopics(data.topics);
+   154→        setFilterTopicId("all");
+   155→      } catch {
+   156→        // ignore
+   157→      }
+   158→    }
+   159→    load();
+   160→    return () => {
+   161→      cancelled = true;
+   162→    };
+   163→  }, [filterSubjectId]);
+   164→
+   165→  const load = useCallback(async () => {
+   166→    setLoading(true);
+   167→    try {
+   168→      const url = new URL("/api/admin/questions", window.location.origin);
+   169→      if (filterClassId !== "all") url.searchParams.set("classId", filterClassId);
+   170→      if (filterSubjectId !== "all")
+   171→        url.searchParams.set("subjectId", filterSubjectId);
+   172→      if (filterTopicId !== "all") url.searchParams.set("topicId", filterTopicId);
+   173→      if (filterStatus !== "all") url.searchParams.set("status", filterStatus);
+   174→      if (search.trim()) url.searchParams.set("search", search.trim());
+   175→      const res = await fetch(url.toString(), { cache: "no-store" });
+   176→      if (!res.ok) throw new Error("Failed to load questions");
+   177→      const data = (await res.json()) as { questions: QuestionWithChain[] };
+   178→      setQuestions(data.questions);
+   179→    } catch (e) {
+   180→      toast.error(e instanceof Error ? e.message : "Failed to load questions");
+   181→      setQuestions([]);
+   182→    } finally {
+   183→      setLoading(false);
+   184→    }
+   185→  }, [filterClassId, filterSubjectId, filterTopicId, filterStatus, search]);
+   186→
+   187→  useEffect(() => {
+   188→    load();
+   189→  }, [load]);
+   190→
+   191→  async function togglePublish(q: QuestionWithChain) {
+   192→    const next: QuestionStatus = q.status === "published" ? "draft" : "published";
+   193→    try {
+   194→      const res = await fetch(`/api/admin/questions/${q.id}`, {
+   195→        method: "PATCH",
+   196→        headers: { "Content-Type": "application/json" },
+   197→        body: JSON.stringify({ status: next }),
+   198→      });
+   199→      if (!res.ok) {
+   200→        const d = await res.json().catch(() => ({}));
+   201→        throw new Error(d.error ?? "Failed to update status");
+   202→      }
+   203→      toast.success(
+   204→        next === "published" ? "Question published" : "Question moved to draft"
+   205→      );
+   206→      await load();
+   207→    } catch (e) {
+   208→      toast.error(e instanceof Error ? e.message : "Failed to update status");
+   209→    }
+   210→  }
+   211→
+   212→  const visible = (questions ?? []).slice(0, PAGE_SIZE);
+   213→  const hiddenCount = (questions?.length ?? 0) - visible.length;
+   214→
+   215→  return (
+   216→    <div className="space-y-6">
+   217→      <div className="flex flex-wrap items-center justify-between gap-3">
+   218→        <div>
+   219→          <h2 className="text-2xl font-bold text-slate-900">Questions</h2>
+   220→          <p className="text-sm text-slate-600 mt-1">
+   221→            Create, edit, and publish MCQs. Questions are grouped by topic.
+   222→          </p>
+   223→        </div>
+   224→        <div className="flex items-center gap-2">
+   225→          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+   226→            <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
+   227→            <span className="hidden sm:inline">Refresh</span>
+   228→          </Button>
+   229→          <Button
+   230→            size="sm"
+   231→            className="bg-emerald-500 hover:bg-emerald-600 text-white"
+   232→            onClick={() => setCreating(true)}
+   233→            disabled={classes.length === 0}
+   234→          >
+   235→            <Plus className="size-4" />
+   236→            Add Question
+   237→          </Button>
+   238→        </div>
+   239→      </div>
+   240→
+   241→      {classes.length === 0 && (
+   242→        <div className="rounded-md bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+   243→          You need to create at least one class, subject, and topic before you
+   244→          can add questions.
+   245→        </div>
+   246→      )}
+   247→
+   248→      {/* Filters */}
+   249→      <div className="flex flex-wrap gap-3">
+   250→        <div className="relative flex-1 min-w-[200px] max-w-sm">
+   251→          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+   252→          <Input
+   253→            placeholder="Search question text…"
+   254→            value={search}
+   255→            onChange={(e) => setSearch(e.target.value)}
+   256→            className="pl-9"
+   257→          />
+   258→        </div>
+   259→        <Select value={filterClassId} onValueChange={setFilterClassId}>
+   260→          <SelectTrigger className="w-[160px]">
+   261→            <SelectValue placeholder="All classes" />
+   262→          </SelectTrigger>
+   263→          <SelectContent>
+   264→            <SelectItem value="all">All classes</SelectItem>
+   265→            {classes.map((c) => (
+   266→              <SelectItem key={c.id} value={c.id}>
+   267→                {c.name}
+   268→              </SelectItem>
+   269→            ))}
+   270→          </SelectContent>
+   271→        </Select>
+   272→        <Select
+   273→          value={filterSubjectId}
+   274→          onValueChange={setFilterSubjectId}
+   275→          disabled={filterClassId === "all"}
+   276→        >
+   277→          <SelectTrigger className="w-[160px]">
+   278→            <SelectValue placeholder="All subjects" />
+   279→          </SelectTrigger>
+   280→          <SelectContent>
+   281→            <SelectItem value="all">All subjects</SelectItem>
+   282→            {subjects.map((s) => (
+   283→              <SelectItem key={s.id} value={s.id}>
+   284→                {s.name}
+   285→              </SelectItem>
+   286→            ))}
+   287→          </SelectContent>
+   288→        </Select>
+   289→        <Select
+   290→          value={filterTopicId}
+   291→          onValueChange={setFilterTopicId}
+   292→          disabled={filterSubjectId === "all"}
+   293→        >
+   294→          <SelectTrigger className="w-[180px]">
+   295→            <SelectValue placeholder="All topics" />
+   296→          </SelectTrigger>
+   297→          <SelectContent>
+   298→            <SelectItem value="all">All topics</SelectItem>
+   299→            {topics.map((t) => (
+   300→              <SelectItem key={t.id} value={t.id}>
+   301→                {t.name}
+   302→              </SelectItem>
+   303→            ))}
+   304→          </SelectContent>
+   305→        </Select>
+   306→        <Select value={filterStatus} onValueChange={setFilterStatus}>
+   307→          <SelectTrigger className="w-[140px]">
+   308→            <SelectValue placeholder="All statuses" />
+   309→          </SelectTrigger>
+   310→          <SelectContent>
+   311→            <SelectItem value="all">All statuses</SelectItem>
+   312→            <SelectItem value="published">Published</SelectItem>
+   313→            <SelectItem value="draft">Draft</SelectItem>
+   314→          </SelectContent>
+   315→        </Select>
+   316→      </div>
+   317→
+   318→      {/* List */}
+   319→      {loading ? (
+   320→        <ListSkeleton rows={6} />
+   321→      ) : !questions || questions.length === 0 ? (
+   322→        <EmptyState
+   323→          icon={FileQuestion}
+   324→          title="No questions yet"
+   325→          description={
+   326→            classes.length === 0
+   327→              ? "Create a class, subject, and topic first, then add questions."
+   328→              : "Add your first question to start building the quiz bank."
+   329→          }
+   330→          action={
+   331→            classes.length > 0 ? (
+   332→              <Button
+   333→                size="sm"
+   334→                className="bg-emerald-500 hover:bg-emerald-600 text-white"
+   335→                onClick={() => setCreating(true)}
+   336→              >
+   337→                <Plus className="size-4" />
+   338→                Add Question
+   339→              </Button>
+   340→            ) : undefined
+   341→          }
+   342→        />
+   343→      ) : (
+   344→        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+   345→          <div className="overflow-x-auto">
+   346→            <table className="w-full text-sm">
+   347→              <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+   348→                <tr>
+   349→                  <th className="px-4 py-3 text-left font-medium">Question</th>
+   350→                  <th className="px-4 py-3 text-left font-medium hidden lg:table-cell">
+   351→                    Class
+   352→                  </th>
+   353→                  <th className="px-4 py-3 text-left font-medium hidden md:table-cell">
+   354→                    Subject
+   355→                  </th>
+   356→                  <th className="px-4 py-3 text-left font-medium hidden sm:table-cell">
+   357→                    Topic
+   358→                  </th>
+   359→                  <th className="px-4 py-3 text-left font-medium">Status</th>
+   360→                  <th className="px-4 py-3 text-left font-medium hidden md:table-cell">
+   361→                    Created
+   362→                  </th>
+   363→                  <th className="px-4 py-3 text-right font-medium">Actions</th>
+   364→                </tr>
+   365→              </thead>
+   366→              <tbody className="divide-y divide-slate-100">
+   367→                {visible.map((q, idx) => (
+   368→                  <motion.tr
+   369→                    key={q.id}
+   370→                    initial={{ opacity: 0, y: 4 }}
+   371→                    animate={{ opacity: 1, y: 0 }}
+   372→                    transition={{ duration: 0.15, delay: Math.min(idx * 0.02, 0.3) }}
+   373→                    className="hover:bg-slate-50/60 align-top"
+   374→                  >
+   375→                    <td className="px-4 py-3 font-medium text-slate-900 max-w-md">
+   376→                      <div className="line-clamp-2">{q.questionText}</div>
+   377→                      <div className="mt-1 sm:hidden text-xs text-slate-500">
+   378→                        {q.topic.subject.class.name} → {q.topic.subject.name} →{" "}
+   379→                        {q.topic.name}
+   380→                      </div>
+   381→                    </td>
+   382→                    <td className="px-4 py-3 text-slate-600 hidden lg:table-cell">
+   383→                      {q.topic.subject.class.name}
+   384→                    </td>
+   385→                    <td className="px-4 py-3 text-slate-600 hidden md:table-cell">
+   386→                      {q.topic.subject.name}
+   387→                    </td>
+   388→                    <td className="px-4 py-3 text-slate-600 hidden sm:table-cell">
+   389→                      {q.topic.name}
+   390→                    </td>
+   391→                    <td className="px-4 py-3">
+   392→                      <StatusBadge
+   393→                        tone={q.status === "published" ? "published" : "draft"}
+   394→                        label={q.status === "published" ? "Published" : "Draft"}
+   395→                      />
+   396→                    </td>
+   397→                    <td className="px-4 py-3 text-slate-500 hidden md:table-cell text-xs">
+   398→                      {new Date(q.createdAt).toLocaleDateString(undefined, {
+   399→                        year: "numeric",
+   400→                        month: "short",
+   401→                        day: "numeric",
+   402→                      })}
+   403→                    </td>
+   404→                    <td className="px-4 py-3 text-right">
+   405→                      <div className="inline-flex items-center gap-1">
+   406→                        <Button
+   407→                          variant="ghost"
+   408→                          size="sm"
+   409→                          onClick={() => togglePublish(q)}
+   410→                          title={
+   411→                            q.status === "published" ? "Unpublish" : "Publish"
+   412→                          }
+   413→                          className={
+   414→                            q.status === "published"
+   415→                              ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+   416→                              : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+   417→                          }
+   418→                        >
+   419→                          {q.status === "published" ? (
+   420→                            <EyeOff className="size-4" />
+   421→                          ) : (
+   422→                            <Eye className="size-4" />
+   423→                          )}
+   424→                          <span className="hidden sm:inline">
+   425→                            {q.status === "published" ? "Unpublish" : "Publish"}
+   426→                          </span>
+   427→                        </Button>
+   428→                        <Button
+   429→                          variant="ghost"
+   430→                          size="sm"
+   431→                          onClick={() => setEditing(q)}
+   432→                        >
+   433→                          <Pencil className="size-4" />
+   434→                          <span className="hidden sm:inline">Edit</span>
+   435→                        </Button>
+   436→                        <ConfirmDialog
+   437→                          trigger={
+   438→                            <Button
+   439→                              variant="ghost"
+   440→                              size="sm"
+   441→                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+   442→                            >
+   443→                              <Trash2 className="size-4" />
+   444→                              <span className="hidden sm:inline">Delete</span>
+   445→                            </Button>
+   446→                          }
+   447→                          title="Delete this question?"
+   448→                          entityName={q.questionText.slice(0, 80) + (q.questionText.length > 80 ? "…" : "")}
+   449→                          onConfirm={async () => {
+   450→                            const res = await fetch(
+   451→                              `/api/admin/questions/${q.id}`,
+   452→                              { method: "DELETE" }
+   453→                            );
+   454→                            if (!res.ok) {
+   455→                              const d = await res.json().catch(() => ({}));
+   456→                              throw new Error(
+   457→                                d.error ?? "Failed to delete question"
+   458→                              );
+   459→                            }
+   460→                            toast.success("Question deleted");
+   461→                            await load();
+   462→                          }}
+   463→                        />
+   464→                      </div>
+   465→                    </td>
+   466→                  </motion.tr>
+   467→                ))}
+   468→              </tbody>
+   469→            </table>
+   470→          </div>
+   471→          {hiddenCount > 0 && (
+   472→            <div className="px-4 py-3 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 text-center">
+   473→              Showing {visible.length} of {questions.length} questions. Narrow
+   474→              your filters to see more.
+   475→            </div>
+   476→          )}
+   477→        </div>
+   478→      )}
+   479→
+   480→      {/* Create / Edit dialog */}
+   481→      <QuestionDialog
+   482→        open={creating || editing !== null}
+   483→        editing={editing}
+   484→        classes={classes}
+   485→        onClose={() => {
+   486→          setCreating(false);
+   487→          setEditing(null);
+   488→        }}
+   489→        onSaved={async () => {
+   490→          setCreating(false);
+   491→          setEditing(null);
+   492→          await load();
+   493→        }}
+   494→      />
+   495→    </div>
+   496→  );
+   497→}
+   498→
+   499→// ---------------------------------------------------------------------------
+   500→// Create/Edit Dialog — with 3-level dependent selectors Class → Subject → Topic
+   501→// ---------------------------------------------------------------------------
+   502→
+   503→function QuestionDialog({
+   504→  open,
+   505→  editing,
+   506→  classes,
+   507→  onClose,
+   508→  onSaved,
+   509→}: {
+   510→  open: boolean;
+   511→  editing: QuestionWithChain | null;
+   512→  classes: AcademicClass[];
+   513→  onClose: () => void;
+   514→  onSaved: () => void | Promise<void>;
+   515→}) {
+   516→  const [classId, setClassId] = useState<string>("");
+   517→  const [subjects, setSubjects] = useState<AcademicSubject[]>([]);
+   518→  const [subjectId, setSubjectId] = useState<string>("");
+   519→  const [topics, setTopics] = useState<AcademicTopic[]>([]);
+   520→  const [topicId, setTopicId] = useState<string>("");
+   521→
+   522→  const [questionText, setQuestionText] = useState("");
+   523→  const [optionA, setOptionA] = useState("");
+   524→  const [optionB, setOptionB] = useState("");
+   525→  const [optionC, setOptionC] = useState("");
+   526→  const [optionD, setOptionD] = useState("");
+   527→  const [questionImage, setQuestionImage] = useState<string | null>(null);
+   528→  const [optionAImage, setOptionAImage] = useState<string | null>(null);
+   529→  const [optionBImage, setOptionBImage] = useState<string | null>(null);
+   530→  const [optionCImage, setOptionCImage] = useState<string | null>(null);
+   531→  const [optionDImage, setOptionDImage] = useState<string | null>(null);
+   532→  const [correctOption, setCorrectOption] = useState<"A" | "B" | "C" | "D">("A");
+   533→  const [explanation, setExplanation] = useState("");
+   534→  const [status, setStatus] = useState<QuestionStatus>("draft");
+   535→  const [saving, setSaving] = useState(false);
+   536→  const [error, setError] = useState<string | null>(null);
+   537→
+   538→  // Reset form when dialog opens with a new target.
+   539→  useEffect(() => {
+   540→    if (!open) return;
+   541→    setError(null);
+   542→    if (editing) {
+   543→      // Pre-populate parent chain from editing target
+   544→      setClassId(editing.topic.subject.class.id);
+   545→      setSubjectId(editing.topic.subject.id);
+   546→      setTopicId(editing.topic.id);
+   547→      setQuestionText(editing.questionText);
+   548→      setOptionA(editing.optionA);
+   549→      setOptionB(editing.optionB);
+   550→      setOptionC(editing.optionC);
+   551→      setOptionD(editing.optionD);
+   552→      setCorrectOption(editing.correctOption);
+   553→      setExplanation(editing.explanation ?? "");
+   554→      setStatus(editing.status);
+   555→      setQuestionImage(editing.questionImage ?? null);
+   556→      setOptionAImage(editing.optionAImage ?? null);
+   557→      setOptionBImage(editing.optionBImage ?? null);
+   558→      setOptionCImage(editing.optionCImage ?? null);
+   559→      setOptionDImage(editing.optionDImage ?? null);
+   560→    } else {
+   561→      setClassId(classes[0]?.id ?? "");
+   562→      setSubjectId("");
+   563→      setTopicId("");
+   564→      setQuestionText("");
+   565→      setOptionA("");
+   566→      setOptionB("");
+   567→      setOptionC("");
+   568→      setOptionD("");
+   569→      setCorrectOption("A");
+   570→      setExplanation("");
+   571→      setStatus("draft");
+   572→      setQuestionImage(null);
+   573→      setOptionAImage(null);
+   574→      setOptionBImage(null);
+   575→      setOptionCImage(null);
+   576→      setOptionDImage(null);
+   577→    }
+   578→  }, [open, editing, classes]);
+   579→
+   580→  // Load subjects when classId changes
+   581→  useEffect(() => {
+   582→    if (!open || !classId) {
+   583→      setSubjects([]);
+   584→      return;
+   585→    }
+   586→    let cancelled = false;
+   587→    async function load() {
+   588→      try {
+   589→        const res = await fetch(`/api/admin/subjects?classId=${classId}`, {
+   590→          cache: "no-store",
+   591→        });
+   592→        if (!res.ok) return;
+   593→        const data = (await res.json()) as { subjects: AcademicSubject[] };
+   594→        if (cancelled) return;
+   595→        setSubjects(data.subjects);
+   596→        // If editing and the current subjectId belongs to this class, keep it.
+   597→        if (
+   598→          editing &&
+   599→          editing.topic.subject.class.id === classId &&
+   600→          data.subjects.some((s) => s.id === editing.topic.subject.id)
+   601→        ) {
+   602→          setSubjectId(editing.topic.subject.id);
+   603→        } else if (!data.subjects.some((s) => s.id === subjectId)) {
+   604→          setSubjectId("");
+   605→        }
+   606→      } catch {
+   607→        // ignore
+   608→      }
+   609→    }
+   610→    load();
+   611→    return () => {
+   612→      cancelled = true;
+   613→    };
+   614→  }, [classId, open, editing, subjectId]);
+   615→
+   616→  // Load topics when subjectId changes
+   617→  useEffect(() => {
+   618→    if (!open || !subjectId) {
+   619→      setTopics([]);
+   620→      return;
+   621→    }
+   622→    let cancelled = false;
+   623→    async function load() {
+   624→      try {
+   625→        const res = await fetch(`/api/admin/topics?subjectId=${subjectId}`, {
+   626→          cache: "no-store",
+   627→        });
+   628→        if (!res.ok) return;
+   629→        const data = (await res.json()) as { topics: AcademicTopic[] };
+   630→        if (cancelled) return;
+   631→        setTopics(data.topics);
+   632→        if (
+   633→          editing &&
+   634→          editing.topic.subject.id === subjectId &&
+   635→          data.topics.some((t) => t.id === editing.topic.id)
+   636→        ) {
+   637→          setTopicId(editing.topic.id);
+   638→        } else if (!data.topics.some((t) => t.id === topicId)) {
+   639→          setTopicId("");
+   640→        }
+   641→      } catch {
+   642→        // ignore
+   643→      }
+   644→    }
+   645→    load();
+   646→    return () => {
+   647→      cancelled = true;
+   648→    };
+   649→  }, [subjectId, open, editing, topicId]);
+   650→
+   651→  async function handleSubmit(e: React.FormEvent) {
+   652→    e.preventDefault();
+   653→    setError(null);
+   654→    if (!classId) {
+   655→      setError("Please select a parent class");
+   656→      return;
+   657→    }
+   658→    if (!subjectId) {
+   659→      setError("Please select a parent subject");
+   660→      return;
+   661→    }
+   662→    if (!topicId) {
+   663→      setError("Please select a parent topic");
+   664→      return;
+   665→    }
+   666→    if (!questionText.trim()) {
+   667→      setError("Question text is required");
+   668→      return;
+   669→    }
+   670→    if (!optionA.trim() || !optionB.trim() || !optionC.trim() || !optionD.trim()) {
+   671→      setError("All four options are required");
+   672→      return;
+   673→    }
+   674→    setSaving(true);
+   675→    try {
+   676→      const url = editing
+   677→        ? `/api/admin/questions/${editing.id}`
+   678→        : "/api/admin/questions";
+   679→      const method = editing ? "PATCH" : "POST";
+   680→      const res = await fetch(url, {
+   681→        method,
+   682→        headers: { "Content-Type": "application/json" },
+   683→        body: JSON.stringify({
+   684→          topicId,
+   685→          questionText: questionText.trim(),
+   686→          optionA: optionA.trim(),
+   687→          optionB: optionB.trim(),
+   688→          optionC: optionC.trim(),
+   689→          optionD: optionD.trim(),
+   690→          correctOption,
+   691→          explanation: explanation.trim() || null,
+   692→          status,
+   693→          questionImage,
+   694→          optionAImage,
+   695→          optionBImage,
+   696→          optionCImage,
+   697→          optionDImage,
+   698→        }),
+   699→      });
+   700→      if (!res.ok) {
+   701→        const d = await res.json().catch(() => ({}));
+   702→        throw new Error(d.error ?? "Failed to save question");
+   703→      }
+   704→      toast.success(editing ? "Question updated" : "Question created");
+   705→      await onSaved();
+   706→    } catch (err) {
+   707→      setError(err instanceof Error ? err.message : "Failed to save question");
+   708→    } finally {
+   709→      setSaving(false);
+   710→    }
+   711→  }
+   712→
+   713→  return (
+   714→    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+   715→      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+   716→        <DialogHeader>
+   717→          <DialogTitle>
+   718→            {editing ? "Edit Question" : "Create Question"}
+   719→          </DialogTitle>
+   720→          <DialogDescription>
+   721→            {editing
+   722→              ? "Update this question's content or status."
+   723→              : "Add a new MCQ. Pick the parent class → subject → topic first."}
+   724→          </DialogDescription>
+   725→        </DialogHeader>
+   726→
+   727→        <form onSubmit={handleSubmit} className="space-y-4">
+   728→          {/* 3-level dependent selectors */}
+   729→          <div className="grid gap-3 sm:grid-cols-3">
+   730→            <FormField label="Class" required>
+   731→              <Select
+   732→                value={classId}
+   733→                onValueChange={(v) => {
+   734→                  setClassId(v);
+   735→                  setSubjectId("");
+   736→                  setTopicId("");
+   737→                }}
+   738→                disabled={saving}
+   739→              >
+   740→                <SelectTrigger>
+   741→                  <SelectValue placeholder="Pick a class" />
+   742→                </SelectTrigger>
+   743→                <SelectContent>
+   744→                  {classes.map((c) => (
+   745→                    <SelectItem key={c.id} value={c.id}>
+   746→                      {c.name}
+   747→                    </SelectItem>
+   748→                  ))}
+   749→                </SelectContent>
+   750→              </Select>
+   751→            </FormField>
+   752→            <FormField
+   753→              label="Subject"
+   754→              required
+   755→              hint={
+   756→                !classId
+   757→                  ? "Pick class first."
+   758→                  : subjects.length === 0
+   759→                    ? "No subjects."
+   760→                    : undefined
+   761→              }
+   762→            >
+   763→              <Select
+   764→                value={subjectId}
+   765→                onValueChange={(v) => {
+   766→                  setSubjectId(v);
+   767→                  setTopicId("");
+   768→                }}
+   769→                disabled={saving || !classId || subjects.length === 0}
+   770→              >
+   771→                <SelectTrigger>
+   772→                  <SelectValue placeholder="Pick a subject" />
+   773→                </SelectTrigger>
+   774→                <SelectContent>
+   775→                  {subjects.map((s) => (
+   776→                    <SelectItem key={s.id} value={s.id}>
+   777→                      {s.name}
+   778→                    </SelectItem>
+   779→                  ))}
+   780→                </SelectContent>
+   781→              </Select>
+   782→            </FormField>
+   783→            <FormField
+   784→              label="Topic"
+   785→              required
+   786→              hint={
+   787→                !subjectId
+   788→                  ? "Pick subject first."
+   789→                  : topics.length === 0
+   790→                    ? "No topics."
+   791→                    : undefined
+   792→              }
+   793→            >
+   794→              <Select
+   795→                value={topicId}
+   796→                onValueChange={setTopicId}
+   797→                disabled={saving || !subjectId || topics.length === 0}
+   798→              >
+   799→                <SelectTrigger>
+   800→                  <SelectValue placeholder="Pick a topic" />
+   801→                </SelectTrigger>
+   802→                <SelectContent>
+   803→                  {topics.map((t) => (
+   804→                    <SelectItem key={t.id} value={t.id}>
+   805→                      {t.name}
+   806→                    </SelectItem>
+   807→                  ))}
+   808→                </SelectContent>
+   809→              </Select>
+   810→            </FormField>
+   811→          </div>
+   812→
+   813→          <FormField label="Question" htmlFor="q-text" required>
+   814→            <Textarea
+   815→              id="q-text"
+   816→              value={questionText}
+   817→              onChange={(e) => setQuestionText(e.target.value)}
+   818→              placeholder="e.g. What is the SI unit of force?"
+   819→              rows={3}
+   820→              disabled={saving}
+   821→            />
+   822→          </FormField>
+   823→
+   824→          {/* Optional question image (e.g. a diagram, graph, or figure) */}
+   825→          <ImageUpload
+   826→            value={questionImage}
+   827→            onChange={setQuestionImage}
+   828→            label="Question image (optional — diagram, graph, figure)"
+   829→          />
+   830→
+   831→          <div className="grid gap-3 sm:grid-cols-2">
+   832→            <OptionField
+   833→              label="Option A"
+   834→              value={optionA}
+   835→              onChange={setOptionA}
+   836→              selected={correctOption === "A"}
+   837→              onSelect={() => setCorrectOption("A")}
+   838→              disabled={saving}
+   839→              image={optionAImage}
+   840→              onImageChange={setOptionAImage}
+   841→            />
+   842→            <OptionField
+   843→              label="Option B"
+   844→              value={optionB}
+   845→              onChange={setOptionB}
+   846→              selected={correctOption === "B"}
+   847→              onSelect={() => setCorrectOption("B")}
+   848→              disabled={saving}
+   849→              image={optionBImage}
+   850→              onImageChange={setOptionBImage}
+   851→            />
+   852→            <OptionField
+   853→              label="Option C"
+   854→              value={optionC}
+   855→              onChange={setOptionC}
+   856→              selected={correctOption === "C"}
+   857→              onSelect={() => setCorrectOption("C")}
+   858→              disabled={saving}
+   859→              image={optionCImage}
+   860→              onImageChange={setOptionCImage}
+   861→            />
+   862→            <OptionField
+   863→              label="Option D"
+   864→              value={optionD}
+   865→              onChange={setOptionD}
+   866→              selected={correctOption === "D"}
+   867→              onSelect={() => setCorrectOption("D")}
+   868→              disabled={saving}
+   869→              image={optionDImage}
+   870→              onImageChange={setOptionDImage}
+   871→            />
+   872→          </div>
+   873→
+   874→          <FormField
+   875→            label="Explanation"
+   876→            htmlFor="q-explanation"
+   877→            hint="Optional — shown to students after they answer."
+   878→          >
+   879→            <Textarea
+   880→              id="q-explanation"
+   881→              value={explanation}
+   882→              onChange={(e) => setExplanation(e.target.value)}
+   883→              placeholder="e.g. Force is measured in newtons (N). 1 N = 1 kg·m/s²."
+   884→              rows={2}
+   885→              disabled={saving}
+   886→            />
+   887→          </FormField>
+   888→
+   889→          <FormField label="Status" required>
+   890→            <RadioGroup
+   891→              value={status}
+   892→              onValueChange={(v) => setStatus(v as QuestionStatus)}
+   893→              className="flex gap-4"
+   894→              disabled={saving}
+   895→            >
+   896→              <div className="flex items-center gap-2">
+   897→                <RadioGroupItem value="draft" id="status-draft" />
+   898→                <Label htmlFor="status-draft" className="text-sm">
+   899→                  Draft (hidden from students)
+   900→                </Label>
+   901→              </div>
+   902→              <div className="flex items-center gap-2">
+   903→                <RadioGroupItem value="published" id="status-published" />
+   904→                <Label htmlFor="status-published" className="text-sm">
+   905→                  Published (visible to students)
+   906→                </Label>
+   907→              </div>
+   908→            </RadioGroup>
+   909→          </FormField>
+   910→
+   911→          {error && (
+   912→            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+   913→              {error}
+   914→            </div>
+   915→          )}
+   916→
+   917→          <DialogFooter>
+   918→            <Button
+   919→              type="button"
+   920→              variant="outline"
+   921→              onClick={onClose}
+   922→              disabled={saving}
+   923→            >
+   924→              Cancel
+   925→            </Button>
+   926→            <Button
+   927→              type="submit"
+   928→              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+   929→              disabled={saving}
+   930→            >
+   931→              {saving && <Loader2 className="size-4 animate-spin" />}
+   932→              {editing ? "Save changes" : "Create question"}
+   933→            </Button>
+   934→          </DialogFooter>
+   935→        </form>
+   936→      </DialogContent>
+   937→    </Dialog>
+   938→  );
+   939→}
+   940→
+   941→function OptionField({
+   942→  label,
+   943→  value,
+   944→  onChange,
+   945→  selected,
+   946→  onSelect,
+   947→  disabled,
+   948→  image,
+   949→  onImageChange,
+   950→}: {
+   951→  label: string;
+   952→  value: string;
+   953→  onChange: (v: string) => void;
+   954→  selected: boolean;
+   955→  onSelect: () => void;
+   956→  disabled?: boolean;
+   957→  image: string | null;
+   958→  onImageChange: (v: string | null) => void;
+   959→}) {
+   960→  return (
+   961→    <div
+   962→      className={
+   963→        "rounded-lg border px-3 py-2 transition-colors " +
+   964→        (selected
+   965→          ? "border-emerald-400 bg-emerald-50"
+   966→          : "border-slate-200 bg-white")
+   967→      }
+   968→    >
+   969→      <div className="flex items-center gap-2 mb-1">
+   970→        <button
+   971→          type="button"
+   972→          onClick={onSelect}
+   973→          disabled={disabled}
+   974→          className={
+   975→            "size-5 rounded-full border-2 flex items-center justify-center transition-colors " +
+   976→            (selected
+   977→              ? "border-emerald-500 bg-emerald-500 text-white"
+   978→              : "border-slate-300 hover:border-emerald-400")
+   979→          }
+   980→          aria-label={`Mark ${label} as correct`}
+   981→        >
+   982→          {selected && (
+   983→            <svg
+   984→              xmlns="http://www.w3.org/2000/svg"
+   985→              viewBox="0 0 20 20"
+   986→              fill="currentColor"
+   987→              className="size-3"
+   988→            >
+   989→              <path
+   990→                fillRule="evenodd"
+   991→                d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 1 1 1.4-1.4l2.8 2.79 6.8-6.79a1 1 0 0 1 1.4 0Z"
+   992→                clipRule="evenodd"
+   993→              />
+   994→            </svg>
+   995→          )}
+   996→        </button>
+   997→        <label className="text-xs font-medium text-slate-600">{label}</label>
+   998→        {selected && (
+   999→          <span className="ml-auto text-xs text-emerald-600 font-medium">
+  1000→            Correct
+  1001→          </span>
+  1002→        )}
+  1003→      </div>
+  1004→      <Input
+  1005→        value={value}
+  1006→        onChange={(e) => onChange(e.target.value)}
+  1007→        placeholder={`Option ${label.split(" ")[1]} text`}
+  1008→        disabled={disabled}
+  1009→        className="border-0 px-0 focus-visible:ring-0 focus-visible:border-0 h-8"
+  1010→      />
+  1011→      <ImageUpload value={image} onChange={onImageChange} className="mt-2" />
+  1012→    </div>
+  1013→  );
+  1014→}
+  1015→
