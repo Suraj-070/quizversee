@@ -1,86 +1,69 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth-guard";
 
 type Params = { params: Promise<{ id: string }> };
+class AttemptMissing extends Error {}
 
-/**
- * POST /api/student/attempts/[id]/complete
- *
- * Marks an attempt as complete and computes the final score.
- *
- * - Sums up correctAnswers from the UserAnswer rows
- * - Computes scorePercentage = correct / total * 100
- * - Sets completedAt
- *
- * Idempotent: if the attempt is already completed, returns the existing
- * score without re-computing.
- */
+/** PostgreSQL rollout: locks the attempt to prevent a completion/submission race. */
 export async function POST(_req: Request, { params }: Params) {
   const { user, error } = await requireUser();
   if (error) return error;
-
   const { id: attemptId } = await params;
 
-  const attempt = await db.quizAttempt.findFirst({
-    where: { id: attemptId, userId: user.id },
-    include: {
-      answers: { select: { isCorrect: true } },
-      topic: {
-        select: {
-          id: true,
-          name: true,
-          subject: {
-            select: {
-              id: true,
-              name: true,
-              class: { select: { id: true, name: true } },
+  for (let retry = 0; retry < 3; retry++) {
+    try {
+      const result = await db.$transaction(async tx => {
+        const locked = await tx.$queryRaw<{ id: string }[]>`
+          SELECT "id" FROM "QuizAttempt"
+          WHERE "id" = ${attemptId} AND "userId" = ${user.id}
+          FOR UPDATE
+        `;
+        if (!locked.length) throw new AttemptMissing();
+
+        const attempt = await tx.quizAttempt.findFirst({
+          where: { id: attemptId, userId: user.id },
+          include: {
+            answers: { select: { isCorrect: true, submittedAt: true } },
+            topic: {
+              select: {
+                id: true, name: true,
+                subject: { select: { id: true, name: true, class: { select: { id: true, name: true } } } },
+              },
             },
           },
-        },
-      },
-    },
-  });
-  if (!attempt) {
-    return NextResponse.json(
-      { error: "Attempt not found" },
-      { status: 404 }
-    );
+        });
+        if (!attempt) throw new AttemptMissing();
+        if (attempt.completedAt) {
+          return {
+            attemptId: attempt.id, correctAnswers: attempt.correctAnswers,
+            totalQuestions: attempt.totalQuestions, scorePercentage: attempt.scorePercentage,
+            completedAt: attempt.completedAt, topic: attempt.topic,
+          };
+        }
+        const correctAnswers = attempt.answers.filter(a => a.submittedAt !== null && a.isCorrect).length;
+        const scorePercentage = attempt.totalQuestions > 0
+          ? correctAnswers / attempt.totalQuestions * 100 : 0;
+        const updated = await tx.quizAttempt.update({
+          where: { id: attempt.id },
+          data: { correctAnswers, scorePercentage, completedAt: new Date() },
+        });
+        return {
+          attemptId: updated.id, correctAnswers: updated.correctAnswers,
+          totalQuestions: updated.totalQuestions, scorePercentage: updated.scorePercentage,
+          completedAt: updated.completedAt, topic: attempt.topic,
+        };
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10000 });
+      return NextResponse.json(result);
+    } catch (err) {
+      if (err instanceof AttemptMissing)
+        return NextResponse.json({ error: "Attempt not found" }, { status: 404 });
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2034" && retry < 2)
+        continue;
+      console.error("[complete] transactional completion failed", err);
+      return NextResponse.json({ error: "Unable to complete attempt" }, { status: 500 });
+    }
   }
-
-  // Already completed → return existing
-  if (attempt.completedAt) {
-    return NextResponse.json({
-      attemptId: attempt.id,
-      correctAnswers: attempt.correctAnswers,
-      totalQuestions: attempt.totalQuestions,
-      scorePercentage: attempt.scorePercentage,
-      completedAt: attempt.completedAt,
-      topic: attempt.topic,
-    });
-  }
-
-  const correctAnswers = attempt.answers.filter((a) => a.isCorrect).length;
-  const scorePercentage =
-    attempt.totalQuestions > 0
-      ? (correctAnswers / attempt.totalQuestions) * 100
-      : 0;
-
-  const updated = await db.quizAttempt.update({
-    where: { id: attemptId },
-    data: {
-      correctAnswers,
-      scorePercentage,
-      completedAt: new Date(),
-    },
-  });
-
-  return NextResponse.json({
-    attemptId: updated.id,
-    correctAnswers: updated.correctAnswers,
-    totalQuestions: updated.totalQuestions,
-    scorePercentage: updated.scorePercentage,
-    completedAt: updated.completedAt,
-    topic: attempt.topic,
-  });
+  return NextResponse.json({ error: "Please retry completion" }, { status: 503 });
 }
