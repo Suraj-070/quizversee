@@ -44,3 +44,13 @@ Source: https://eastpoleschool.edu.np/media/pdfs/LP_Class_9_Science.pdf
 
 ## Publication gate
 For each subject, record a direct CDC source URL, edition/year, and chapter order. Mark `chapterVerification: "verified"` only after checking the table of contents. Then run `npx tsx scripts/import-curriculum.ts` (dry run) before any approved `--apply`.
+
+
+## Edition warning discovered in October 2026
+- **Official CDC Grade 9 Science & Technology (2082 BS)**: https://moecdc.gov.np/content/589/science-and-technology-class---ix/ . This is newer than the Grade 9 English textbook catalogued as **2080 BS** at https://lib.moecdc.gov.np/catalog/opac_css/index.php?id=15068&lvl=notice_display .
+- **CDC Grade 9 Science teacher guide (2080 BS)**: https://lib.moecdc.gov.np/catalog/opac_css/index.php?id=13734&lvl=notice_display ; its 2080 chapter order must **not automatically be represented as the 2082 book's contents**.
+- **Grade 10 elective Computer Science English edition (2082 BS)** appears on the official CDC website, linked in the notices at https://moecdc.gov.np/content/589/science-and-technology-class---ix/ .
+- A widely mirrored older Grade 9 Science book includes *24* units beginning with "Measurement"; this belongs to a **different, earlier syllabus** and must **not** be imported as the current Science and Technology chapters: https://www.riviera.edu.np/downloads/Grade_9_Book_Science.pdf .
+- The previous candidate list of 19 Grade 9 Science units came from a school plan, **not the 2082 CDC contents**. It remains provisional.
+
+**Decision:** Prefer the newest official CDC textbook edition, and verify its contents page before setting chapterVerification to verified. Currently zero subjects have validated chapters in the import manifest. Do not run `--apply` on an incomplete plan merely to populate empty subjects.
