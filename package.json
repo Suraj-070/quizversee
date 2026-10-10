@@ -10,7 +10,9 @@
     "db:push": "prisma db push --accept-data-loss",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "test:qai": "node --test tests/qai-smart-selector.test.mjs tests/qai-attempt-visibility.test.mjs",
+    "test:qai:postgres": "node --test tests/qai-answer-integrity.postgres.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
