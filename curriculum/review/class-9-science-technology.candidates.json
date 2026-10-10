@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "grade": 9,
+  "subject": "Science and Technology",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "edition": "School lesson plan 2081 BS, textbook edition unknown",
+  "sourceQuality": "School-produced unit sequence, not verified against the latest CDC textbook",
+  "sources": [
+    "https://eastpoleschool.edu.np/media/pdfs/LP_Class_9_Science.pdf"
+  ],
+  "reviewNotes": [
+    "School lesson plan calls unit 4 'Evaluation'; 'Evolution' is a probable correction, not verified.",
+    "Confirm current CDC 2082 Grade 9 textbook table of contents before importing.",
+    "All 19 headings here are provisional."
+  ],
+  "chapters": [
+    {
+      "name": "Scientific Study",
+      "displayOrder": 1,
+      "verified": false
+    },
+    {
+      "name": "Classification of Living Beings",
+      "displayOrder": 2,
+      "verified": false
+    },
+    {
+      "name": "Life Cycle",
+      "displayOrder": 3,
+      "verified": false
+    },
+    {
+      "name": "Evolution",
+      "displayOrder": 4,
+      "verified": false,
+      "notes": "Teacher plan says Evaluation; title requires verification."
+    },
+    {
+      "name": "Physical Structure and Life Process",
+      "displayOrder": 5,
+      "verified": false
+    },
+    {
+      "name": "Nature and Environment",
+      "displayOrder": 6,
+      "verified": false
+    },
+    {
+      "name": "Force and Motion",
+      "displayOrder": 7,
+      "verified": false
+    },
+    {
+      "name": "Machine",
+      "displayOrder": 8,
+      "verified": false
+    },
+    {
+      "name": "Energy",
+      "displayOrder": 9,
+      "verified": false
+    },
+    {
+      "name": "Waves",
+      "displayOrder": 10,
+      "verified": false
+    },
+    {
+      "name": "Electricity",
+      "displayOrder": 11,
+      "verified": false
+    },
+    {
+      "name": "The Universe",
+      "displayOrder": 12,
+      "verified": false
+    },
+    {
+      "name": "Information and Communication Technology",
+      "displayOrder": 13,
+      "verified": false
+    },
+    {
+      "name": "Atomic Structure and Chemical Bond",
+      "displayOrder": 14,
+      "verified": false
+    },
+    {
+      "name": "Chemical Reaction",
+      "displayOrder": 15,
+      "verified": false
+    },
+    {
+      "name": "Gases",
+      "displayOrder": 16,
+      "verified": false
+    },
+    {
+      "name": "Metals and Non-Metals",
+      "displayOrder": 17,
+      "verified": false
+    },
+    {
+      "name": "Carbon and Its Compounds",
+      "displayOrder": 18,
+      "verified": false
+    },
+    {
+      "name": "Materials Used in Daily Life",
+      "displayOrder": 19,
+      "verified": false
+    }
+  ]
+}
