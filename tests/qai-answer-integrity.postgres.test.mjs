@@ -47,8 +47,8 @@ test("submittedAt is nullable on a fresh placeholder; duplicate claim succeeds o
     assert.ok(final.submittedAt);
   } finally {
     // Deleting test user cascades attempts and answer; deleting class cascades curriculum.
-    if (classId) await db.class.delete({where:{id:classId}}).catch(()=>{});
     await db.user.deleteMany({where:{name:uid}}).catch(()=>{});
+    if (classId) await db.class.delete({where:{id:classId}}).catch(()=>{});
     await db.$disconnect();
   }
 });
