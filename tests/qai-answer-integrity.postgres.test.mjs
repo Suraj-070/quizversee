@@ -10,8 +10,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { PrismaClient } from "@prisma/client";
 
-const gate = process.env.QAI_TEST_DISPOSABLE_DB === "YES" &&
-  process.env.DATABASE_URL?.includes("qai_test");
+let dbName = "";
+try { dbName = new URL(process.env.DATABASE_URL ?? "").pathname.slice(1); } catch {}
+const gate = process.env.QAI_TEST_DISPOSABLE_DB === "YES" && dbName === "qai_test";
 const skip = !gate
   ? "Requires explicitly named disposable qai_test database and QAI_TEST_DISPOSABLE_DB=YES"
   : undefined;
