@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "grade": 12,
+  "subject": "English",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "unresolved",
+  "sources": [
+    {
+      "url": "https://padandas.com/subjects/neb-english-class-12-eng/",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://www.kalawati175.com.np/2022/05/class-12-english-guide.html",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Language and Literature both required; 45 vs 46 chapter counting discrepancy in third-party indexes, so no headings claimed.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": []
+}
