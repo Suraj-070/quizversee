@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "grade": 11,
+  "subject": "Biology",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "candidate-sequence",
+  "sources": [
+    {
+      "url": "https://iswori.com.np/neb-class-11-biology-botanyzoology-syllabus-2080/",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://www.jayantbist.com.np/2024/11/neb-class-11-biology-botany-zoology.html",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Ten curriculum units (5 Botany, 5 Zoology), rather than granular book chapters.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Biomolecules and Cell Biology",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Floral Diversity",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Introductory Microbiology",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "Ecology",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Vegetation",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Introduction to Biology",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "Evolutionary Biology",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "Faunal Diversity",
+      "verified": false
+    },
+    {
+      "displayOrder": 9,
+      "name": "Biota and Environment",
+      "verified": false
+    },
+    {
+      "displayOrder": 10,
+      "name": "Conservation Biology",
+      "verified": false
+    }
+  ]
+}
