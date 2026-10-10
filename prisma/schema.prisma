@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -229,10 +229,13 @@ model UserAnswer {
   selectedOption  String    // "A".."D"
   isCorrect       Boolean
   answeredAt      DateTime  @default(now())
+  submittedAt     DateTime? // null until a genuine answer submission
 
   attempt         QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   question        Question    @relation(fields: [questionId], references: [id])
+
+  @@index([attemptId, submittedAt])
 }
 
 // ---------------------------------------------------------------------------
