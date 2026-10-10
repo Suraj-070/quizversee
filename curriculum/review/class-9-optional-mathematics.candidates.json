@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "grade": 9,
+  "subject": "Optional Mathematics",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "candidate-sequence",
+  "sources": [
+    {
+      "url": "https://giwmscdnone.gov.np/media/pdf_upload/Final%20opt%20math%20eng%20for%20press%209%20%282082-11-26%29%201-12%20PM%20%281%29_1iwtizb.pdf",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://moecdc.gov.np/content/58/",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Six headings indexed in government-hosted Grade 9 English Optional Mathematics 2082 BS PDF; direct full PDF inspection not completed.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Algebra",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Trigonometry",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Geometry",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "Vector",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Statistics",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Limit",
+      "verified": false
+    }
+  ]
+}
