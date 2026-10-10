@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "grade": 10,
+  "subject": "Optional Mathematics",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "candidate-sequence",
+  "sources": [
+    {
+      "url": "https://moecdc.gov.np/content/569/elective-mathematics-class-10--2082-/",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://www.nebeducation.com/2025/07/class-10-optional-mathematics-notes.html",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Eight units from older guide; newer official 2082 edition exists; reconcile names and sequence before use.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Algebra",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Limit and Continuity",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Matrix",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "Coordinate Geometry",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Trigonometry",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Vector",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "Transformation",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "Statistics",
+      "verified": false
+    }
+  ]
+}
