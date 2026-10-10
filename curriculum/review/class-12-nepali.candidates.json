@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "grade": 12,
+  "subject": "Nepali",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "partial",
+  "sources": [
+    {
+      "url": "https://www.nebeducation.com/2025/07/class-12-nepali-book.html",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Only first 10 accessible names: known incomplete, not the full Grade 12 Nepali textbook.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "आमाको सपना",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "विरहिणी दमयन्ती",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "घनघस्याको उकालो काट्ता",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "व्यावसायिक पत्र",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "एक चिहान",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "स्टिफन विलियम हकिङ",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "हामीलाई बोलाउँछन् हिमचुली",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "मातृत्व",
+      "verified": false
+    },
+    {
+      "displayOrder": 9,
+      "name": "गोर्खे",
+      "verified": false
+    },
+    {
+      "displayOrder": 10,
+      "name": "नेपाली पहिचान",
+      "verified": false
+    }
+  ]
+}
