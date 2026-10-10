@@ -270,7 +270,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
         handleNext();
       } else {
         const data = (await res.json()) as AnswerResult;
-        recordAnswer(questions[currentIndex]?.id, data);
+        recordAnswer(questions[currentIndex]?.id, { ...data, selectedOption });
         setRevealedResult(data);
         setRevealed(true);
 
