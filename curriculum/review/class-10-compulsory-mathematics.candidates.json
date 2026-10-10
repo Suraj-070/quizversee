@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "grade": 10,
+  "subject": "Compulsory Mathematics",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "edition": "CDC Mathematics Grade 10 2080 BS (reproduced contents)",
+  "sourceQuality": "Reproduced front matter of CDC textbook, not yet checked in CDC-hosted original",
+  "sources": [
+    "https://anyflip.com/ypram/uvyc/basic",
+    "https://www.scribd.com/document/668833792/1687066510",
+    "https://lib.moecdc.gov.np/catalog/opac_css/index.php?id=15108&lvl=notice_display"
+  ],
+  "reviewNotes": [
+    "14 textbook contents entries in reproduced CDC 2080 BS edition.",
+    "Some independent teaching guides list a 15th Trigonometry chapter. Do not automatically append it: resolve edition and syllabus differences against official book and specification grid.",
+    "Names are candidates until the CDC-hosted contents page is checked."
+  ],
+  "chapters": [
+    {
+      "name": "Sets",
+      "displayOrder": 1,
+      "verified": false
+    },
+    {
+      "name": "Compound Interest",
+      "displayOrder": 2,
+      "verified": false
+    },
+    {
+      "name": "Growth and Depreciation",
+      "displayOrder": 3,
+      "verified": false
+    },
+    {
+      "name": "Currency and Exchange Rate",
+      "displayOrder": 4,
+      "verified": false
+    },
+    {
+      "name": "Area and Volume",
+      "displayOrder": 5,
+      "verified": false
+    },
+    {
+      "name": "Sequence and Series",
+      "displayOrder": 6,
+      "verified": false
+    },
+    {
+      "name": "Quadratic Equation",
+      "displayOrder": 7,
+      "verified": false
+    },
+    {
+      "name": "Algebraic Fraction",
+      "displayOrder": 8,
+      "verified": false
+    },
+    {
+      "name": "Indices",
+      "displayOrder": 9,
+      "verified": false
+    },
+    {
+      "name": "Triangles and Quadrilaterals",
+      "displayOrder": 10,
+      "verified": false
+    },
+    {
+      "name": "Construction",
+      "displayOrder": 11,
+      "verified": false
+    },
+    {
+      "name": "Circle",
+      "displayOrder": 12,
+      "verified": false
+    },
+    {
+      "name": "Statistics",
+      "displayOrder": 13,
+      "verified": false
+    },
+    {
+      "name": "Probability",
+      "displayOrder": 14,
+      "verified": false
+    }
+  ]
+}

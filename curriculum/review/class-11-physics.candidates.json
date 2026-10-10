@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "grade": 11,
+  "subject": "Physics",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "edition": "CDC 2077 curriculum (textbook edition still to verify)",
+  "sources": [
+    {
+      "url": "https://lib.moecdc.gov.np/catalog/opac_css/index.php?id=12061&lvl=notice_display",
+      "type": "official CDC catalog"
+    },
+    {
+      "url": "https://www.enotesnepal.com/neb-notes/class-11-physics-notes/",
+      "type": "third-party chapter list"
+    },
+    {
+      "url": "https://www.examkura.com/neb-class-11-physics-guide/",
+      "type": "third-party cross-check"
+    }
+  ],
+  "reviewNotes": [
+    "Third-party sources provide chapter sequences; confirm completeness, typography, and sequence against original CDC curriculum and textbook.",
+    "Not an approved list for importing."
+  ],
+  "chapters": [
+    {
+      "name": "Physical Quantities",
+      "displayOrder": 1,
+      "verified": false
+    },
+    {
+      "name": "Vectors",
+      "displayOrder": 2,
+      "verified": false
+    },
+    {
+      "name": "Kinematics",
+      "displayOrder": 3,
+      "verified": false
+    },
+    {
+      "name": "Dynamics",
+      "displayOrder": 4,
+      "verified": false
+    },
+    {
+      "name": "Work, Energy and Power",
+      "displayOrder": 5,
+      "verified": false
+    },
+    {
+      "name": "Circular Motion",
+      "displayOrder": 6,
+      "verified": false
+    },
+    {
+      "name": "Gravitation",
+      "displayOrder": 7,
+      "verified": false
+    },
+    {
+      "name": "Elasticity",
+      "displayOrder": 8,
+      "verified": false
+    },
+    {
+      "name": "Heat and Temperature",
+      "displayOrder": 9,
+      "verified": false
+    },
+    {
+      "name": "Thermal Expansion",
+      "displayOrder": 10,
+      "verified": false
+    },
+    {
+      "name": "Quantity of Heat",
+      "displayOrder": 11,
+      "verified": false
+    },
+    {
+      "name": "Rate of Heat Flow",
+      "displayOrder": 12,
+      "verified": false
+    },
+    {
+      "name": "Ideal Gas",
+      "displayOrder": 13,
+      "verified": false
+    },
+    {
+      "name": "Reflection at Curved Mirrors",
+      "displayOrder": 14,
+      "verified": false
+    },
+    {
+      "name": "Refraction at Plane Surfaces",
+      "displayOrder": 15,
+      "verified": false
+    },
+    {
+      "name": "Refraction through Prisms",
+      "displayOrder": 16,
+      "verified": false
+    },
+    {
+      "name": "Lenses",
+      "displayOrder": 17,
+      "verified": false
+    },
+    {
+      "name": "Dispersion",
+      "displayOrder": 18,
+      "verified": false
+    },
+    {
+      "name": "Electric Charges",
+      "displayOrder": 19,
+      "verified": false
+    },
+    {
+      "name": "Electric Field",
+      "displayOrder": 20,
+      "verified": false
+    },
+    {
+      "name": "Electric Potential",
+      "displayOrder": 21,
+      "verified": false
+    },
+    {
+      "name": "Capacitor",
+      "displayOrder": 22,
+      "verified": false
+    },
+    {
+      "name": "DC Circuits",
+      "displayOrder": 23,
+      "verified": false
+    },
+    {
+      "name": "Nuclear Physics",
+      "displayOrder": 24,
+      "verified": false
+    },
+    {
+      "name": "Solids",
+      "displayOrder": 25,
+      "verified": false
+    },
+    {
+      "name": "Recent Trends in Physics",
+      "displayOrder": 26,
+      "verified": false
+    }
+  ]
+}

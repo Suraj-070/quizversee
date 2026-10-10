@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "grade": 11,
+  "subject": "Chemistry",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "curriculumBasis": "CDC Secondary Level Curriculum 2078, Grade 11 Chemistry scope and sequence",
+  "sourceReview": {
+    "primaryCDC": "https://moecdc.gov.np/storage/gallery/1674713655.pdf",
+    "primaryAccessibleAtReview": false,
+    "secondaryCrossChecks": [
+      "https://www.ndds.com.np/2023/08/neb-class-11-chemistry-syllabus.html",
+      "https://www.examkura.com/neb-class-11-chemistry-guide/",
+      "https://chemicalnote.com/neb-new-syllabus-curriculum-of-class-11-and-12-chemistry-2077/"
+    ],
+    "notes": [
+      "Official CDC PDF appears indexed with Grade 11 Chemistry curriculum but direct PDF retrieval returned 404 during this review.",
+      "The 17 headings agree across publicly available reproduced NEB/CDC scope-and-sequence resources; authoritative latest edition confirmation remains pending.",
+      "This file is isolated from the actual import manifest."
+    ]
+  },
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Foundation and Fundamentals",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Stoichiometry",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Atomic Structure",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "Classification of Elements and Periodic Table",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Chemical Bonding and Shapes of Molecules",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Oxidation and Reduction",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "States of Matter",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "Chemical Equilibrium",
+      "verified": false
+    },
+    {
+      "displayOrder": 9,
+      "name": "Chemistry of Non-metals",
+      "verified": false
+    },
+    {
+      "displayOrder": 10,
+      "name": "Chemistry of Metals",
+      "verified": false
+    },
+    {
+      "displayOrder": 11,
+      "name": "Bio-inorganic Chemistry",
+      "verified": false
+    },
+    {
+      "displayOrder": 12,
+      "name": "Basic Concept of Organic Chemistry",
+      "verified": false
+    },
+    {
+      "displayOrder": 13,
+      "name": "Fundamental Principles of Organic Chemistry",
+      "verified": false
+    },
+    {
+      "displayOrder": 14,
+      "name": "Hydrocarbons",
+      "verified": false
+    },
+    {
+      "displayOrder": 15,
+      "name": "Aromatic Hydrocarbons",
+      "verified": false
+    },
+    {
+      "displayOrder": 16,
+      "name": "Fundamentals of Applied Chemistry",
+      "verified": false
+    },
+    {
+      "displayOrder": 17,
+      "name": "Modern Chemical Manufactures",
+      "verified": false
+    }
+  ]
+}

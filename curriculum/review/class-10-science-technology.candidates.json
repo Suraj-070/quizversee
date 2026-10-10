@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "grade": 10,
+  "subject": "Science and Technology",
+  "language": "English",
+  "edition": "CDC Grade 10 Science & Technology English translation, 2080 BS (reported)",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "reviewNote": "Complete ordered 19-unit list cross-reported by two independent educator sites as reflecting CDC Grade 10 textbook 2080 BS. Final check against the original CDC PDF contents page is required before promoting to the live curriculum manifest. Do not interpret as the latest edition without verifying.",
+  "sources": [
+    {
+      "url": "https://www.bhojrajbhurtel.com.np/2025/09/new-textbook-of-science-technology.html",
+      "type": "third-party reproduction of CDC book contents"
+    },
+    {
+      "url": "https://www.subeshyadav.com.np/blog/see-science-complete-notes-all-chapters",
+      "type": "third-party chapter-by-chapter contents and downloadable textbook"
+    }
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Scientific Learning",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Classification of Living Beings",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Honey Bee",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "Heredity",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Physiological Structure and Life Process",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Nature and Environment",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "Motion and Force",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "Pressure",
+      "verified": false
+    },
+    {
+      "displayOrder": 9,
+      "name": "Heat",
+      "verified": false
+    },
+    {
+      "displayOrder": 10,
+      "name": "Wave",
+      "verified": false
+    },
+    {
+      "displayOrder": 11,
+      "name": "Electricity and Magnetism",
+      "verified": false
+    },
+    {
+      "displayOrder": 12,
+      "name": "Universe",
+      "verified": false
+    },
+    {
+      "displayOrder": 13,
+      "name": "Information and Communication Technology",
+      "verified": false
+    },
+    {
+      "displayOrder": 14,
+      "name": "Classification of Elements",
+      "verified": false
+    },
+    {
+      "displayOrder": 15,
+      "name": "Chemical Reaction",
+      "verified": false
+    },
+    {
+      "displayOrder": 16,
+      "name": "Gases",
+      "verified": false
+    },
+    {
+      "displayOrder": 17,
+      "name": "Metal and Non-metals",
+      "verified": false
+    },
+    {
+      "displayOrder": 18,
+      "name": "Hydrocarbon and its Compounds",
+      "verified": false
+    },
+    {
+      "displayOrder": 19,
+      "name": "Chemicals used in Daily Life",
+      "verified": false
+    }
+  ]
+}
