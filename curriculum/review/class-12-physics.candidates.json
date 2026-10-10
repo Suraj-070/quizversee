@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "grade": 12,
+  "subject": "Physics",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "candidate-sequence",
+  "sources": [
+    {
+      "url": "https://prakashthapa617.com.np/note/chapter_list/physics-class-12/",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://www.enotesnepal.com/neb-notes/class-12-physics-notes/",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "25 units cross-checked against two NEB chapter-index sites; original official contents still pending.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Rotational Dynamics",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Periodic Motion",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Fluid Statics",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "First Law of Thermodynamics",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Second Law of Thermodynamics",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Wave Motion",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "Mechanical Waves",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "Wave in Pipes and Strings",
+      "verified": false
+    },
+    {
+      "displayOrder": 9,
+      "name": "Acoustic Phenomena",
+      "verified": false
+    },
+    {
+      "displayOrder": 10,
+      "name": "Nature and Propagation of Light",
+      "verified": false
+    },
+    {
+      "displayOrder": 11,
+      "name": "Interference",
+      "verified": false
+    },
+    {
+      "displayOrder": 12,
+      "name": "Diffraction",
+      "verified": false
+    },
+    {
+      "displayOrder": 13,
+      "name": "Polarization",
+      "verified": false
+    },
+    {
+      "displayOrder": 14,
+      "name": "Electrical Circuits",
+      "verified": false
+    },
+    {
+      "displayOrder": 15,
+      "name": "Thermoelectric Effects",
+      "verified": false
+    },
+    {
+      "displayOrder": 16,
+      "name": "Magnetic Field",
+      "verified": false
+    },
+    {
+      "displayOrder": 17,
+      "name": "Magnetic Properties of Materials",
+      "verified": false
+    },
+    {
+      "displayOrder": 18,
+      "name": "Electromagnetic Induction",
+      "verified": false
+    },
+    {
+      "displayOrder": 19,
+      "name": "Alternating Currents",
+      "verified": false
+    },
+    {
+      "displayOrder": 20,
+      "name": "Electrons",
+      "verified": false
+    },
+    {
+      "displayOrder": 21,
+      "name": "Photons",
+      "verified": false
+    },
+    {
+      "displayOrder": 22,
+      "name": "Semiconductor Devices",
+      "verified": false
+    },
+    {
+      "displayOrder": 23,
+      "name": "Quantization of Energy",
+      "verified": false
+    },
+    {
+      "displayOrder": 24,
+      "name": "Radioactivity and Nuclear Reaction",
+      "verified": false
+    },
+    {
+      "displayOrder": 25,
+      "name": "Recent Trends in Physics",
+      "verified": false
+    }
+  ]
+}

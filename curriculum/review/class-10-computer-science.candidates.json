@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "grade": 10,
+  "subject": "Computer Science",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "unresolved",
+  "sources": [
+    {
+      "url": "https://www.examkura.com/class-10-computer-science-guide/",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://moecdc.gov.np/",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Official 2082 elective Computer Science book listed but guide unit breakdown does not reliably match official chapter sequence.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": []
+}

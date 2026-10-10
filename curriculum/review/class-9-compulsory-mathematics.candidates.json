@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "grade": 9,
+  "subject": "Compulsory Mathematics",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "unresolved",
+  "sources": [
+    {
+      "url": "https://moecdc.gov.np/content/201/secondary-education-curssions--2078--class-9-10--mandatory/",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Current textbook table of contents not reliably extracted. Empty by design.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": []
+}

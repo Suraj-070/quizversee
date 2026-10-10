@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "grade": 11,
+  "subject": "English",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "partial",
+  "sources": [
+    {
+      "url": "https://www.collegenp.com/study-material/neb-class-11-compulsory-english-book",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Only Language Development 20 units. Literature section not included; this candidate list is intentionally incomplete.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Education and Humanity",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Communication",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Media and Society",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "History and Culture",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Life and Love",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Health and Exercise",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "Ecology and Development",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "Humour and Satire",
+      "verified": false
+    },
+    {
+      "displayOrder": 9,
+      "name": "Democracy and Human Rights",
+      "verified": false
+    },
+    {
+      "displayOrder": 10,
+      "name": "Home Life and Family Relationship",
+      "verified": false
+    },
+    {
+      "displayOrder": 11,
+      "name": "Arts and Creation",
+      "verified": false
+    },
+    {
+      "displayOrder": 12,
+      "name": "Fantasy",
+      "verified": false
+    },
+    {
+      "displayOrder": 13,
+      "name": "Career and Entrepreneurship",
+      "verified": false
+    },
+    {
+      "displayOrder": 14,
+      "name": "Power and Politics",
+      "verified": false
+    },
+    {
+      "displayOrder": 15,
+      "name": "War and Peace",
+      "verified": false
+    },
+    {
+      "displayOrder": 16,
+      "name": "Critical Thinking",
+      "verified": false
+    },
+    {
+      "displayOrder": 17,
+      "name": "Globalisation and Diaspora",
+      "verified": false
+    },
+    {
+      "displayOrder": 18,
+      "name": "Immigration and Identity",
+      "verified": false
+    },
+    {
+      "displayOrder": 19,
+      "name": "Travel and Tourism",
+      "verified": false
+    },
+    {
+      "displayOrder": 20,
+      "name": "Science and Technology",
+      "verified": false
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "grade": 12,
+  "subject": "Mathematics",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "candidate-sequence",
+  "sources": [
+    {
+      "url": "https://pradipd.com.np/neb/class-12-math",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://www.nebeducation.com/2025/07/class-12-mathematics-notes.html",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "23 study-guide chapter headings; confirm alignment with CDC unit sequence.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Permutation and Combination",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Binomial Theorem",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Elementary Group Theory",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "Complex Number",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Quadratic Equation",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Mathematical Induction",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "Matrix-Based System of Linear Equations",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "Inverse Circular Function",
+      "verified": false
+    },
+    {
+      "displayOrder": 9,
+      "name": "General Solution of Trigonometric Equations",
+      "verified": false
+    },
+    {
+      "displayOrder": 10,
+      "name": "Conic Section",
+      "verified": false
+    },
+    {
+      "displayOrder": 11,
+      "name": "Coordinates in Space",
+      "verified": false
+    },
+    {
+      "displayOrder": 12,
+      "name": "Product of Vectors",
+      "verified": false
+    },
+    {
+      "displayOrder": 13,
+      "name": "Scalar Triple Product",
+      "verified": false
+    },
+    {
+      "displayOrder": 14,
+      "name": "Correlation and Regression",
+      "verified": false
+    },
+    {
+      "displayOrder": 15,
+      "name": "Probability",
+      "verified": false
+    },
+    {
+      "displayOrder": 16,
+      "name": "Derivatives",
+      "verified": false
+    },
+    {
+      "displayOrder": 17,
+      "name": "Antiderivatives",
+      "verified": false
+    },
+    {
+      "displayOrder": 18,
+      "name": "Computing Roots",
+      "verified": false
+    },
+    {
+      "displayOrder": 19,
+      "name": "System of Linear Equations",
+      "verified": false
+    },
+    {
+      "displayOrder": 20,
+      "name": "Numerical Integration",
+      "verified": false
+    },
+    {
+      "displayOrder": 21,
+      "name": "Statics",
+      "verified": false
+    },
+    {
+      "displayOrder": 22,
+      "name": "Dynamics",
+      "verified": false
+    },
+    {
+      "displayOrder": 23,
+      "name": "Mathematics for Economics and Finance",
+      "verified": false
+    }
+  ]
+}

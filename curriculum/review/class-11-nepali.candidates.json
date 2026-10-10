@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "grade": 11,
+  "subject": "Nepali",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "candidate-sequence",
+  "sources": [
+    {
+      "url": "https://www.prakashthapa617.com.np/note/chapter_list/nepali-class-11/",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "12 literary chapters transcribed from third-party chapter summary; confirm orthography with book.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "वीर पुर्खा",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "गाउँको माया",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "संस्कृतिको नयाँ यात्रा",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "योगमाया",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "साथीलाई चिठी",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "त्यो फेरि फर्किएला",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "पर्यापर्यटनका सम्भावना र आयाम",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "लौ आयो ताजा खबर",
+      "verified": false
+    },
+    {
+      "displayOrder": 9,
+      "name": "सफलताको कथा",
+      "verified": false
+    },
+    {
+      "displayOrder": 10,
+      "name": "कृषिशालामा एक दिन",
+      "verified": false
+    },
+    {
+      "displayOrder": 11,
+      "name": "रारा भ्रमण",
+      "verified": false
+    },
+    {
+      "displayOrder": 12,
+      "name": "जलस्रोत र ऊर्जा",
+      "verified": false
+    }
+  ]
+}

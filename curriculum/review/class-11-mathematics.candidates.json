@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "grade": 11,
+  "subject": "Mathematics",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "candidate-sequence",
+  "sources": [
+    {
+      "url": "https://pradipd.com.np/neb/class-11-math",
+      "verification": "page-or-index-only"
+    },
+    {
+      "url": "https://www.examkura.com/neb-class-11-mathematics-guide/",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "18 chapters from third-party textbook guide; spelling normalized and may diverge from CDC taxonomy.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": [
+    {
+      "displayOrder": 1,
+      "name": "Logic, Sets and Real Number System",
+      "verified": false
+    },
+    {
+      "displayOrder": 2,
+      "name": "Relations, Functions and Graphs",
+      "verified": false
+    },
+    {
+      "displayOrder": 3,
+      "name": "Sequence and Series",
+      "verified": false
+    },
+    {
+      "displayOrder": 4,
+      "name": "Matrices and Determinants",
+      "verified": false
+    },
+    {
+      "displayOrder": 5,
+      "name": "Complex Numbers",
+      "verified": false
+    },
+    {
+      "displayOrder": 6,
+      "name": "Properties of Triangle",
+      "verified": false
+    },
+    {
+      "displayOrder": 7,
+      "name": "Solutions of Triangle",
+      "verified": false
+    },
+    {
+      "displayOrder": 8,
+      "name": "Analytical Geometry",
+      "verified": false
+    },
+    {
+      "displayOrder": 9,
+      "name": "Pair of Straight Lines",
+      "verified": false
+    },
+    {
+      "displayOrder": 10,
+      "name": "Circle",
+      "verified": false
+    },
+    {
+      "displayOrder": 11,
+      "name": "Conic Section",
+      "verified": false
+    },
+    {
+      "displayOrder": 12,
+      "name": "Vectors",
+      "verified": false
+    },
+    {
+      "displayOrder": 13,
+      "name": "Measures of Dispersion",
+      "verified": false
+    },
+    {
+      "displayOrder": 14,
+      "name": "Probability",
+      "verified": false
+    },
+    {
+      "displayOrder": 15,
+      "name": "Limits and Continuity",
+      "verified": false
+    },
+    {
+      "displayOrder": 16,
+      "name": "Derivatives",
+      "verified": false
+    },
+    {
+      "displayOrder": 17,
+      "name": "Composition and Resolution of Concurrent Forces",
+      "verified": false
+    },
+    {
+      "displayOrder": 18,
+      "name": "Kinematics: The Geometry of Motion",
+      "verified": false
+    }
+  ]
+}

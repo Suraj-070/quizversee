@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "grade": 9,
+  "subject": "Computer Science",
+  "status": "candidate-review-required",
+  "importReady": false,
+  "completeness": "unresolved",
+  "sources": [
+    {
+      "url": "https://basantakk.com.np/2026/1139/class-9-book/",
+      "verification": "page-or-index-only"
+    }
+  ],
+  "reviewNotes": [
+    "Elective Computer Science book confirmed listed, but no authoritative ordered contents extracted.",
+    "Do not import into Supabase until official CDC/NEB edition and complete table of contents are independently verified."
+  ],
+  "chapters": []
+}
