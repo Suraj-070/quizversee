@@ -44,3 +44,10 @@ Current `PATCH /api/student/attempts/[id]/answer` can update the same `UserAnswe
 - Official curriculum-linked concepts, reviewed difficulty tags, question-bank volume.
 - End-to-end test on the owner's local PostgreSQL branch; test execution has not been verified in this environment.
 - Document evaluation metrics: question repetition rate, curriculum coverage, learning improvement, and opt-out behavior.
+
+
+## Follow-up safety update (2026-10-11)
+- The answer PATCH route now rejects answer records whose attempts are already completed (commit `861c89c`). This is an incremental guard only.
+- A proposed nullable PostgreSQL `submittedAt` column and index are documented in `docs/qai/proposed-answer-submitted-at.postgres.sql`. **The SQL is not executed, and the schema is not changed.**
+- Full transactional answer claim and concurrency protection are still pending; follow `docs/qai/answer-integrity-spec.md`.
+- Keep `QAI_SMART_PRACTICE_V1` **OFF for production** while the answer-integrity gate is open.
