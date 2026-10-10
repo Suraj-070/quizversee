@@ -448,6 +448,7 @@ export async function GET(request: Request) {
             questionId: true,
             selectedOption: true,
             isCorrect: true,
+            submittedAt: true,
             question: {
               select: {
                 id: true,
@@ -501,8 +502,14 @@ export async function GET(request: Request) {
       };
     }
 
+    const visibleAnswers = attempt.completedAt ? attempt.answers : attempt.answers.map((a) => ({
+      ...a,
+      selectedOption: a.submittedAt ? a.selectedOption : null,
+      isCorrect: null,
+      question: { ...a.question, correctOption: null, explanation: null },
+    }));
     return NextResponse.json({
-      attempt: { ...attempt, quizSet: quizSetWithRelations },
+      attempt: { ...attempt, answers: visibleAnswers, quizSet: quizSetWithRelations },
     });
   }
 
