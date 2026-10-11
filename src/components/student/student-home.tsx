@@ -251,6 +251,7 @@ export function StudentHome({ user }: { user: PublicUser }) {
                   onClick={() =>
                     setDismissedAnnouncements((prev) => new Set([...prev, a.id]))
                   }
+                  aria-label={`Dismiss announcement: ${a.title}`}
                   className="shrink-0 text-emerald-400 hover:text-emerald-600"
                 >
                   <X className="size-4" />
