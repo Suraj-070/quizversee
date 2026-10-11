@@ -242,7 +242,7 @@ function StatCard({
 }: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  value: number | undefined;
+  value: number | string | undefined;
   loading: boolean;
   color: keyof typeof COLOR_MAP;
   hint?: string;
