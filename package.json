@@ -11,7 +11,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "test:qai": "node --test tests/qai-smart-selector.test.mjs tests/qai-attempt-visibility.test.mjs tests/qai-legacy-attempt.test.mjs tests/qai-question-secrecy.test.mjs",
+    "test:qai": "node --test tests/qai-smart-selector.test.mjs tests/qai-attempt-visibility.test.mjs tests/qai-legacy-attempt.test.mjs tests/qai-question-secrecy.test.mjs tests/qai-answer-visibility.test.mjs",
     "test:qai:postgres": "node --test tests/qai-answer-integrity.postgres.test.mjs"
   },
   "dependencies": {
