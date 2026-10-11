@@ -69,6 +69,13 @@ type QuizSessionState = {
     questions: QuizQuestionClient[],
     feedbackMode?: FeedbackMode
   ) => void;
+  restore: (session: {
+    attemptId: string;
+    questions: QuizQuestionClient[];
+    answers: Record<string, AnswerResult>;
+    feedbackMode: FeedbackMode;
+    currentIndex: number;
+  }) => void;
   setCurrentIndex: (index: number) => void;
   recordAnswer: (questionId: string, result: AnswerResult) => void;
   /** Mark session as complete (results screen). */
@@ -94,6 +101,7 @@ export const useQuizSessionStore = create<QuizSessionState>()(
           answers: {},
           feedbackMode,
         }),
+      restore: (session) => set(session),
       setCurrentIndex: (index) => set({ currentIndex: index }),
       recordAnswer: (questionId, result) =>
         set((state) => ({
