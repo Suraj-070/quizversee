@@ -50,12 +50,12 @@ export async function PATCH(request: Request, { params }: Params) {
   // Verify the answer row exists, belongs to this attempt, and the
   // attempt belongs to this user.
   const userAnswer = await db.userAnswer.findFirst({
-    where: { id: userAnswerId, attemptId, userId: user.id },
+    where: { id: userAnswerId, attemptId, userId: user.id, attempt: { userId: user.id, completedAt: null } },
     include: { question: true },
   });
   if (!userAnswer) {
     return NextResponse.json(
-      { error: "Answer record not found" },
+      { error: "Answer record not found or attempt already completed" },
       { status: 404 }
     );
   }
