@@ -158,7 +158,9 @@ async function mockApi(page, role = "user") {
     const method = route.request().method();
     let payload;
     if (path === "/api/me") payload = { user: user(role) };
-    else if (path === "/api/admin/settings" && method === "PUT") {
+    else if (path === "/api/student/attempts/session") {
+      payload = { active: true };
+    } else if (path === "/api/admin/settings" && method === "PUT") {
       payload = { success: true };
     } else if (path === "/api/student/academic-profile" && method === "POST") {
       payload = { success: true };
@@ -296,4 +298,28 @@ test("admin settings persist quiz defaults and expose site management", async ({
     quiz_smart_practice_enabled: false,
   });
   await expect(page.getByRole("button", { name: /Homepage & site content/ })).toBeVisible();
+});
+
+
+test("refresh lands on Home and offers a server-verified resume card", async ({ page }) => {
+  await page.addInitScript((question) => {
+    localStorage.setItem("quizverse-quiz-session", JSON.stringify({
+      version: 2,
+      state: {
+        attemptId: "attempt-1",
+        questions: [question],
+        currentIndex: 0,
+        answers: {},
+        feedbackMode: "immediate",
+      },
+    }));
+  }, quizQuestion);
+  await mockApi(page);
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Welcome back, Test" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Continue Quiz" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Welcome back, Test" })).toBeVisible();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "What is the basic unit of life?" })).toBeVisible();
 });

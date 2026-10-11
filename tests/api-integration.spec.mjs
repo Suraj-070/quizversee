@@ -99,6 +99,7 @@ test("real admin login can retrieve curriculum coverage without production DB", 
 
 test("admin quiz settings update feeds the real student setup endpoint", async ({ page }) => {
   await login(page, "ci-admin@example.test");
+  await expect(page.getByRole("heading", { name: "Dashboard", level: 2 })).toBeVisible();
   const save = await page.request.put("/api/admin/settings", {
     data: {
       quiz_question_counts: [1, 5, 10],
