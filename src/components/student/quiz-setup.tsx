@@ -67,8 +67,10 @@ export function QuizSetup({ user }: { user: PublicUser }) {
   const [selectedCount, setSelectedCount] = useState<number | null>(null);
   const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>("immediate");
   const [smartPractice, setSmartPractice] = useState(false);
+  const [smartPracticeEnabled, setSmartPracticeEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
@@ -95,16 +97,20 @@ export function QuizSetup({ user }: { user: PublicUser }) {
           topic: TopicInfo;
           publishedCount: number;
           allowedCounts: AllowedCount[];
+          defaultCount: number | null;
+          defaultFeedbackMode: FeedbackMode;
+          smartPracticeEnabled: boolean;
         };
         if (cancelled) return;
         setTopic(data.topic);
         setPublishedCount(data.publishedCount);
         setAllowedCounts(data.allowedCounts);
-        // Pre-select the largest available count
+        // Prefer school default; always fall back to a working size.
         const available = data.allowedCounts.filter((c) => c.available);
-        if (available.length > 0) {
-          setSelectedCount(available[available.length - 1].count);
-        }
+        setSelectedCount(data.defaultCount ?? available[0]?.count ?? null);
+        setFeedbackMode(data.defaultFeedbackMode);
+        setSmartPracticeEnabled(data.smartPracticeEnabled);
+        if (!data.smartPracticeEnabled) setSmartPractice(false);
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : "Failed to load topic info");
@@ -121,7 +127,7 @@ export function QuizSetup({ user }: { user: PublicUser }) {
   async function handleStart() {
     if (!selectedCount || starting) return;
     setStarting(true);
-    setError(null);
+    setStartError(null);
     try {
       // Use smart-practice endpoint if enabled, otherwise normal attempts
       const endpoint = smartPractice
@@ -160,7 +166,7 @@ export function QuizSetup({ user }: { user: PublicUser }) {
       startQuiz(data.attemptId, data.questions, feedbackMode);
       setView({ name: "quiz-active", attemptId: data.attemptId });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to start quiz");
+      setStartError(e instanceof Error ? e.message : "Failed to start quiz");
     } finally {
       setStarting(false);
     }
@@ -266,7 +272,7 @@ export function QuizSetup({ user }: { user: PublicUser }) {
                   How many questions would you like?
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">
-                  Unavailable quantities are disabled.
+                  Choose one question for a quick check or a longer session. Unavailable quantities are disabled.
                 </p>
 
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -314,15 +320,17 @@ export function QuizSetup({ user }: { user: PublicUser }) {
               </div>
 
               {/* Smart practice toggle */}
-              <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
+              {smartPracticeEnabled && <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-slate-900">Smart Practice</p>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Prioritizes questions you previously got wrong or haven&apos;t seen recently.
                   </p>
                 </div>
-                <Switch checked={smartPractice} onCheckedChange={setSmartPractice} />
-              </div>
+                <Switch aria-label="Enable Smart Practice" checked={smartPractice} onCheckedChange={setSmartPractice} />
+              </div>}
+
+              {startError && <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{startError}</div>}
 
               {/* Start button */}
               <div className="mt-6 flex justify-end">
@@ -372,6 +380,8 @@ function CountTile({
       type="button"
       onClick={onSelect}
       disabled={!available}
+      aria-pressed={selected}
+      aria-label={available ? `${count} ${count === 1 ? "question" : "questions"}` : `${count} questions unavailable`}
       className={cn(
         "relative rounded-xl border-2 px-4 py-5 text-center transition-all",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",
@@ -394,7 +404,7 @@ function CountTile({
           available ? "text-slate-500" : "text-slate-400"
         )}
       >
-        {available ? "questions" : "unavailable"}
+        {available ? (count === 1 ? "question" : "questions") : "unavailable"}
       </div>
       {!available && (
         <div className="absolute top-2 right-2">
@@ -426,6 +436,7 @@ function ModeTile({
     <button
       type="button"
       onClick={onSelect}
+      aria-pressed={selected}
       className={cn(
         "relative text-left rounded-xl border-2 p-4 transition-all",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",
