@@ -130,7 +130,7 @@ export function AdminImports() {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [uploading, setUploading] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [importAsDraft, setImportAsDraft] = useState(false);
+  const [importAsDraft, setImportAsDraft] = useState(true);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[] | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -355,10 +355,13 @@ export function AdminImports() {
 
       {/* Upload area */}
       {!preview && !result && (
-        <div
-          onClick={() => fileRef.current?.click()}
-          className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-10 text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-colors"
-        >
+        <div>
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="flex w-full flex-col items-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-10 text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-wait"
+          >
           {uploading ? (
             <Loader2 className="size-8 mx-auto animate-spin text-emerald-500" />
           ) : (
@@ -370,6 +373,7 @@ export function AdminImports() {
           <p className="mt-1 text-xs text-slate-500">
             Must have: class, subject, topic, questions[] with options A-D + answer
           </p>
+          </button>
           <input
             ref={fileRef}
             type="file"
@@ -444,18 +448,21 @@ export function AdminImports() {
               />
               <div>
                 <div className="text-sm font-medium text-slate-800">
-                  Import as draft (recommended for AI-generated content)
+                  Import as draft (recommended)
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  When checked, questions are inserted with status=draft and
-                  tagged with an import batch ID. You can review and
-                  bulk-publish them from the "Import Batches" section below.
-                  When unchecked, valid questions are published immediately
-                  (legacy behavior).
+                  Draft questions stay unpublished until you review and publish them.
+                  Unchecking this option publishes valid questions immediately.
                 </p>
               </div>
             </label>
           </div>
+
+          {!importAsDraft && (
+            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="status">
+              Immediate publishing is enabled. Valid questions will be visible to students after import.
+            </p>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setPreview(null)}>

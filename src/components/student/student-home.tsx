@@ -189,6 +189,7 @@ export function StudentHome({ user }: { user: PublicUser }) {
                     setDismissedAnnouncements((prev) => new Set([...prev, a.id]))
                   }
                   className="shrink-0 text-emerald-400 hover:text-emerald-600"
+                  aria-label={`Dismiss announcement: ${a.title}`}
                 >
                   <X className="size-4" />
                 </button>
@@ -258,6 +259,12 @@ export function StudentHome({ user }: { user: PublicUser }) {
           />
         ) : (
           <>
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h2 className="text-base font-semibold text-slate-900">Your subjects</h2>
+              <button type="button" className="text-xs font-semibold text-emerald-700 hover:text-emerald-800" onClick={() => setView({ name: "my-learning" })}>
+                View all <ChevronRight className="inline size-3" />
+              </button>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {subjects.map((subject) => (
                 <button
