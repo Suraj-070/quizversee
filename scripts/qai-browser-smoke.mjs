@@ -26,7 +26,12 @@ async function testBrowser(viewport, label, email) {
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
   await fs.mkdir("/tmp/qai-browser-artifacts", { recursive: true });
-  const snapshot = async name => page.screenshot({ path: "/tmp/qai-browser-artifacts/" + label + "-" + name + ".png", fullPage: true });
+  const snapshot = async name => {
+    await page.waitForTimeout(1100);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(120);
+    return page.screenshot({ path: "/tmp/qai-browser-artifacts/" + label + "-" + name + ".png", fullPage: true });
+  };
   page.setDefaultTimeout(25000);
   const pageErrors = [];
   page.on("pageerror", e => pageErrors.push(e.message));
