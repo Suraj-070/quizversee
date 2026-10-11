@@ -47,3 +47,15 @@ Updated 2026-10-11. **Staging only: not merged, released, or deployed.**
 6. Confirm compatibility with the local `migrate/supabase` branch before merging. Do not overwrite untracked local files.
 
 **No changes were made to production application deployment, QAI activation flag, or existing Supabase data in this UX phase.**
+
+## Final visual-review refinements
+- Inspected CI Chromium images for Home, Profile, Quiz Setup, Results and Resumed Quiz at desktop (1280px) and phone (390px) sizes.
+- Replaced smooth route scroll reset with immediate scroll in `AppShell` to keep quiz headings from hiding under sticky mobile navigation.
+- Added accessible labels to icon-only student header, dismiss-announcement, and name-save actions.
+- Admin preset tiles now expose `aria-pressed` and no longer nest a Switch button inside a button.
+- Added a real-browser sign-out/switch-account isolation check.
+- **Prior verified all-green CI**: [38115962196](https://github.com/Suraj-070/quizversee/actions/runs/38115962196). Confirm latest commits separately.
+- Full manual assistive-technology testing and a deployed preview review are not replaced by headless Chromium automation.
+
+## Integration limitation
+Only `main` and `qai/answer-integrity-postgres` exist as remote branches; the owner's `migrate/supabase` worktree branch and its untracked files are local-only. This staging work must not be merged into `main` or deployed until the local PostgreSQL migration branch is reconciled. Production QAI remains off.
