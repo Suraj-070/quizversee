@@ -80,6 +80,7 @@ export async function POST(request: Request) {
         classId,
         isActive: true,
         archivedAt: null,
+        topics: { some: { isActive: true, archivedAt: null, contentType: "curriculum" } },
       },
       select: { id: true },
     });
@@ -91,24 +92,19 @@ export async function POST(request: Request) {
     }
   }
 
-  await db.user.update({
-    where: { id: user.id },
-    data: {
-      currentClassId: classId,
-      onboardingCompleted: true,
-    },
-  });
-
-  await db.userSubject.deleteMany({ where: { userId: user.id } });
-
-  if (subjectIds.length > 0) {
-    await db.userSubject.createMany({
-      data: subjectIds.map((subjectId) => ({
-        userId: user.id,
-        subjectId,
-      })),
+  // Keep grade and subject selection consistent if any write fails.
+  await db.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: user.id },
+      data: { currentClassId: classId, onboardingCompleted: true },
     });
-  }
+    await tx.userSubject.deleteMany({ where: { userId: user.id } });
+    if (subjectIds.length > 0) {
+      await tx.userSubject.createMany({
+        data: subjectIds.map((subjectId) => ({ userId: user.id, subjectId })),
+      });
+    }
+  });
 
   return NextResponse.json({ success: true, classId, subjectIds });
 }
