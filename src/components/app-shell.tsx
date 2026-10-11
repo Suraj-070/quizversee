@@ -111,6 +111,18 @@ export function AppShell() {
     };
   }, [setView]);
 
+  // Keep the header's display name in sync with profile edits without a full-page reload.
+  useEffect(() => {
+    const onProfileUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<{ name?: string }>).detail;
+      if (typeof detail?.name === "string") {
+        setUser((current) => current ? { ...current, name: detail.name! } : current);
+      }
+    };
+    window.addEventListener("quizverse:user-updated", onProfileUpdate);
+    return () => window.removeEventListener("quizverse:user-updated", onProfileUpdate);
+  }, []);
+
   // Booting state — show a centered spinner while /api/me resolves.
   if (booting) {
     return (
