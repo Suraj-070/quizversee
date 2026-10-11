@@ -45,6 +45,15 @@ jobs:
         run: bunx playwright install --with-deps chromium
       - name: Browser smoke tests with mocked API data
         run: bunx playwright test --config=playwright.ui.config.mjs
+      - name: Create disposable test database (never production)
+        env:
+          DATABASE_URL: file:./ui-smoke.sqlite
+        run: |
+          test "$CI" = "true"
+          bunx prisma db push --skip-generate
+          bun scripts/seed-ui-ci.mjs
+      - name: Live API integration tests against disposable SQLite
+        run: bunx playwright test --config=playwright.api.config.mjs
       - name: Upload browser failure artifacts
         if: failure()
         uses: actions/upload-artifact@v4
