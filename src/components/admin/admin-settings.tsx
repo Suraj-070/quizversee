@@ -9,7 +9,6 @@ import {
   Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -147,6 +146,8 @@ export function AdminSettings() {
                 key={n}
                 type="button"
                 onClick={() => toggleCount(n)}
+                aria-pressed={enabled}
+                aria-label={`${n} question preset ${enabled ? "enabled" : "disabled"}`}
                 className={cn(
                   "rounded-xl border-2 p-4 text-center transition-all",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",
@@ -165,7 +166,7 @@ export function AdminSettings() {
                   {n}
                 </div>
                 <div className="mt-1 flex items-center justify-center">
-                  <Switch checked={enabled} />
+                  <span aria-hidden="true" className={cn("flex items-center justify-center rounded-full size-6 text-xs font-semibold", enabled ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400")}>{enabled ? <Check className="size-4" /> : "–"}</span>
                 </div>
               </button>
             );
