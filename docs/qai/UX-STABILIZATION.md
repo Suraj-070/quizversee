@@ -16,8 +16,11 @@ Updated 2026-10-11. **Staging only: not merged, released, or deployed.**
 - New completed quiz reviews explicitly show unanswered questions as unanswered, not as placeholder answer A. Results separate Correct / Incorrect / Skipped. Historical completed attempt reviews remain compatible.
 - Wrong-answer repeat-practice excludes skipped questions for new attempts, preserving legacy behavior.
 - `package-lock.json` was regenerated and committed to the staging branch; CI reverted to strict `npm ci`.
-- GitHub Actions verifies unit tests, TypeScript, a standalone production Next.js build, and a PostgreSQL integration test against a disposable `qai_test` database.
+- GitHub Actions verifies unit tests, TypeScript, a standalone production Next.js build, PostgreSQL integration, and authenticated HTTP flows against a disposable `qai_test` database.
 - Reference green CI: [run 38114211711](https://github.com/Suraj-070/quizversee/actions/runs/38114211711) — 27 unit tests passed and production build successful. **Subsequent commits need independent green confirmation**.
+
+- [Green authenticated HTTP verification](https://github.com/Suraj-070/quizversee/actions/runs/38114415212) confirms test-student login, subject saving, one-question exam, answer secrecy, duplicate rejection, completion, cross-user attempt isolation, and profile subject replacement.
+- Quiz-set start now returns question/option images consistently with topic and subject quizzes.
 
 ## Still required before deployment
 1. Verify the **latest commit** passes both CI jobs including Next.js production build.
@@ -31,7 +34,7 @@ Updated 2026-10-11. **Staging only: not merged, released, or deployed.**
    - Complete while skipping a question; review and results should say Unanswered / Skipped.
    - Admin changes presets and default feedback; student sees updated setup.
    - Test zero published questions, empty onboarding subjects, slow responses and errors.
-3. Authenticated API and concurrent-submission end-to-end integration tests against a staging server. The current PostgreSQL test is a database primitive test, not a full HTTP test.
+3. The authenticated HTTP smoke test now passes in disposable CI. Still required: true **concurrent HTTP submission/completion race tests**, and visual browser acceptance tests (including navigation and keyboard controls).
 4. Check accessibility: keyboard navigation, focus order, mobile widths, form validation, visible loading/errors, contrast and assistive labels.
 5. Resume question ordering can differ from initial randomized order because existing schema does not record original sequence; improving exact order would require an approved additive data change.
 6. Confirm compatibility with the local `migrate/supabase` branch before merging. Do not overwrite untracked local files.
