@@ -9,7 +9,7 @@ export function buildResumableQuiz(attempt) {
   const questions = [];
   const recordedAnswers = {};
   const seen = new Set();
-  for (const answer of attempt.answers) {
+  for (const answer of [...attempt.answers].sort((a, b) => String(a?.id ?? '').localeCompare(String(b?.id ?? '')))) {
     const q = answer?.question;
     if (!q?.id || !answer?.id || seen.has(q.id)) {
       throw new Error("Quiz attempt contains invalid questions");
