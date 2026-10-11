@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+# New pushes supersede outdated staging checks, avoiding CI queue buildup.
+concurrency:
+  group: qai-staging-verification
+  cancel-in-progress: true
+
 jobs:
   unit-and-types:
     runs-on: ubuntu-latest
