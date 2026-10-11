@@ -29,14 +29,23 @@ export async function POST(request: Request) {
 
   const originalAttempt = await db.quizAttempt.findFirst({
     where: { id: fromAttemptId, userId: user.id, completedAt: { not: null } },
-    select: { id: true, topicId: true, subjectId: true },
+    select: { id: true, topicId: true, subjectId: true, startedAt: true },
   });
   if (!originalAttempt) {
     return NextResponse.json({ error: "Attempt not found" }, { status: 404 });
   }
 
+  const activationAt = process.env.QAI_ANSWER_ACTIVATION_AT;
+  const activationTime = Date.parse(activationAt ?? "");
+  const isNewAttempt = Number.isFinite(activationTime) &&
+    originalAttempt.startedAt.getTime() >= activationTime;
+
   const wrongAnswers = await db.userAnswer.findMany({
-    where: { attemptId: fromAttemptId, userId: user.id, isCorrect: false },
+    where: {
+      attemptId: fromAttemptId, userId: user.id, isCorrect: false,
+      // Skip unanswered placeholders in new attempts; preserve historical reviews.
+      ...(isNewAttempt ? { submittedAt: { not: null } } : {}),
+    },
     select: { questionId: true },
   });
 
