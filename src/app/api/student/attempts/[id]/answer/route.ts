@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth-guard";
 import { isLegacyAttempt } from "@/lib/qai-legacy-attempt.mjs";
+import { canRevealSubmittedAnswer } from "@/lib/qai-answer-visibility.mjs";
 
 type Params = { params: Promise<{ id: string }> };
 class AnswerConflict extends Error {}
@@ -107,7 +108,7 @@ export async function PATCH(request: Request, { params }: Params) {
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10000 });
 
       // Exam secrecy is enforced from the stored attempt mode, never the caller-supplied reveal flag.
-      if (result.feedbackMode === "exam" || !reveal) return NextResponse.json({ recorded: true });
+      if (!canRevealSubmittedAnswer(result.feedbackMode, reveal)) return NextResponse.json({ recorded: true });
       return NextResponse.json({ isCorrect: result.isCorrect, correctOption: result.correctOption, explanation: result.explanation });
     } catch (err) {
       if (err instanceof LegacyAttempt)
