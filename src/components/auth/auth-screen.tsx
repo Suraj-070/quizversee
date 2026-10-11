@@ -228,32 +228,6 @@ export function AuthScreen() {
           </CardContent>
         </Card>
 
-        <div className="mt-6 text-center text-xs text-slate-400">
-          <p>
-            Demo logins —{" "}
-            <button
-              type="button"
-              className="underline hover:text-slate-600"
-              onClick={async () => {
-                setEmail("admin@mcq.local");
-                setPassword("admin12345");
-              }}
-            >
-              admin@mcq.local
-            </button>{" "}
-            ·{" "}
-            <button
-              type="button"
-              className="underline hover:text-slate-600"
-              onClick={async () => {
-                setEmail("student@mcq.local");
-                setPassword("student12345");
-              }}
-            >
-              student@mcq.local
-            </button>
-          </p>
-        </div>
       </motion.div>
     </div>
   );
