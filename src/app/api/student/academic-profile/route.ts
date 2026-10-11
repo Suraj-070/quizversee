@@ -65,6 +65,9 @@ export async function POST(request: Request) {
   }
 
   const { classId, subjectIds } = parsed.data;
+  if (new Set(subjectIds).size !== subjectIds.length) {
+    return NextResponse.json({ error: "Duplicate subjects are not allowed" }, { status: 400 });
+  }
 
   const klass = await db.class.findFirst({
     where: { id: classId, isActive: true, archivedAt: null },
@@ -91,24 +94,18 @@ export async function POST(request: Request) {
     }
   }
 
-  await db.user.update({
-    where: { id: user.id },
-    data: {
-      currentClassId: classId,
-      onboardingCompleted: true,
-    },
-  });
-
-  await db.userSubject.deleteMany({ where: { userId: user.id } });
-
-  if (subjectIds.length > 0) {
-    await db.userSubject.createMany({
-      data: subjectIds.map((subjectId) => ({
-        userId: user.id,
-        subjectId,
-      })),
+  await db.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: user.id },
+      data: { currentClassId: classId, onboardingCompleted: true },
     });
-  }
+    await tx.userSubject.deleteMany({ where: { userId: user.id } });
+    if (subjectIds.length > 0) {
+      await tx.userSubject.createMany({
+        data: subjectIds.map((subjectId) => ({ userId: user.id, subjectId })),
+      });
+    }
+  });
 
   return NextResponse.json({ success: true, classId, subjectIds });
 }
