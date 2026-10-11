@@ -30,3 +30,11 @@ test("completed and inconsistent attempts cannot be resumed", () => {
   assert.throws(() => buildResumableQuiz({ id: "a3", completedAt: "done", totalQuestions: 1, answers: [q("q1")] }));
   assert.throws(() => buildResumableQuiz({ id: "a4", completedAt: null, totalQuestions: 2, answers: [q("q1")] }));
 });
+
+test("server record order cannot reshuffle an already-started attempt", () => {
+  const result = buildResumableQuiz({
+    id: "order-test", totalQuestions: 2, feedbackMode: "exam", completedAt: null,
+    answers: [q("q2"), q("q1")],
+  });
+  assert.deepEqual(result.questions.map(item => item.userAnswerId), ["answer-q1", "answer-q2"]);
+});
