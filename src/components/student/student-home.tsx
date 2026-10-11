@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
 import { useQuizSessionStore } from "@/stores/quiz-session-store";
+import { buildResumableQuiz } from "@/lib/qai-resume-session.mjs";
+import { toast } from "sonner";
 import { StudentHeader } from "@/components/student/student-header";
 import { ClassCard, type StudentClass } from "@/components/student/class-card";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -55,42 +57,35 @@ export function StudentHome({ user }: { user: PublicUser }) {
   const [error, setError] = useState<string | null>(null);
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState<Set<string>>(new Set());
 
-  // Check if there's an unfinished quiz session
-  const sessionAttemptId = useQuizSessionStore((s) => s.attemptId);
-  const sessionQuestions = useQuizSessionStore((s) => s.questions);
-  const sessionAnswers = useQuizSessionStore((s) => s.answers);
-  const [verifiedResumeId, setVerifiedResumeId] = useState<string | null>(null);
-  const clearSession = useQuizSessionStore((s) => s.clear);
-  useEffect(() => {
-    setVerifiedResumeId(null);
-    if (!sessionAttemptId) return;
-    let cancelled = false;
-    async function validateResume() {
-      try {
-        const res = await fetch(`/api/student/attempts?attemptId=${encodeURIComponent(sessionAttemptId!)}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("Quiz attempt is unavailable");
-        const data = await res.json() as { attempt?: { id: string; completedAt: string | null } };
-        if (!cancelled) {
-          if (data.attempt?.id === sessionAttemptId && !data.attempt.completedAt) {
-            setVerifiedResumeId(sessionAttemptId);
-          } else {
-            clearSession();
-          }
-        }
-      } catch {
-        if (!cancelled) clearSession();
-      }
-    }
-    validateResume();
-    return () => { cancelled = true; };
-  }, [sessionAttemptId, clearSession]);
+  // A resumable attempt comes from the authenticated server, not from stale localStorage.
+  const [resumeCandidate, setResumeCandidate] = useState<{
+    id: string; totalQuestions: number; answeredCount: number;
+  } | null>(null);
+  const [resuming, setResuming] = useState(false);
+  const restoreSession = useQuizSessionStore((state) => state.restore);
+  const clearSession = useQuizSessionStore((state) => state.clear);
+  const hasUnfinishedQuiz = !!resumeCandidate;
+  const answeredCount = resumeCandidate?.answeredCount ?? 0;
+  const totalQuestions = resumeCandidate?.totalQuestions ?? 0;
 
-  const hasUnfinishedQuiz =
-    verifiedResumeId === sessionAttemptId &&
-    sessionQuestions.length > 0 &&
-    Object.keys(sessionAnswers).length < sessionQuestions.length;
-  const answeredCount = Object.keys(sessionAnswers).length;
-  const totalQuestions = sessionQuestions.length;
+  async function handleResume() {
+    if (!resumeCandidate || resuming) return;
+    setResuming(true);
+    try {
+      const res = await fetch(`/api/student/attempts?attemptId=${encodeURIComponent(resumeCandidate.id)}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("This quiz can no longer be resumed");
+      const data = await res.json() as { attempt: unknown };
+      const session = buildResumableQuiz(data.attempt);
+      restoreSession(session);
+      setView({ name: "quiz-active", attemptId: session.attemptId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Unable to resume quiz");
+    } finally {
+      setResuming(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -98,11 +93,12 @@ export function StudentHome({ user }: { user: PublicUser }) {
       setLoading(true);
       setError(null);
       try {
-        const [classesRes, annRes, progressRes, weakRes] = await Promise.all([
+        const [classesRes, annRes, progressRes, weakRes, attemptsRes] = await Promise.all([
           fetch("/api/student/academic", { cache: "no-store" }),
           fetch("/api/student/announcements", { cache: "no-store" }),
           fetch("/api/student/progress", { cache: "no-store" }),
           fetch("/api/student/weak-topics", { cache: "no-store" }),
+          fetch("/api/student/attempts", { cache: "no-store" }),
         ]);
 
         if (!classesRes.ok) throw new Error("Failed to load classes");
@@ -126,6 +122,28 @@ export function StudentHome({ user }: { user: PublicUser }) {
           }
         }
 
+        if (attemptsRes.ok) {
+          const attemptData = await attemptsRes.json() as {
+            attempts: Array<{
+              id: string; completedAt: string | null; resumable: boolean;
+              totalQuestions: number; _count?: { answers: number };
+            }>;
+          };
+          if (!cancelled) {
+            const pending = attemptData.attempts.find(
+              (attempt) => attempt.resumable && !attempt.completedAt && attempt.totalQuestions > 0
+            );
+            setResumeCandidate(pending ? {
+              id: pending.id,
+              totalQuestions: pending.totalQuestions,
+              answeredCount: pending._count?.answers ?? 0,
+            } : null);
+            // Never retain a different user's or an obsolete attempt in browser storage.
+            const localId = useQuizSessionStore.getState().attemptId;
+            if (localId && localId !== pending?.id) clearSession();
+          }
+        }
+
         if (weakRes.ok) {
           const weakData = (await weakRes.json()) as { weakTopics: WeakTopic[] };
           if (!cancelled) setWeakTopics(weakData.weakTopics);
@@ -139,7 +157,7 @@ export function StudentHome({ user }: { user: PublicUser }) {
     }
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [clearSession]);
 
   const activeAnnouncements = announcements.filter(
     (a) => !dismissedAnnouncements.has(a.id)
@@ -233,11 +251,10 @@ export function StudentHome({ user }: { user: PublicUser }) {
               </div>
               <Button
                 className="bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
-                onClick={() =>
-                  setView({ name: "quiz-active", attemptId: sessionAttemptId! })
-                }
+                onClick={handleResume}
+                disabled={resuming}
               >
-                Continue
+                {resuming ? "Restoring..." : "Continue"}
               </Button>
             </div>
           </motion.div>
