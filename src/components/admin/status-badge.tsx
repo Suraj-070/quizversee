@@ -1,7 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
+import type { VariantProps } from "class-variance-authority";
+import { badgeVariants } from "@/components/ui/badge";
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
 type Tone = "active" | "inactive" | "published" | "draft" | "neutral";
 
