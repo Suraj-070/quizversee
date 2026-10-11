@@ -162,7 +162,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
 
       // 1-4 / A-D: select option
       if (["1", "2", "3", "4", "a", "b", "c", "d"].includes(e.key.toLowerCase())) {
-        if (!revealed && !submitting) {
+        if (!revealed && !submitting && !answers[questions[currentIndex]?.id]) {
           const map: Record<string, "A" | "B" | "C" | "D"> = {
             "1": "A", "a": "A",
             "2": "B", "b": "B",
@@ -180,7 +180,9 @@ export function QuizActive({ user }: { user: PublicUser }) {
       // Enter: confirm or advance
       if (e.key === "Enter") {
         e.preventDefault();
-        if (!revealed && selectedOption && !submitting) {
+        if (isExamMode && answers[questions[currentIndex]?.id] && !submitting) {
+          handleNext();
+        } else if (!revealed && selectedOption && !submitting) {
           handleReveal();
         } else if (revealed && !submitting) {
           handleNext();
@@ -214,7 +216,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [revealed, selectedOption, submitting, currentIndex, questions.length, flagToggling]);
+  }, [revealed, selectedOption, submitting, currentIndex, questions, answers, isExamMode, flagToggling]);
 
   // ---------- Flag toggle ----------
   async function toggleFlag() {
@@ -482,14 +484,14 @@ export function QuizActive({ user }: { user: PublicUser }) {
                 const isCorrect =
                   revealed && revealedResult?.correctOption === opt.key;
                 const isWrongSelected =
-                  revealed && isSelected && !revealedResult?.isCorrect;
+                  revealed && isSelected && revealedResult?.isCorrect === false;
 
                 return (
                   <motion.button
                     key={opt.key}
                     type="button"
-                    onClick={() => !revealed && setSelectedOption(opt.key)}
-                    disabled={revealed || submitting}
+                    onClick={() => !revealed && !answers[question.id] && setSelectedOption(opt.key)}
+                    disabled={revealed || submitting || !!answers[question.id]}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 + optIdx * 0.04, duration: 0.2, ease: "easeOut" }}
@@ -633,8 +635,8 @@ export function QuizActive({ user }: { user: PublicUser }) {
                 <Button
                   size="lg"
                   className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                  disabled={!selectedOption || submitting}
-                  onClick={handleReveal}
+                  disabled={(!selectedOption && !answers[question.id]) || submitting}
+                  onClick={answers[question.id] ? handleNext : handleReveal}
                 >
                   {submitting ? (
                     <Loader2 className="size-4 animate-spin" />
