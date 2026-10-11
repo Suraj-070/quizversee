@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       subjectId: z.string().min(1).optional(),
       quizSetId: z.string().min(1).optional(),
       totalQuestions: z.number().int().positive().optional(),
+      feedbackMode: z.enum(["immediate", "exam"]).optional().default("immediate"),
     })
     .refine(
       (data) => !!data.topicId || !!data.quizSetId || !!data.subjectId,
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { topicId, subjectId, quizSetId, totalQuestions } = parsed.data;
+  const { topicId, subjectId, quizSetId, totalQuestions, feedbackMode } = parsed.data;
 
   // ----- Mode 1: Topic quiz -----
   if (topicId) {
@@ -133,6 +134,7 @@ export async function POST(request: Request) {
       const created = await tx.quizAttempt.create({
         data: {
           userId: user.id,
+          feedbackMode,
           topicId,
           totalQuestions,
           correctAnswers: 0,
@@ -253,6 +255,7 @@ export async function POST(request: Request) {
       const created = await tx.quizAttempt.create({
         data: {
           userId: user.id,
+          feedbackMode,
           topicId: null,
           subjectId,
           totalQuestions,
@@ -348,6 +351,7 @@ export async function POST(request: Request) {
     const created = await tx.quizAttempt.create({
       data: {
         userId: user.id,
+        feedbackMode,
         topicId: null,
         quizSetId: quizSet.id,
         totalQuestions: total,
