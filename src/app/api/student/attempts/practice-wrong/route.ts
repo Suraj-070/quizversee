@@ -63,6 +63,7 @@ export async function POST(request: Request) {
     const created = await tx.quizAttempt.create({
       data: {
         userId: user.id,
+        feedbackMode: "immediate",
         topicId: originalAttempt.topicId,
         subjectId: originalAttempt.subjectId,
         totalQuestions: total,
