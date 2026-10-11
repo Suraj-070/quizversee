@@ -59,6 +59,6 @@ export async function GET() {
 
   return NextResponse.json({
     className: klass?.name ?? null,
-    subjects: subjects.filter((s) => s.questionCount > 0),
+    subjects, // Keep selected subjects visible even before questions are published.
   });
 }
