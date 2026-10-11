@@ -64,6 +64,12 @@ export function AppShell() {
   const setView = useViewStore((s) => s.setView);
 
   useEffect(() => {
+    // Remove obsolete persisted quiz payloads from older releases.
+    // Active quizzes now recover safely from the authenticated database.
+    try { window.localStorage.removeItem("quizverse-quiz-session"); } catch {}
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     async function bootstrap() {
       try {
