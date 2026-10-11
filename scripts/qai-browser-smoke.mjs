@@ -29,7 +29,7 @@ async function testBrowser(viewport, label, email) {
   await fs.mkdir("/tmp/qai-browser-artifacts", { recursive: true });
   const snapshot = async name => {
     await page.waitForTimeout(1100);
-    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
     await page.waitForTimeout(120);
     return page.screenshot({ path: "/tmp/qai-browser-artifacts/" + label + "-" + name + ".png", fullPage: true });
   };
@@ -80,6 +80,8 @@ async function testBrowser(viewport, label, email) {
     await page.getByRole("button", { name: /Browser Science/ }).click();
     await page.getByRole("button", { name: /Browser Single Topic/ }).click();
     await visible(page.getByRole("heading", { name: "Browser Single Topic" }));
+    assert.ok((await page.evaluate(() => window.scrollY)) <= 4,
+      "Screen navigation must immediately reset page scroll");
     await page.locator("#custom-question-count").fill("1");
     await page.getByRole("button", { name: /Exam mode/ }).click();
     await checkWidth(page, label + " one-question setup");
