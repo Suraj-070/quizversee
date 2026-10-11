@@ -34,14 +34,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   // Students may request an AI explanation only after a completed
   // attempt in which they genuinely submitted a wrong answer.
   // Never accept an arbitrary supplied option as evidence of an attempt.
+  const activationAt = process.env.QAI_ANSWER_ACTIVATION_AT;
+  const activationDate = activationAt ? new Date(activationAt) : null;
+  if (!activationDate || !Number.isFinite(activationDate.getTime())) {
+    return NextResponse.json({ error: "Answer integrity upgrade is not activated" }, { status: 503 });
+  }
   const reviewedAnswer = await db.userAnswer.findFirst({
     where: {
       userId: user.id,
       questionId,
       selectedOption,
       isCorrect: false,
-      submittedAt: { not: null },
       attempt: { userId: user.id, completedAt: { not: null } },
+      OR: [
+        { submittedAt: { not: null } },
+        // Completed historical attempts predate submittedAt; preserve their review access.
+        { attempt: { startedAt: { lt: activationDate }, completedAt: { not: null } } },
+      ],
     },
     select: { id: true },
   });
