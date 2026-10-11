@@ -100,7 +100,7 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
         // Pre-select the largest available count
         const available = data.allowedCounts.filter((c) => c.available);
         if (available.length > 0) {
-          setSelectedCount(available[available.length - 1].count);
+          setSelectedCount(available[Math.min(available.length - 1, 2)].count);
         }
       } catch (e) {
         if (cancelled) return;
@@ -262,6 +262,28 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
                     />
                   ))}
                 </div>
+                {publishedCount > 0 && (
+                  <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <label htmlFor="custom-question-count" className="block text-sm font-medium text-slate-700">
+                      Custom number of questions (1–{publishedCount})
+                    </label>
+                    <input
+                      id="custom-question-count"
+                      type="number"
+                      min={1}
+                      max={publishedCount}
+                      step={1}
+                      value={selectedCount ?? ""}
+                      onChange={(e) => {
+                        if (e.target.value === "") { setSelectedCount(null); return; }
+                        const n = Number(e.target.value);
+                        if (Number.isInteger(n) && n >= 1 && n <= publishedCount) setSelectedCount(n);
+                      }}
+                      className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                    />
+                    <p className="mt-1 text-xs text-slate-500">You can start a quiz even with just one question.</p>
+                  </div>
+                )}
               </div>
 
               {/* Feedback mode selector */}
