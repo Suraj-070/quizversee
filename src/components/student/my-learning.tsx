@@ -149,8 +149,11 @@ export function MyLearning({ user }: { user: PublicUser }) {
                 </div>
                 <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
                   <span>{subject.topicCount} topics</span>
-                  <span>{subject.questionCount} questions</span>
+                  <span>{subject.questionCount} {subject.questionCount === 1 ? "question" : "questions"}</span>
                 </div>
+                {subject.questionCount === 0 && (
+                  <p className="mt-2 text-xs text-amber-700">Saved subject — no published questions yet.</p>
+                )}
               </motion.button>
             ))}
           </div>
