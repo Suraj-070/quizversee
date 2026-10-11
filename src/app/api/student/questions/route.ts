@@ -62,7 +62,7 @@ export async function GET(request: Request) {
   const setting = await db.setting.findUnique({
     where: { key: "quiz_question_counts" },
   });
-  let allowedCounts: number[] = [10];
+  let allowedCounts: number[] = [1, 3, 5, 10];
   if (setting) {
     try {
       const parsed = JSON.parse(setting.value);
@@ -75,6 +75,11 @@ export async function GET(request: Request) {
       // fall back to default
     }
   }
+
+  // Support one-question quizzes and small question banks automatically.
+  allowedCounts = [...new Set([1, publishedCount, ...allowedCounts])]
+    .filter((n) => n > 0)
+    .sort((a, b) => a - b);
 
   // Build the availability map: each allowed count is "available" iff
   // it does not exceed the published-question count.
