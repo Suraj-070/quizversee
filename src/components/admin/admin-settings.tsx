@@ -24,12 +24,13 @@ import { cn } from "@/lib/utils";
  * pass mark, etc.).
  */
 
-const ALL_POSSIBLE_COUNTS = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100];
+const ALL_POSSIBLE_COUNTS = [1, 2, 3, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100];
 
 export function AdminSettings() {
   const [enabledCounts, setEnabledCounts] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [defaultFeedback, setDefaultFeedback] = useState<"immediate" | "exam">("immediate");
 
   useEffect(() => {
     async function load() {
@@ -39,6 +40,7 @@ export function AdminSettings() {
         if (!res.ok) throw new Error("Failed to load settings");
         const data = await res.json();
         const counts = data.settings?.quiz_question_counts;
+        setDefaultFeedback(data.settings?.default_feedback_mode === "exam" ? "exam" : "immediate");
         if (Array.isArray(counts)) {
           setEnabledCounts(counts);
         } else {
@@ -73,6 +75,7 @@ export function AdminSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           quiz_question_counts: enabledCounts,
+          default_feedback_mode: defaultFeedback,
         }),
       });
       if (!res.ok) {
@@ -104,6 +107,20 @@ export function AdminSettings() {
         </p>
       </div>
 
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 className="text-base font-semibold text-slate-900">Default feedback mode</h3>
+        <p className="text-sm text-slate-500 mt-1 mb-3">Choose what students see first when starting a topic quiz. Students can still switch modes.</p>
+        <select
+          value={defaultFeedback}
+          onChange={(e) => setDefaultFeedback(e.target.value as "immediate" | "exam")}
+          className="w-full sm:w-72 rounded-lg border border-slate-300 p-2 text-sm bg-white"
+          aria-label="Default quiz feedback mode"
+        >
+          <option value="immediate">Practice — reveal after answering</option>
+          <option value="exam">Exam — reveal after completion</option>
+        </select>
+      </section>
+
       {/* Quiz question counts */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-start gap-3 mb-4">
@@ -115,9 +132,9 @@ export function AdminSettings() {
               Allowed Question Counts
             </h3>
             <p className="text-sm text-slate-500 mt-0.5">
-              Choose which question quantities students can select when
+              Choose which preset quantities students see when
               starting a quiz. Counts that exceed the available published
-              questions are automatically disabled for students.
+              questions are automatically disabled. Students can also choose a custom count from 1 to the available total.
             </p>
           </div>
         </div>
