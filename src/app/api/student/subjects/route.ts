@@ -44,7 +44,7 @@ export async function GET(request: Request) {
       description: true,
       icon: true,
       displayOrder: true,
-      _count: { select: { topics: { where: { isActive: true } } } },
+      _count: { select: { topics: { where: { isActive: true, archivedAt: null, contentType: "curriculum" } } } },
     },
   });
 
@@ -53,7 +53,9 @@ export async function GET(request: Request) {
       const publishedQuestions = await db.question.count({
         where: {
           status: "published",
-          topic: { subjectId: s.id, isActive: true },
+          archivedAt: null,
+          contentType: "curriculum",
+          topic: { subjectId: s.id, isActive: true, archivedAt: null, contentType: "curriculum" },
         },
       });
       return { ...s, publishedQuestions };

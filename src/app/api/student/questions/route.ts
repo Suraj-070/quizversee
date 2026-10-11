@@ -36,6 +36,7 @@ export async function GET(request: Request) {
     where: { id: topicId, isActive: true },
     select: {
       id: true,
+      contentType: true,
       name: true,
       description: true,
       subject: {
@@ -55,7 +56,7 @@ export async function GET(request: Request) {
   }
 
   const publishedCount = await db.question.count({
-    where: { topicId, status: "published" },
+    where: { topicId, status: "published", archivedAt: null, contentType: topic.contentType },
   });
 
   // Fetch the allowed-counts setting (defaults to [10] if missing)

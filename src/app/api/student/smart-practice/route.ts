@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   // Verify topic is active
   const topic = await db.topic.findFirst({
     where: { id: topicId, isActive: true, archivedAt: null },
-    select: { id: true },
+    select: { id: true, contentType: true },
   });
   if (!topic) {
     return NextResponse.json({ error: "Topic not found" }, { status: 404 });
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   // Get all published question IDs for this topic
   const allQuestions = await db.question.findMany({
-    where: { topicId, status: "published", archivedAt: null },
+    where: { topicId, status: "published", archivedAt: null, contentType: topic.contentType },
     select: { id: true },
   });
 
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
           userId: user.id,
           timesSeen: { gte: 1 },
           timesCorrect: 0,
-          question: { topicId, status: "published", archivedAt: null },
+          question: { topicId, status: "published", archivedAt: null, contentType: topic.contentType },
         },
         select: { questionId: true },
       });
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     
       // 2. Fetch less-practiced questions (low timesSeen, including never-seen)
       const masteryRecords = await db.questionMastery.findMany({
-        where: { userId: user.id, question: { topicId } },
+        where: { userId: user.id, question: { topicId, contentType: topic.contentType } },
         select: { questionId: true, timesSeen: true },
       });
       const seenMap = new Map(masteryRecords.map((m) => [m.questionId, m.timesSeen]));
