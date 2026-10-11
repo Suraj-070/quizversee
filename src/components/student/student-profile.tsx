@@ -240,7 +240,7 @@ export function StudentProfile({ user }: { user: PublicUser }) {
                     autoFocus
                   />
                   <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white h-8"
-                    onClick={handleSaveName} disabled={savingName}>
+                    onClick={handleSaveName} disabled={savingName} aria-label="Save display name">
                     {savingName ? <Loader2 className="size-3 animate-spin" /> : <Save className="size-3" />}
                   </Button>
                 </div>
