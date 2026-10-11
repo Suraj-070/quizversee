@@ -91,6 +91,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
       } else {
         setRevealed(true);
         setRevealedResult(existing);
+        setFeedbackMsg(existing.isCorrect === null ? "Answer saved. Feedback will be available after completing the quiz." : existing.isCorrect ? "Correct answer!" : "Answer recorded.");
       }
     } else {
       setSelectedOption(null);
@@ -566,13 +567,17 @@ export function QuizActive({ user }: { user: PublicUser }) {
                   transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                   className={cn(
                     "mt-5 rounded-xl border p-4",
-                    revealedResult.isCorrect
+                    revealedResult.isCorrect === null
+                      ? "border-slate-200 bg-slate-50"
+                      : revealedResult.isCorrect
                       ? "border-emerald-200 bg-emerald-50"
                       : "border-red-200 bg-red-50"
                   )}
                 >
                   <div className="flex items-start gap-2.5">
-                    {revealedResult.isCorrect ? (
+                    {revealedResult.isCorrect === null ? (
+                      <Info className="size-5 text-slate-500 mt-0.5 shrink-0" />
+                    ) : revealedResult.isCorrect ? (
                       <CheckCircle2 className="size-5 text-emerald-600 mt-0.5 shrink-0" />
                     ) : (
                       <XCircle className="size-5 text-red-600 mt-0.5 shrink-0" />
@@ -581,7 +586,9 @@ export function QuizActive({ user }: { user: PublicUser }) {
                       <p
                         className={cn(
                           "font-semibold text-sm",
-                          revealedResult.isCorrect
+                          revealedResult.isCorrect === null
+                            ? "text-slate-700"
+                            : revealedResult.isCorrect
                             ? "text-emerald-700"
                             : "text-red-700"
                         )}
