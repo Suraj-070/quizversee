@@ -443,6 +443,16 @@ export function AdminQuestions() {
   }
 
   // ── Pagination helpers ─────────────────────────────────────────────────
+  const hasActiveFilters = filterClassId !== "all" || filterSubjectId !== "all" || filterTopicId !== "all" || filterStatus !== "all" || search.trim().length > 0;
+  function resetFilters() {
+    setFilterClassId("all");
+    setFilterSubjectId("all");
+    setFilterTopicId("all");
+    setFilterStatus("all");
+    setSearch("");
+    clearSelection();
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const showingFrom = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const showingTo = Math.min(page * PAGE_SIZE, total);
@@ -458,7 +468,7 @@ export function AdminQuestions() {
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Questions</h2>
           <p className="text-sm text-slate-600 mt-1">
-            Create, edit, and publish MCQs. Questions are grouped by topic.
+            Search and review the question bank. Publish validated drafts when ready.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -491,6 +501,7 @@ export function AdminQuestions() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
           <Input
             placeholder="Search question text…"
+            aria-label="Search question text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -553,6 +564,15 @@ export function AdminQuestions() {
             <SelectItem value="draft">Draft</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+        <p aria-live="polite">{loading ? "Loading questions…" : `${total.toLocaleString()} matching questions`}</p>
+        {hasActiveFilters && (
+          <Button type="button" variant="ghost" size="sm" onClick={resetFilters}>
+            <X className="size-4" /> Clear filters
+          </Button>
+        )}
       </div>
 
       {/* Bulk action toolbar — TASK B/C */}

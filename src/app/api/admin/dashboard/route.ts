@@ -56,6 +56,42 @@ export async function GET() {
     },
   });
 
+  // Published Nepal curriculum coverage, computed from the existing question bank.
+  // The 40-question benchmark is guidance only; no content is modified.
+  const curriculumTopics = await db.topic.findMany({
+    where: {
+      isActive: true,
+      archivedAt: null,
+      contentType: "curriculum",
+      subject: {
+        isActive: true,
+        archivedAt: null,
+        class: { isActive: true, archivedAt: null },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      subject: {
+        select: { name: true, class: { select: { name: true } } },
+      },
+      _count: {
+        select: {
+          questions: {
+            where: { status: "published", archivedAt: null, contentType: "curriculum" },
+          },
+        },
+      },
+    },
+  });
+  const coverageTopics = curriculumTopics.map((topic) => ({
+    id: topic.id,
+    name: topic.name,
+    subjectName: topic.subject.name,
+    className: topic.subject.class.name,
+    publishedQuestions: topic._count.questions,
+  })).sort((a, b) => a.publishedQuestions - b.publishedQuestions || a.name.localeCompare(b.name));
+
   // Average score
   const avgScoreAgg = await db.quizAttempt.aggregate({
     where: { completedAt: { not: null } },
@@ -75,6 +111,11 @@ export async function GET() {
     quizSets,
     publishedQuizSets,
     avgScore: Math.round(avgScoreAgg._avg.scorePercentage ?? 0),
+    curriculumCoverage: {
+      topicCount: coverageTopics.length,
+      under40Count: coverageTopics.filter((topic) => topic.publishedQuestions < 40).length,
+      priorityTopics: coverageTopics.filter((topic) => topic.publishedQuestions < 40).slice(0, 8),
+    },
     recentActivity: recentActivity.map((a) => ({
       id: a.id,
       description: a.description,

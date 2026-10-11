@@ -10,6 +10,7 @@ import {
   ListChecks,
   TrendingUp,
   CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
 import {
   Card,
@@ -19,6 +20,8 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PublicUser } from "@/types";
+import { Button } from "@/components/ui/button";
+import { useViewStore } from "@/stores/view-store";
 
 /**
  * Admin Dashboard — Phase 1 placeholder.
@@ -42,6 +45,17 @@ type DashboardStats = {
   quizSets: number;
   publishedQuizSets: number;
   avgScore: number;
+  curriculumCoverage: {
+    topicCount: number;
+    under40Count: number;
+    priorityTopics: Array<{
+      id: string;
+      name: string;
+      subjectName: string;
+      className: string;
+      publishedQuestions: number;
+    }>;
+  };
   recentActivity: Array<{
     id: string;
     description: string;
@@ -52,6 +66,7 @@ type DashboardStats = {
 };
 
 export function AdminDashboard({ user: _user }: { user: PublicUser }) {
+  const setView = useViewStore((s) => s.setView);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +104,7 @@ export function AdminDashboard({ user: _user }: { user: PublicUser }) {
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Dashboard</h2>
         <p className="text-sm text-slate-600 mt-1">
-          Overview of your MCQ platform. Real CRUD screens arrive in Phases 2–3.
+          See what needs publishing and which curriculum topics need more questions.
         </p>
       </div>
 
@@ -128,6 +143,14 @@ export function AdminDashboard({ user: _user }: { user: PublicUser }) {
           value={stats?.publishedQuestions}
           loading={loading}
           color="emerald"
+        />
+        <StatCard
+          label="Draft Questions"
+          icon={FileQuestion}
+          value={stats?.draftQuestions}
+          loading={loading}
+          color="amber"
+          hint="Awaiting review"
         />
         <StatCard
           label="Total Users"
@@ -194,30 +217,61 @@ export function AdminDashboard({ user: _user }: { user: PublicUser }) {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Platform status</CardTitle>
+      {/* Curriculum coverage is based on existing published questions only. */}
+      <Card className="shadow-card">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-base">Curriculum question coverage</CardTitle>
+            <p className="mt-1 text-xs text-slate-500">Topics with fewer than 40 published curriculum MCQs are listed first.</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setView({ name: "admin-questions" })}>
+            Manage questions <ArrowRight className="size-4" />
+          </Button>
         </CardHeader>
-        <CardContent className="text-sm text-slate-600 space-y-2">
-          <p>
-            ✅ All core modules are live: Classes, Subjects, Topics, Questions,
-            Quiz Sets, Quiz Engine, Results, Review, History.
-          </p>
-          <p>
-            ✅ Authentication + role enforcement via NextAuth + bcrypt. Roles
-            (<code>user</code> / <code>admin</code>) stored on the User record
-            and enforced server-side via <code>requireAdmin()</code>.
-          </p>
-          <p>
-            ✅ Architecture is fully dynamic — adding a new class, subject,
-            topic, question, or quiz set through the Admin Portal requires
-            <strong> zero source-code changes</strong>.
-          </p>
-          <p>
-            ✅ Quiz engine is theme-ready (PRD §24) — the{" "}
-            <code>quiz-themes.ts</code> registry ships one default theme. Adding
-            Focus / Chill / Arcade themes is a single registry entry.
-          </p>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}</div>
+          ) : stats?.curriculumCoverage ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
+                <p><strong className="text-slate-900">{stats.curriculumCoverage.topicCount}</strong> active curriculum topics</p>
+                <p><strong className="text-amber-700">{stats.curriculumCoverage.under40Count}</strong> below 40 questions</p>
+              </div>
+              {stats.curriculumCoverage.priorityTopics.length === 0 ? (
+                <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
+                  {stats.curriculumCoverage.topicCount === 0 ? "No active curriculum topics yet." : "Every active curriculum topic has at least 40 published questions."}
+                </p>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {stats.curriculumCoverage.priorityTopics.map((topic) => (
+                    <div key={topic.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-900">{topic.name}</p>
+                          <p className="mt-1 truncate text-xs text-slate-500">{topic.className} · {topic.subjectName}</p>
+                        </div>
+                        <span className="shrink-0 text-sm font-semibold tabular-nums text-amber-700">{topic.publishedQuestions}/40</span>
+                      </div>
+                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label={`${topic.name} published question coverage`} aria-valuenow={topic.publishedQuestions} aria-valuemin={0} aria-valuemax={40}>
+                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, topic.publishedQuestions / 40 * 100)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">Coverage is unavailable.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-card">
+        <CardHeader><CardTitle className="text-base">Next steps</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => setView({ name: "admin-questions" })}>Review question drafts <ArrowRight className="size-4" /></Button>
+          <Button size="sm" variant="outline" onClick={() => setView({ name: "admin-imports" })}>Open import center <ArrowRight className="size-4" /></Button>
+          <Button size="sm" variant="outline" onClick={() => setView({ name: "admin-analytics" })}>View performance analytics <ArrowRight className="size-4" /></Button>
         </CardContent>
       </Card>
     </div>
