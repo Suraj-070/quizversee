@@ -59,8 +59,34 @@ export function StudentHome({ user }: { user: PublicUser }) {
   const sessionAttemptId = useQuizSessionStore((s) => s.attemptId);
   const sessionQuestions = useQuizSessionStore((s) => s.questions);
   const sessionAnswers = useQuizSessionStore((s) => s.answers);
+  const [verifiedResumeId, setVerifiedResumeId] = useState<string | null>(null);
+  const clearSession = useQuizSessionStore((s) => s.clear);
+  useEffect(() => {
+    setVerifiedResumeId(null);
+    if (!sessionAttemptId) return;
+    let cancelled = false;
+    async function validateResume() {
+      try {
+        const res = await fetch(`/api/student/attempts?attemptId=${encodeURIComponent(sessionAttemptId!)}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Quiz attempt is unavailable");
+        const data = await res.json() as { attempt?: { id: string; completedAt: string | null } };
+        if (!cancelled) {
+          if (data.attempt?.id === sessionAttemptId && !data.attempt.completedAt) {
+            setVerifiedResumeId(sessionAttemptId);
+          } else {
+            clearSession();
+          }
+        }
+      } catch {
+        if (!cancelled) clearSession();
+      }
+    }
+    validateResume();
+    return () => { cancelled = true; };
+  }, [sessionAttemptId, clearSession]);
+
   const hasUnfinishedQuiz =
-    sessionAttemptId &&
+    verifiedResumeId === sessionAttemptId &&
     sessionQuestions.length > 0 &&
     Object.keys(sessionAnswers).length < sessionQuestions.length;
   const answeredCount = Object.keys(sessionAnswers).length;
