@@ -144,7 +144,7 @@ async function main() {
       }
 
       // Convert image to data URI if present
-      let questionImage = null;
+      let questionImage: string | null = null;
       if (q.questionImage) {
         questionImage = imageToDataUri(q.questionImage, baseDir);
         if (questionImage) totalImages++;
