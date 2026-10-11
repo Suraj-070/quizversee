@@ -141,10 +141,14 @@ export function StudentProfile({ user }: { user: PublicUser }) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error ?? "Failed");
       }
+      const updatedName = editName.trim();
+      setData((current) => current ? {
+        ...current,
+        profile: { ...current.profile, name: updatedName },
+      } : current);
+      window.dispatchEvent(new CustomEvent("quizverse:user-updated", { detail: { name: updatedName } }));
       toast.success("Name updated");
       setEditingName(false);
-      // Reload to pick up the new name in the header
-      window.location.reload();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
     } finally {
