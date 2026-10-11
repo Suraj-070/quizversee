@@ -38,6 +38,8 @@ export function AcademicOnboarding({ user }: { user: PublicUser }) {
   const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [subjectsLoading, setSubjectsLoading] = useState(false);
+  const [subjectsError, setSubjectsError] = useState(false);
 
   // Load classes on mount
   useEffect(() => {
@@ -59,17 +61,24 @@ export function AcademicOnboarding({ user }: { user: PublicUser }) {
   // Load subjects when a class is selected
   useEffect(() => {
     if (!selectedClass) return;
+    let cancelled = false;
     async function loadSubjects() {
+      setSubjectsLoading(true);
+      setSubjectsError(false);
+      setSubjects([]);
       try {
         const res = await fetch(`/api/student/subjects?classId=${selectedClass}`, { cache: "no-store" });
         if (!res.ok) throw new Error("Failed");
         const data = (await res.json()) as { subjects: SubjectInfo[] };
-        setSubjects(data.subjects);
+        if (!cancelled) setSubjects(data.subjects);
       } catch {
-        toast.error("Failed to load subjects");
+        if (!cancelled) { setSubjectsError(true); toast.error("Failed to load subjects"); }
+      } finally {
+        if (!cancelled) setSubjectsLoading(false);
       }
     }
     loadSubjects();
+    return () => { cancelled = true; };
   }, [selectedClass]);
 
   function toggleSubject(id: string) {
@@ -245,10 +254,12 @@ export function AcademicOnboarding({ user }: { user: PublicUser }) {
                 </p>
               </div>
 
-              {subjects.length === 0 ? (
+              {subjectsLoading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="size-6 animate-spin text-emerald-500" />
                 </div>
+              ) : subjects.length === 0 ? (
+                <p className="text-sm text-center text-slate-600 py-8">{subjectsError ? "Unable to load subjects. Select your class again to retry." : "No subjects are available for this class yet."}</p>
               ) : (
                 <>
                   <div className="space-y-2">
