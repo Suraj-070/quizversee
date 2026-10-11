@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { BarChart3, Loader2, TrendingUp, Target, Award } from "lucide-react";
+import { BarChart3, TrendingUp, Target, Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type Analytics = {
   overview: { totalAttempts: number; totalUsers: number; avgScore: number };
@@ -16,20 +16,28 @@ type Analytics = {
 export function AdminAnalytics() {
   const [data, setData] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       setLoading(true);
+      setError(null);
       try {
         const res = await fetch("/api/admin/analytics", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed");
+        if (!res.ok) throw new Error("Could not load analytics");
         const d = (await res.json()) as Analytics;
-        setData(d);
-      } catch { setData(null); }
-      finally { setLoading(false); }
+        if (!cancelled) setData(d);
+      } catch (reason) {
+        if (!cancelled) setError(reason instanceof Error ? reason.message : "Could not load analytics");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
     load();
-  }, []);
+    return () => { cancelled = true; };
+  }, [retry]);
 
   if (loading) {
     return (
@@ -43,8 +51,14 @@ export function AdminAnalytics() {
     );
   }
 
-  if (!data) {
-    return <div className="text-center py-12 text-slate-500">Could not load analytics.</div>;
+  if (error || !data) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+        <p className="text-sm font-medium text-slate-800">Analytics are temporarily unavailable.</p>
+        <p className="mt-1 text-xs text-slate-500">{error ?? "No data returned."}</p>
+        <Button variant="outline" size="sm" className="mt-4" onClick={() => setRetry((value) => value + 1)}>Try again</Button>
+      </div>
+    );
   }
 
   const difficultyColor = (d: string) =>
@@ -54,13 +68,13 @@ export function AdminAnalytics() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Analytics</h2>
-        <p className="text-sm text-slate-600 mt-1">Real performance data from quiz attempts.</p>
+        <p className="text-sm text-slate-600 mt-1">Real performance insights from completed quiz attempts.</p>
       </div>
 
       {/* Overview */}
       <div className="grid grid-cols-3 gap-4">
         <OverviewCard icon={TrendingUp} label="Total Attempts" value={data.overview.totalAttempts} color="sky" />
-        <OverviewCard icon={Target} label="Active Students" value={data.overview.totalUsers} color="violet" />
+        <OverviewCard icon={Target} label="Students" value={data.overview.totalUsers} color="violet" />
         <OverviewCard icon={Award} label="Avg Score" value={`${data.overview.avgScore}%`} color="emerald" />
       </div>
 
@@ -87,6 +101,10 @@ export function AdminAnalytics() {
           </div>
         </div>
       )}
+
+      <p className="text-xs text-slate-500">
+        Question rankings require at least five appearances in completed quizzes. Skipped questions may count as incorrect in older attempts.
+      </p>
 
       {/* Hardest / Easiest questions */}
       {data.hardestQuestions.length > 0 && (

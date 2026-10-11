@@ -46,13 +46,23 @@ export async function GET(request: Request) {
     .slice(0, 10);
 
   // 2. Most difficult / easiest questions (by correct rate)
-  const questionStats = await db.userAnswer.groupBy({
-    by: ["questionId"],
-    _count: true,
-    _sum: { isCorrect: true },
+  // Placeholder answers are created when a quiz starts. Only completed
+  // attempts should contribute to published question-quality insights.
+  const questionRows = await db.userAnswer.groupBy({
+    by: ["questionId", "isCorrect"],
+    where: { attempt: { completedAt: { not: null } } },
+    _count: { _all: true },
   });
 
-  const questionIds = questionStats.map((q) => q.questionId);
+  const counts = new Map<string, { total: number; correct: number }>();
+  for (const row of questionRows) {
+    const entry = counts.get(row.questionId) ?? { total: 0, correct: 0 };
+    entry.total += row._count._all;
+    if (row.isCorrect) entry.correct += row._count._all;
+    counts.set(row.questionId, entry);
+  }
+
+  const questionIds = [...counts.keys()];
   const questions = await db.question.findMany({
     where: { id: { in: questionIds } },
     select: {
@@ -64,22 +74,24 @@ export async function GET(request: Request) {
   });
   const questionMap = new Map(questions.map((q) => [q.id, q]));
 
-  const questionAnalytics = questionStats
-    .map((q) => {
-      const question = questionMap.get(q.questionId);
-      const correct = q._sum.isCorrect ?? 0;
-      const total = q._count;
-      const rate = total > 0 ? Math.round((correct / total) * 100) : 0;
+  // Require a small sample before ranking a question as hard or easy.
+  // Completed quizzes may still include skipped questions in older records;
+  // never describe this measure as a pure answered-only rate.
+  const MIN_SAMPLE = 5;
+  const questionAnalytics = [...counts.entries()]
+    .filter(([, item]) => item.total >= MIN_SAMPLE)
+    .map(([questionId, item]) => {
+      const question = questionMap.get(questionId);
+      const rate = Math.round((item.correct / item.total) * 100);
       return {
-        questionId: q.questionId,
+        questionId,
         questionText: question?.questionText?.substring(0, 100) ?? "Unknown",
         topicName: question?.topic.name ?? "",
         correctOption: question?.correctOption,
-        attempts: total,
-        correctCount: correct,
+        attempts: item.total,
+        correctCount: item.correct,
         correctRate: rate,
-        difficulty:
-          rate >= 80 ? "Easy" : rate >= 50 ? "Medium" : "Hard",
+        difficulty: rate >= 80 ? "Easy" : rate >= 50 ? "Medium" : "Hard",
       };
     })
     .sort((a, b) => a.correctRate - b.correctRate);

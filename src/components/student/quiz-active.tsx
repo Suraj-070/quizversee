@@ -14,6 +14,7 @@ import {
   Grid3x3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
@@ -166,9 +167,10 @@ export function QuizActive({ user }: { user: PublicUser }) {
   // ---------- Keyboard shortcuts ----------
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      // Don't interfere with form inputs
+      // Dialogs and focused controls own their keyboard interactions.
+      if (showPreSubmit) return;
       const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+      if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(target.tagName) || target.isContentEditable) return;
 
       // 1-4 / A-D: select option
       if (["1", "2", "3", "4", "a", "b", "c", "d"].includes(e.key.toLowerCase())) {
@@ -224,7 +226,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [revealed, selectedOption, submitting, currentIndex, questions.length, flagToggling]);
+  }, [revealed, selectedOption, submitting, currentIndex, questions.length, flagToggling, showPreSubmit]);
 
   // ---------- Flag toggle ----------
   async function toggleFlag() {
@@ -699,31 +701,15 @@ export function QuizActive({ user }: { user: PublicUser }) {
         onJump={(i) => setCurrentIndex(i)}
       />
 
-      {/* Pre-submit review modal (exam mode only) */}
-      <AnimatePresence>
-        {showPreSubmit && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
-            onClick={() => setShowPreSubmit(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ ease: [0.22, 1, 0.36, 1] }}
-              className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-lg font-bold text-slate-900 mb-1">
-                Ready to submit?
-              </h2>
-              <p className="text-sm text-slate-500 mb-4">
-                You're about to finish this exam. Here's your summary:
-              </p>
-
+      {/* Radix handles dialog focus, Escape, focus trapping and return focus. */}
+      <Dialog open={showPreSubmit} onOpenChange={setShowPreSubmit}>
+        <DialogContent className="max-w-sm rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-slate-900">Ready to submit?</DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              You're about to finish this exam. Review your answers before submitting.
+            </DialogDescription>
+          </DialogHeader>
               {/* Summary stats */}
               <div className="grid grid-cols-3 gap-2 mb-4">
                 <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-center">
@@ -771,18 +757,17 @@ export function QuizActive({ user }: { user: PublicUser }) {
                 </Button>
                 <Button
                   className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
+                  disabled={submitting}
                   onClick={() => {
                     setShowPreSubmit(false);
-                    handleComplete();
+                    void handleComplete();
                   }}
                 >
                   Submit exam
                 </Button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
