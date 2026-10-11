@@ -160,7 +160,7 @@ export async function POST(request: Request) {
 
     const questionsForClient = finalOrder.map((q) => {
       const ua = userAnswers.find((a) => a.questionId === q.id);
-      return { ...q, userAnswerId: ua?.id ?? "" };
+      return { ...q, explanation: null, userAnswerId: ua?.id ?? "" };
     });
 
     return NextResponse.json(
@@ -285,7 +285,7 @@ export async function POST(request: Request) {
 
     const questionsForClient = finalOrder.map((q) => {
       const ua = userAnswers.find((a) => a.questionId === q.id);
-      return { ...q, userAnswerId: ua?.id ?? "" };
+      return { ...q, explanation: null, userAnswerId: ua?.id ?? "" };
     });
 
     return NextResponse.json(
@@ -387,7 +387,7 @@ export async function POST(request: Request) {
       optionB: q.optionB,
       optionC: q.optionC,
       optionD: q.optionD,
-      explanation: q.explanation,
+      explanation: null,
       userAnswerId: ua?.id ?? "",
     };
   });
@@ -472,6 +472,14 @@ export async function GET(request: Request) {
       return NextResponse.json(
         { error: "Attempt not found" },
         { status: 404 }
+      );
+    }
+
+    // Results and review must never expose answer keys before completion.
+    if (!attempt.completedAt) {
+      return NextResponse.json(
+        { error: "Review is only available after completing this quiz" },
+        { status: 409 }
       );
     }
 

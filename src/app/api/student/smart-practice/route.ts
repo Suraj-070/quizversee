@@ -192,7 +192,7 @@ export async function POST(request: Request) {
 
   const questionsForClient = finalOrder.map((q) => {
     const ua = userAnswers.find((a) => a.questionId === q.id);
-    return { ...q, userAnswerId: ua?.id ?? "" };
+    return { ...q, explanation: null, userAnswerId: ua?.id ?? "" };
   });
 
   return NextResponse.json(
