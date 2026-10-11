@@ -149,12 +149,55 @@ try {
   const listed = await request("/api/student/attempts");
   assert.equal(listed.body.attempts.find(x => x.id === attemptId)?.resumable, false);
 
+  // Concurrency: two requests racing for the same answer must claim it once.
+  const secondAttempt = await json(request, "/api/student/attempts", "POST", {
+    topicId: topic.id, totalQuestions: 1, feedbackMode: "exam",
+  }, 201);
+  const secondAnswerId = secondAttempt.questions[0].userAnswerId;
+  const secondQuestionId = secondAttempt.questions[0].id;
+  const beforeMastery = await prisma.questionMastery.findUniqueOrThrow({
+    where: { userId_questionId: {
+      userId: (await prisma.user.findUniqueOrThrow({ where: { email } })).id,
+      questionId: secondQuestionId,
+    } },
+  });
+  const sendContendingAnswer = (selectedOption) => request(
+    `/api/student/attempts/${secondAttempt.attemptId}/answer`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ userAnswerId: secondAnswerId, selectedOption, reveal: true }),
+    },
+  );
+  const racingAnswers = await Promise.all([
+    sendContendingAnswer("A"),
+    sendContendingAnswer("B"),
+  ]);
+  assert.deepEqual(
+    racingAnswers.map(x => x.response.status).sort((a, b) => a - b),
+    [200, 409],
+    "Exactly one simultaneous answer submission must win",
+  );
+  const afterMastery = await prisma.questionMastery.findUniqueOrThrow({
+    where: { userId_questionId: { userId: beforeMastery.userId, questionId: secondQuestionId } },
+  });
+  assert.equal(afterMastery.timesSeen, beforeMastery.timesSeen + 1, "Mastery updated exactly once");
+  const [finishOne, finishTwo] = await Promise.all([
+    request(`/api/student/attempts/${secondAttempt.attemptId}/complete`, { method: "POST" }),
+    request(`/api/student/attempts/${secondAttempt.attemptId}/complete`, { method: "POST" }),
+  ]);
+  assert.equal(finishOne.response.status, 200, "First concurrent completion succeeds");
+  assert.equal(finishTwo.response.status, 200, "Second concurrent completion is idempotent");
+  assert.equal(finishOne.body.completedAt, finishTwo.body.completedAt,
+    "Concurrent completion records just one completion timestamp");
+  const blockedAfterFinish = await sendContendingAnswer("C");
+  assert.notEqual(blockedAfterFinish.response.status, 200, "Completed attempt cannot receive new answers");
+
   // Profile edits replace rather than duplicate saved class/subjects.
   await json(request, "/api/student/academic-profile", "POST", { classId, subjectIds: [secondSubject.id] }, 200);
   const changed = await request("/api/student/academic-profile");
   assert.deepEqual(changed.body.subjects.map(x => x.id), [secondSubject.id]);
 
-  console.log("QAI authenticated HTTP smoke test passed: login, academic saving, one-question exam, redaction, duplicate protection, completion and isolation.");
+  console.log("QAI authenticated HTTP smoke test passed: login, academic saving, one-question exam, redaction, duplicate protection, completion, concurrent claim/finish races and isolation.");
 } finally {
   await prisma.user.deleteMany({ where: { email: { in: [email, student2Email] } } });
   if (classId) await prisma.class.delete({ where: { id: classId } });
