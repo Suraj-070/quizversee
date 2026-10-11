@@ -60,6 +60,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
               variant="ghost"
               size="icon"
               onClick={goBack}
+              aria-label="Go back"
               className="text-slate-500 hover:text-slate-700"
             >
               <ArrowLeft className="size-5" />
@@ -68,6 +69,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
           <button
             type="button"
             onClick={() => setView({ name: "student-home" })}
+            aria-label="Quizverse Home"
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <div className="size-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center">
