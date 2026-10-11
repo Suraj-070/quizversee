@@ -34,7 +34,7 @@ jobs:
       - name: Generate Prisma client without touching a database
         run: npx prisma generate
       - name: TypeScript
-        run: npx tsc --noEmit
+        run: npx tsc --project tsconfig.ui-validation.json --noEmit
       - name: ESLint
         run: npm run lint
       - name: Adaptive selector tests
