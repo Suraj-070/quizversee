@@ -29,7 +29,10 @@ test("real student APIs enforce curriculum boundaries and answer secrecy", async
 
   const available = await page.request.get("/api/student/questions?topicId=ci-cells");
   expect(available.ok()).toBeTruthy();
-  expect((await available.json()).publishedCount).toBe(2);
+  const countBody = await available.json();
+  expect(countBody.publishedCount).toBe(2);
+  expect(countBody.allowedCounts).toContainEqual({ count: 1, available: true });
+  expect(countBody.defaultCount).toBe(2);
 
   const started = await page.request.post("/api/student/attempts", {
     data: { topicId: "ci-cells", totalQuestions: 2 },
@@ -85,4 +88,30 @@ test("real admin login can retrieve curriculum coverage without production DB", 
   const data = await response.json();
   expect(data.curriculumCoverage.topicCount).toBe(1);
   expect(data.curriculumCoverage.priorityTopics.map((t) => t.id)).toContain("ci-cells");
+});
+
+
+test("admin quiz settings update feeds the real student setup endpoint", async ({ page }) => {
+  await login(page, "ci-admin@example.test");
+  const save = await page.request.put("/api/admin/settings", {
+    data: {
+      quiz_question_counts: [1, 5, 10],
+      quiz_default_count: 1,
+      quiz_default_topic_feedback: "exam",
+      quiz_default_subject_feedback: "immediate",
+      quiz_smart_practice_enabled: false,
+    },
+  });
+  expect(save.ok()).toBeTruthy();
+  const settings = await page.request.get("/api/admin/settings");
+  expect(settings.ok()).toBeTruthy();
+  const values = (await settings.json()).settings;
+  expect(values.quiz_default_count).toBe(1);
+  expect(values.quiz_default_topic_feedback).toBe("exam");
+  const topic = await page.request.get("/api/student/questions?topicId=ci-cells");
+  expect(topic.ok()).toBeTruthy();
+  const info = await topic.json();
+  expect(info.defaultCount).toBe(1);
+  expect(info.defaultFeedbackMode).toBe("exam");
+  expect(info.smartPracticeEnabled).toBe(false);
 });

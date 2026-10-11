@@ -90,6 +90,24 @@ const fixture = {
     allowedCounts: [{ count: 1, available: true }],
   },
   "/api/student/questions/flagged": { flags: [] },
+  "/api/student/profile": {
+    profile: user("user"),
+    stats: { quizzesCompleted: 3, avgScore: 75, bestScore: 100 },
+  },
+  "/api/student/academic": { classes: [
+    { id: "class-9", name: "Class 9", description: null, subjects: [
+      { id: "science-9", name: "Science", description: null },
+    ] },
+    { id: "class-10", name: "Class 10", description: null, subjects: [
+      { id: "math-10", name: "Math", description: null },
+    ] },
+  ] },
+  "/api/student/academic-profile": { currentClassId: "class-9", subjects: [{ id: "science-9" }] },
+  "/api/admin/settings": { settings: {
+    quiz_question_counts: [1, 10, 20], quiz_default_count: 10,
+    quiz_default_topic_feedback: "immediate", quiz_default_subject_feedback: "exam",
+    quiz_smart_practice_enabled: true,
+  } },
   "/api/admin/dashboard": {
     classes: 2,
     subjects: 3,
@@ -140,7 +158,11 @@ async function mockApi(page, role = "user") {
     const method = route.request().method();
     let payload;
     if (path === "/api/me") payload = { user: user(role) };
-    else if (path === "/api/student/attempts" && method === "POST") {
+    else if (path === "/api/admin/settings" && method === "PUT") {
+      payload = { success: true };
+    } else if (path === "/api/student/academic-profile" && method === "POST") {
+      payload = { success: true };
+    }     else if (path === "/api/student/attempts" && method === "POST") {
       payload = { attemptId: "attempt-1", questions: [quizQuestion] };
     } else if (path === "/api/student/attempts/attempt-1/answer" && method === "PATCH") {
       payload = { selectedOption: "A", isCorrect: null, correctOption: null, explanation: null };
@@ -225,4 +247,51 @@ test("exam submission has an accessible dialog that closes on Escape", async ({ 
   await expect(dialog.getByText("1", { exact: true }).first()).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
+});
+
+
+test("one-question quick practice appears before starting a quiz", async ({ page }) => {
+  await mockApi(page);
+  await page.goto("/");
+  await page.locator("main").getByRole("button", { name: "My Learning", exact: true }).click();
+  await page.getByRole("button", { name: /Science/ }).last().click();
+  await page.getByRole("button", { name: /Cells/ }).click();
+  await expect(page.getByRole("button", { name: "1 question", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Start Quiz \(1 question\)/ })).toBeEnabled();
+});
+
+test("student profile saves selected grade and subjects", async ({ page }) => {
+  await mockApi(page);
+  await page.goto("/");
+  await page.locator("header").getByRole("button", { name: "Open profile" }).click();
+  await expect(page.getByRole("heading", { name: "My learning preferences" })).toBeVisible();
+  await page.getByRole("button", { name: "Class 10", exact: true }).click();
+  await page.getByRole("button", { name: "Math", exact: true }).click();
+  const saving = page.waitForRequest((request) =>
+    request.url().includes("/api/student/academic-profile") &&
+    request.method() === "POST");
+  await page.getByRole("button", { name: "Save learning choices" }).click();
+  const req = await saving;
+  expect(req.postDataJSON()).toEqual({ classId: "class-10", subjectIds: ["math-10"] });
+});
+
+test("admin settings persist quiz defaults and expose site management", async ({ page }) => {
+  await mockApi(page, "admin");
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Question count options" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "1 question, always available" })).toBeDisabled();
+  await page.getByLabel("Default question count").selectOption("1");
+  await page.getByRole("button", { name: "At the end" }).first().click();
+  await page.getByRole("switch", { name: "Allow Smart Practice" }).click();
+  const saving = page.waitForRequest((request) =>
+    request.url().includes("/api/admin/settings") && request.method() === "PUT");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  const req = await saving;
+  expect(req.postDataJSON()).toMatchObject({
+    quiz_default_count: 1,
+    quiz_default_topic_feedback: "exam",
+    quiz_smart_practice_enabled: false,
+  });
+  await expect(page.getByRole("button", { name: /Homepage & site content/ })).toBeVisible();
 });
