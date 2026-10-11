@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
 import { useViewStore, type View } from "@/stores/view-store";
 import { cn } from "@/lib/utils";
+import { useQuizSessionStore } from "@/stores/quiz-session-store";
 
 /**
  * StudentHeader — shared top navigation for the student app.
@@ -107,6 +108,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
             size="icon"
             onClick={() => {
               signOut({ redirect: false }).then(() => {
+                useQuizSessionStore.getState().clear();
                 window.location.href = "/";
               });
             }}
