@@ -28,9 +28,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
+      - uses: oven-sh/setup-bun@v2
       - name: Install locked dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
       - name: Generate Prisma client without touching a database
         run: npx prisma generate
       - name: TypeScript
