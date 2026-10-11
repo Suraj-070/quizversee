@@ -276,7 +276,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
 
         // Generate contextual feedback message
         const newStreak = data.isCorrect ? streak + 1 : 0;
-        const isRecovery = streak === 0 && data.isCorrect;
+        const isRecovery = streak === 0 && data.isCorrect === true;
         const isFirstTry = currentIndex === 0 && data.isCorrect;
         const msg = getFeedbackMessage(
           data.isCorrect === true,
