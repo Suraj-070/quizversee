@@ -512,7 +512,7 @@ export async function GET(request: Request) {
       };
     }
 
-    const visibleAnswers = visibleAttemptAnswers(attempt.answers, attempt.completedAt);
+    const visibleAnswers = visibleAttemptAnswers(attempt.answers, attempt.completedAt, { startedAt: attempt.startedAt, activationAt: process.env.QAI_ANSWER_ACTIVATION_AT });
     return NextResponse.json({
       attempt: { ...attempt, answers: visibleAnswers, quizSet: quizSetWithRelations },
     });
