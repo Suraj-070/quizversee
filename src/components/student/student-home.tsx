@@ -49,6 +49,7 @@ type WeakTopic = {
 export function StudentHome({ user }: { user: PublicUser }) {
   const setView = useViewStore((s) => s.setView);
   const [classes, setClasses] = useState<StudentClass[] | null>(null);
+  const [mySubjects, setMySubjects] = useState<Array<{id: string; name: string}>>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [progress, setProgress] = useState<ProgressStats | null>(null);
   const [recentlyPracticed, setRecentlyPracticed] = useState<RecentlyPracticed[]>([]);
@@ -93,12 +94,13 @@ export function StudentHome({ user }: { user: PublicUser }) {
       setLoading(true);
       setError(null);
       try {
-        const [classesRes, annRes, progressRes, weakRes, attemptsRes] = await Promise.all([
+        const [classesRes, annRes, progressRes, weakRes, attemptsRes, academicRes] = await Promise.all([
           fetch("/api/student/academic", { cache: "no-store" }),
           fetch("/api/student/announcements", { cache: "no-store" }),
           fetch("/api/student/progress", { cache: "no-store" }),
           fetch("/api/student/weak-topics", { cache: "no-store" }),
           fetch("/api/student/attempts", { cache: "no-store" }),
+          fetch("/api/student/academic-profile", { cache: "no-store" }),
         ]);
 
         if (!classesRes.ok) throw new Error("Failed to load classes");
@@ -120,6 +122,13 @@ export function StudentHome({ user }: { user: PublicUser }) {
             setProgress(progressData.overview);
             setRecentlyPracticed(progressData.recentlyPracticed);
           }
+        }
+
+        if (academicRes.ok) {
+          const academic = await academicRes.json() as {
+            subjects: Array<{ id: string; name: string }>;
+          };
+          if (!cancelled) setMySubjects(academic.subjects);
         }
 
         if (attemptsRes.ok) {
@@ -188,10 +197,36 @@ export function StudentHome({ user }: { user: PublicUser }) {
             Ready to practice?
           </h1>
           <p className="mt-4 text-lg text-slate-600 leading-relaxed">
-            Pick a class to start. Choose your subject, drill into a topic,
-            and we&apos;ll handle the rest.
+            {mySubjects.length > 0
+              ? "Your saved subjects are ready. Continue where you left off, or choose a new topic."
+              : "Pick a class to start. Choose your subject, drill into a topic, and we'll handle the rest."}
           </p>
         </motion.div>
+
+        {mySubjects.length > 0 && (
+          <section className="mb-8 rounded-2xl border border-emerald-200 bg-white p-5 sm:p-6 shadow-sm"
+            aria-labelledby="my-subjects-heading">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 id="my-subjects-heading" className="text-lg font-semibold text-slate-900">Your subjects</h2>
+                <p className="text-sm text-slate-500">Saved to your academic profile.</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setView({ name: "student-profile" })}>
+                Manage subjects
+              </Button>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {mySubjects.map(subject => (
+                <span key={subject.id} className="rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800">
+                  {subject.name}
+                </span>
+              ))}
+            </div>
+            <Button className="mt-4 bg-emerald-500 text-white hover:bg-emerald-600" onClick={() => setView({ name: "my-learning" })}>
+              Go to My Learning <ChevronRight className="size-4" />
+            </Button>
+          </section>
+        )}
 
         {/* Announcements */}
         {activeAnnouncements.length > 0 && (
