@@ -258,6 +258,8 @@ test("one-question quick practice appears before starting a quiz", async ({ page
   await page.getByRole("button", { name: /Cells/ }).click();
   await expect(page.getByRole("button", { name: "1 question", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /Start Quiz \(1 question\)/ })).toBeEnabled();
+  await page.getByLabel("Or enter any number").fill("3");
+  await expect(page.getByRole("button", { name: /Start Quiz \(3 questions\)/ })).toBeEnabled();
 });
 
 test("student profile saves selected grade and subjects", async ({ page }) => {

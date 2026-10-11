@@ -46,6 +46,10 @@ test("real student APIs enforce curriculum boundaries and answer secrecy", async
     expect(question.explanation).toBeNull();
   }
 
+  const activeSession = await page.request.get("/api/student/attempts/session?attemptId=" + startBody.attemptId);
+  expect(activeSession.ok()).toBeTruthy();
+  expect((await activeSession.json()).active).toBe(true);
+
   const pending = await page.request.get("/api/student/attempts?attemptId=" + startBody.attemptId);
   expect(pending.status()).toBe(409);
   expect(JSON.stringify(await pending.json())).not.toContain("correctOption");
@@ -67,6 +71,8 @@ test("real student APIs enforce curriculum boundaries and answer secrecy", async
 
   const completed = await page.request.post("/api/student/attempts/" + startBody.attemptId + "/complete");
   expect(completed.ok()).toBeTruthy();
+  const completedSession = await page.request.get("/api/student/attempts/session?attemptId=" + startBody.attemptId);
+  expect((await completedSession.json()).active).toBe(false);
   const review = await page.request.get("/api/student/attempts?attemptId=" + startBody.attemptId);
   expect(review.ok()).toBeTruthy();
   const reviewBody = await review.json();
@@ -102,7 +108,7 @@ test("admin quiz settings update feeds the real student setup endpoint", async (
       quiz_smart_practice_enabled: false,
     },
   });
-  expect(save.ok()).toBeTruthy();
+  expect(save.ok(), "settings save response: " + (await save.text()).slice(0,500)).toBeTruthy();
   const settings = await page.request.get("/api/admin/settings");
   expect(settings.ok()).toBeTruthy();
   const values = (await settings.json()).settings;
