@@ -136,10 +136,10 @@ jobs:
       DIRECT_URL: postgresql://qai_runner:ephemeral_ci_only@localhost:5432/qai_test?schema=public
       QAI_TEST_DISPOSABLE_DB: "YES"
       QAI_ANSWER_ACTIVATION_AT: "2026-01-01T00:00:00.000Z"
-      NEXTAUTH_URL: http://127.0.0.1:3000
+      NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: ci-only-ephemeral-secret-not-for-production
       NEXT_TELEMETRY_DISABLED: "1"
-      QAI_HTTP_BASE_URL: http://127.0.0.1:3000
+      QAI_HTTP_BASE_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -156,7 +156,7 @@ jobs:
         run: |
           npm run dev > /tmp/qai-browser-server.log 2>&1 &
           for i in $(seq 1 90); do
-            if curl --fail --silent http://127.0.0.1:3000/ > /dev/null; then break; fi
+            if curl --fail --silent http://localhost:3000/ > /dev/null; then break; fi
             sleep 2
           done
           if ! node scripts/qai-browser-smoke.mjs; then
