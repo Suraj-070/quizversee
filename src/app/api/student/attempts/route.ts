@@ -524,6 +524,7 @@ export async function GET(request: Request) {
     orderBy: { startedAt: "desc" },
     take: 50,
     include: {
+      _count: { select: { answers: { where: { submittedAt: { not: null } } } } },
       topic: {
         select: {
           id: true,
@@ -608,5 +609,14 @@ export async function GET(request: Request) {
     };
   });
 
-  return NextResponse.json({ attempts: attemptsWithRelations });
+  const activationTimestamp = Date.parse(process.env.QAI_ANSWER_ACTIVATION_AT ?? "");
+  const attemptsWithResume = attemptsWithRelations.map((attempt) => ({
+    ...attempt,
+    // Pre-upgrade unfinished attempts cannot safely be submitted or resumed.
+    resumable:
+      Number.isFinite(activationTimestamp) &&
+      !attempt.completedAt &&
+      attempt.startedAt.getTime() >= activationTimestamp,
+  }));
+  return NextResponse.json({ attempts: attemptsWithResume });
 }
