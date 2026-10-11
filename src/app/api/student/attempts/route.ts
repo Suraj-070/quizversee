@@ -389,6 +389,11 @@ export async function POST(request: Request) {
       optionC: q.optionC,
       optionD: q.optionD,
       explanation: null,
+      questionImage: q.questionImage,
+      optionAImage: q.optionAImage,
+      optionBImage: q.optionBImage,
+      optionCImage: q.optionCImage,
+      optionDImage: q.optionDImage,
       userAnswerId: ua?.id ?? "",
     };
   });
