@@ -56,6 +56,7 @@ export function StudentHome({ user }: { user: PublicUser }) {
   const setView = useViewStore((s) => s.setView);
   const [subjects, setSubjects] = useState<HomeSubject[] | null>(null);
   const [className, setClassName] = useState<string | null>(null);
+  const [siteContent, setSiteContent] = useState<{ heading: string; subtitle: string; footer: string; contactEmail: string } | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [progress, setProgress] = useState<ProgressStats | null>(null);
   const [recentlyPracticed, setRecentlyPracticed] = useState<RecentlyPracticed[]>([]);
@@ -101,11 +102,12 @@ export function StudentHome({ user }: { user: PublicUser }) {
       setLoading(true);
       setError(null);
       try {
-        const [subjectsRes, annRes, progressRes, weakRes] = await Promise.all([
+        const [subjectsRes, annRes, progressRes, weakRes, siteRes] = await Promise.all([
           fetch("/api/student/my-learning", { cache: "no-store" }),
           fetch("/api/student/announcements", { cache: "no-store" }),
           fetch("/api/student/progress", { cache: "no-store" }),
           fetch("/api/student/weak-topics", { cache: "no-store" }),
+          fetch("/api/student/site-content", { cache: "no-store" }),
         ]);
 
         if (!subjectsRes.ok) throw new Error("Failed to load your subjects");
@@ -133,6 +135,11 @@ export function StudentHome({ user }: { user: PublicUser }) {
         if (weakRes.ok) {
           const weakData = (await weakRes.json()) as { weakTopics: WeakTopic[] };
           if (!cancelled) setWeakTopics(weakData.weakTopics);
+        }
+
+        if (siteRes.ok) {
+          const info = await siteRes.json() as { heading: string; subtitle: string; footer: string; contactEmail: string };
+          if (!cancelled) setSiteContent(info);
         }
       } catch (e) {
         if (cancelled) return;
@@ -184,6 +191,14 @@ export function StudentHome({ user }: { user: PublicUser }) {
             <Button variant="ghost" onClick={() => setView({ name: "explore" })}>Explore</Button>
           </div>
         </motion.div>
+
+        {/* Admin-managed site message, shown only when actually configured. */}
+        {siteContent?.heading && (
+          <section aria-label="School message" className="mb-7 rounded-xl border border-emerald-100 bg-white px-5 py-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-900">{siteContent.heading}</h2>
+            {siteContent.subtitle && <p className="mt-1 text-sm text-slate-600">{siteContent.subtitle}</p>}
+          </section>
+        )}
 
         {/* Announcements */}
         {activeAnnouncements.length > 0 && (
@@ -446,7 +461,7 @@ export function StudentHome({ user }: { user: PublicUser }) {
 
       <footer className="border-t border-slate-200/60 py-6 mt-auto">
         <p className="text-center text-xs text-slate-400">
-          Quizverse — practice MCQs the modern way
+          {siteContent?.footer || "Quizverse — practice MCQs the modern way"}
         </p>
       </footer>
     </div>
