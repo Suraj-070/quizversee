@@ -75,8 +75,11 @@ export function ExtraPractice({ user }: { user: PublicUser }) {
             Extra Practice
           </h1>
           <p className="text-sm text-slate-600 mt-1">
-            Additional questions to strengthen your understanding.
+            Additional practice for your selected subjects, separate from your curriculum.
           </p>
+          <Button size="sm" variant="outline" className="mt-4" onClick={() => setView({ name: "explore" })}>
+            Browse the full practice library <ChevronRight className="size-4" />
+          </Button>
         </motion.div>
 
         {loading ? (

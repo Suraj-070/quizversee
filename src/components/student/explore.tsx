@@ -1,45 +1,34 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Compass, Loader2, ChevronRight, AlertTriangle, Search, GraduationCap,
-} from "lucide-react";
+import { AlertTriangle, BookOpen, ChevronRight, Compass, Search } from "lucide-react";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
 import { StudentHeader } from "@/components/student/student-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 
-/**
- * Explore — discovery area where students can browse ALL published
- * classes, subjects, and topics freely.
- *
- * Browsing does NOT change the student's academic profile.
- * Students can take quizzes from any class — attempts are stored
- * normally but don't affect current-class dashboard statistics.
- */
-type ExploreClass = {
+type LibraryTopic = {
   id: string;
   name: string;
   description: string | null;
-  subjects: Array<{
-    id: string;
-    name: string;
-    description: string | null;
-    _count: { topics: number };
-    publishedQuestions: number;
-  }>;
+  questionCount: number;
+  subjectId: string;
+  subjectName: string;
+  classId: string;
+  className: string;
 };
 
+/** External and supplementary discovery, without changing a student's profile. */
 export function Explore({ user }: { user: PublicUser }) {
-  const setView = useViewStore((s) => s.setView);
-  const [classes, setClasses] = useState<ExploreClass[] | null>(null);
+  const setView = useViewStore((state) => state.setView);
+  const [topics, setTopics] = useState<LibraryTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,146 +36,133 @@ export function Explore({ user }: { user: PublicUser }) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/student/academic", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to load");
-        const data = (await res.json()) as { classes: ExploreClass[] };
-        if (cancelled) return;
-        setClasses(data.classes);
-      } catch (e) {
-        if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Failed to load");
+        const response = await fetch("/api/student/explore", { cache: "no-store" });
+        if (!response.ok) throw new Error("Unable to load the practice library.");
+        const data = (await response.json()) as { topics: LibraryTopic[] };
+        if (!cancelled) setTopics(data.topics);
+      } catch (reason) {
+        if (!cancelled) setError(reason instanceof Error ? reason.message : "Unable to load the practice library.");
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [reload]);
 
-  // Debounced search filter
-  const filteredClasses = useMemo(() => {
-    if (!classes) return [];
-    if (!search.trim()) return classes;
-    const q = search.toLowerCase().trim();
-    return classes.map((c) => ({
-      ...c,
-      subjects: c.subjects.filter(
-        (s) =>
-          s.name.toLowerCase().includes(q) ||
-          c.name.toLowerCase().includes(q)
-      ),
-    })).filter((c) => c.subjects.length > 0 || c.name.toLowerCase().includes(q));
-  }, [classes, search]);
+  const groups = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    const matching = topics.filter((topic) =>
+      !query || [topic.name, topic.description ?? "", topic.subjectName, topic.className]
+        .some((value) => value.toLocaleLowerCase().includes(query))
+    );
+    const grouped = new Map<string, { className: string; subjectName: string; topics: LibraryTopic[] }>();
+    for (const topic of matching) {
+      const key = `${topic.classId}:${topic.subjectId}`;
+      const group = grouped.get(key) ?? {
+        className: topic.className,
+        subjectName: topic.subjectName,
+        topics: [],
+      };
+      group.topics.push(topic);
+      grouped.set(key, group);
+    }
+    return [...grouped.values()].sort(
+      (a, b) => a.className.localeCompare(b.className) || a.subjectName.localeCompare(b.subjectName)
+    );
+  }, [topics, search]);
+
+  const resultCount = groups.reduce((count, group) => count + group.topics.length, 0);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <StudentHeader user={user} />
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }} className="mb-6">
-          <p className="text-xs font-medium text-sky-600 uppercase tracking-wider">
-            Discovery
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-10">
+        <div className="mb-7">
+          <p className="text-xs font-semibold uppercase tracking-wider text-sky-700">Supplementary library</p>
+          <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Explore</h1>
+          <p className="mt-2 max-w-2xl text-sm text-slate-600">
+            Discover published practice topics across classes and subjects. Your current class and selected subjects stay unchanged.
           </p>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 mt-1">
-            Explore
-          </h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Browse all available content. Your academic profile won&apos;t change.
-          </p>
-        </motion.div>
-
-        {/* Search */}
-        {classes && classes.length > 0 && (
-          <div className="relative mb-6 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
-            <Input
-              placeholder="Search classes or subjects…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => setView({ name: "my-learning" })}>
+              <BookOpen className="size-4" /> My Learning
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setView({ name: "extra-practice" })}>
+              Practice my subjects <ChevronRight className="size-4" />
+            </Button>
           </div>
-        )}
+        </div>
+
+        <div className="relative mb-6 max-w-md">
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            aria-label="Search supplementary practice topics"
+            placeholder="Search topics, subjects or classes"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="pl-9"
+          />
+        </div>
 
         {loading ? (
           <div className="grid gap-3 sm:grid-cols-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 animate-pulse">
-                <div className="h-4 w-20 bg-slate-200 rounded mb-2" />
-                <div className="h-3 w-32 bg-slate-200 rounded" />
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="animate-pulse rounded-xl border border-slate-200 bg-white p-5">
+                <div className="h-4 w-2/5 rounded bg-slate-200" />
+                <div className="mt-3 h-3 w-3/4 rounded bg-slate-100" />
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-            <AlertTriangle className="size-6 text-red-500 mx-auto mb-2" />
-            <p className="text-sm text-red-700">{error}</p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={() => window.location.reload()}>
-              Try again
-            </Button>
-          </div>
-        ) : !filteredClasses || filteredClasses.length === 0 ? (
-          search ? (
-            <EmptyState
-              icon={Search}
-              title={`No results for "${search}"`}
-              description="Try a different search term."
-            />
-          ) : (
-            <EmptyState
-              icon={Compass}
-              title="Nothing to explore yet"
-              description="Published classes will appear here once they're available."
-            />
-          )
+          <EmptyState
+            icon={AlertTriangle}
+            title="Could not load the library"
+            description={error}
+            action={<Button variant="outline" size="sm" onClick={() => setReload((value) => value + 1)}>Try again</Button>}
+          />
+        ) : groups.length === 0 ? (
+          <EmptyState
+            icon={search ? Search : Compass}
+            title={search ? "No matching topics" : "No supplementary practice available yet"}
+            description={search
+              ? "Try a different topic, subject or class name."
+              : "Once supplementary questions are reviewed and published, they will appear here."}
+            action={search ? <Button variant="outline" size="sm" onClick={() => setSearch("")}>Clear search</Button> : undefined}
+          />
         ) : (
-          <div className="space-y-6">
-            {filteredClasses.map((klass, cIdx) => (
-              <motion.div
-                key={klass.id}
-                initial={{ opacity: 0, y: 8 }}
+          <div className="space-y-8">
+            <p className="text-xs text-slate-500" aria-live="polite">{resultCount} topics available</p>
+            {groups.map((group, index) => (
+              <motion.section
+                key={`${group.className}:${group.subjectName}`}
+                initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: cIdx * 0.05, duration: 0.2 }}
+                transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.18) }}
               >
-                <h2 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                  <GraduationCap className="size-4 text-sky-500" />
-                  {klass.name}
-                </h2>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {klass.subjects.map((subject, sIdx) => (
-                    <motion.button
-                      key={subject.id}
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-semibold text-slate-900">{group.subjectName}</span>
+                  <span className="text-slate-400" aria-hidden="true">·</span>
+                  <span className="text-slate-500">{group.className}</span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {group.topics.map((topic) => (
+                    <button
+                      key={topic.id}
                       type="button"
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: cIdx * 0.05 + sIdx * 0.03 }}
-                      whileHover={{ y: -1 }}
-                      onClick={() => setView({
-                        name: "student-topics",
-                        classId: klass.id,
-                        subjectId: subject.id,
-                      })}
-                      className={cn(
-                        "text-left rounded-xl border border-slate-200 bg-white p-4 transition-all",
-                        "hover:border-sky-300 hover:shadow-sm"
-                      )}
+                      onClick={() => setView({ name: "quiz-setup", topicId: topic.id })}
+                      className="group flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-card transition-all hover:border-sky-300 hover:shadow-card-hover focus-visible:ring-2 focus-visible:ring-sky-400"
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-900 text-sm">{subject.name}</p>
-                          {subject.description && (
-                            <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{subject.description}</p>
-                          )}
-                          <p className="text-xs text-sky-600 mt-1">
-                            {subject._count.topics} topics · {subject.publishedQuestions} questions
-                          </p>
-                        </div>
-                        <ChevronRight className="size-4 text-slate-300 shrink-0" />
+                      <div className="min-w-0">
+                        <h2 className="font-semibold text-slate-900">{topic.name}</h2>
+                        {topic.description && <p className="mt-1 line-clamp-2 text-sm text-slate-500">{topic.description}</p>}
+                        <p className="mt-3 text-xs font-medium text-sky-700">{topic.questionCount} published questions</p>
                       </div>
-                    </motion.button>
+                      <ChevronRight aria-hidden="true" className="mt-1 size-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" />
+                    </button>
                   ))}
                 </div>
-              </motion.div>
+              </motion.section>
             ))}
           </div>
         )}
