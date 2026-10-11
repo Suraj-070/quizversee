@@ -25,17 +25,23 @@ export async function GET() {
     },
   });
 
-  // 2. Get per-question stats from UserAnswer
-  const questionStats = await db.userAnswer.groupBy({
-    by: ["questionId"],
-    _count: true,
-    _sum: { isCorrect: true },
-    having: { _count: { _gte: 10 } },
+  // 2. Aggregate outcomes from completed attempts only; exclude unfinished
+  // quiz placeholders, and require a sample of at least 10 per question.
+  const outcomeRows = await db.userAnswer.groupBy({
+    by: ["questionId", "isCorrect"],
+    where: { attempt: { completedAt: { not: null } } },
+    _count: { _all: true },
   });
-
-  const questionIds = questionStats.map((q) => q.questionId);
+  const outcomeTotals = new Map<string, { attempts: number; correct: number }>();
+  for (const row of outcomeRows) {
+    const totals = outcomeTotals.get(row.questionId) ?? { attempts: 0, correct: 0 };
+    totals.attempts += row._count._all;
+    if (row.isCorrect) totals.correct += row._count._all;
+    outcomeTotals.set(row.questionId, totals);
+  }
+  const eligible = [...outcomeTotals.entries()].filter(([, total]) => total.attempts >= 10);
   const questions = await db.question.findMany({
-    where: { id: { in: questionIds } },
+    where: { id: { in: eligible.map(([id]) => id) } },
     select: {
       id: true, questionText: true, explanation: true,
       topic: { select: { name: true, subject: { select: { name: true } } } },
@@ -51,44 +57,22 @@ export async function GET() {
     attempts: number;
     correctRate: number;
   }> = [];
+  const highCorrectRate: typeof lowCorrectRate = [];
 
-  const highCorrectRate: Array<{
-    questionId: string;
-    questionText: string;
-    topicName: string;
-    subjectName: string;
-    attempts: number;
-    correctRate: number;
-  }> = [];
-
-  for (const stat of questionStats) {
-    const q = questionMap.get(stat.questionId);
+  for (const [questionId, stats] of eligible) {
+    const q = questionMap.get(questionId);
     if (!q) continue;
-    const correct = stat._sum.isCorrect ?? 0;
-    const total = stat._count;
-    const rate = total > 0 ? Math.round((correct / total) * 100) : 0;
-
-    if (rate < 30) {
-      lowCorrectRate.push({
-        questionId: q.id,
-        questionText: q.questionText.substring(0, 100),
-        topicName: q.topic?.name ?? "",
-        subjectName: q.topic?.subject.name ?? "",
-        attempts: total,
-        correctRate: rate,
-      });
-    }
-
-    if (rate > 95) {
-      highCorrectRate.push({
-        questionId: q.id,
-        questionText: q.questionText.substring(0, 100),
-        topicName: q.topic?.name ?? "",
-        subjectName: q.topic?.subject.name ?? "",
-        attempts: total,
-        correctRate: rate,
-      });
-    }
+    const rate = Math.round((stats.correct / stats.attempts) * 100);
+    const row = {
+      questionId: q.id,
+      questionText: q.questionText.substring(0, 100),
+      topicName: q.topic?.name ?? "",
+      subjectName: q.topic?.subject.name ?? "",
+      attempts: stats.attempts,
+      correctRate: rate,
+    };
+    if (rate < 30) lowCorrectRate.push(row);
+    if (rate > 95) highCorrectRate.push(row);
   }
 
   // 3. Total published questions

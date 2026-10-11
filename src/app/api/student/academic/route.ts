@@ -20,7 +20,7 @@ export async function GET() {
   if (error) return error;
 
   const classes = await db.class.findMany({
-    where: { isActive: true },
+    where: { isActive: true, archivedAt: null },
     orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
     select: {
       id: true,
@@ -28,7 +28,8 @@ export async function GET() {
       description: true,
       displayOrder: true,
       subjects: {
-        where: { isActive: true },
+        where: { isActive: true, archivedAt: null,
+          topics: { some: { isActive: true, archivedAt: null, contentType: "curriculum" } } },
         orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
         select: {
           id: true,
@@ -38,7 +39,7 @@ export async function GET() {
           displayOrder: true,
           _count: {
             select: {
-              topics: { where: { isActive: true } },
+              topics: { where: { isActive: true, archivedAt: null, contentType: "curriculum" } },
             },
           },
         },
@@ -54,8 +55,8 @@ export async function GET() {
       c.subjects.map(async (s) => {
         const publishedQuestions = await db.question.count({
           where: {
-            status: "published",
-            topic: { subjectId: s.id, isActive: true },
+            status: "published", archivedAt: null, contentType: "curriculum",
+            topic: { subjectId: s.id, isActive: true, archivedAt: null, contentType: "curriculum" },
           },
         });
         return { classId: c.id, subjectId: s.id, publishedQuestions };

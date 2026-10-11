@@ -14,6 +14,7 @@ import {
   Grid3x3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
@@ -34,6 +35,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
   const feedbackMode = useQuizSessionStore((s) => s.feedbackMode);
   const setCurrentIndex = useQuizSessionStore((s) => s.setCurrentIndex);
   const recordAnswer = useQuizSessionStore((s) => s.recordAnswer);
+  const clearSession = useQuizSessionStore((s) => s.clear);
 
   const [selectedOption, setSelectedOption] = useState<
     "A" | "B" | "C" | "D" | null
@@ -45,7 +47,8 @@ export function QuizActive({ user }: { user: PublicUser }) {
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [flagged, setFlagged] = useState(false);
+  const [flaggedQuestionIds, setFlaggedQuestionIds] = useState<Set<string>>(new Set());
+  const flagged = !!questions[currentIndex] && flaggedQuestionIds.has(questions[currentIndex].id);
   const [flagToggling, setFlagToggling] = useState(false);
   const [streak, setStreak] = useState(0);
   const [wasOnStreak, setWasOnStreak] = useState(false);
@@ -99,13 +102,23 @@ export function QuizActive({ user }: { user: PublicUser }) {
     }
     setError(null);
 
-    // Fetch flag status
-    setFlagged(false);
-    fetch(`/api/student/questions/${q.id}/flag`)
-      .then((r) => r.json())
-      .then((d) => setFlagged(!!d.flagged))
-      .catch(() => {});
+    // Flags are loaded once for the session; avoid async per-question races.
   }, [currentIndex, questions, answers, isExamMode]);
+
+  // Load bookmarked question IDs so navigator and exam summary use all quiz flags.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/student/questions/flagged")
+      .then((res) => {
+        if (!res.ok) throw new Error("Unable to load flagged questions");
+        return res.json();
+      })
+      .then((data: { flags: Array<{ question: { id: string } }> }) => {
+        if (!cancelled) setFlaggedQuestionIds(new Set(data.flags.map((flag) => flag.question.id)));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   // ---------- Track streak from answers ----------
   useEffect(() => {
@@ -155,9 +168,10 @@ export function QuizActive({ user }: { user: PublicUser }) {
   // ---------- Keyboard shortcuts ----------
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      // Don't interfere with form inputs
+      // Dialogs and focused controls own their keyboard interactions.
+      if (showPreSubmit) return;
       const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+      if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(target.tagName) || target.isContentEditable) return;
 
       // 1-4 / A-D: select option
       if (["1", "2", "3", "4", "a", "b", "c", "d"].includes(e.key.toLowerCase())) {
@@ -213,7 +227,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [revealed, selectedOption, submitting, currentIndex, questions.length, flagToggling]);
+  }, [revealed, selectedOption, submitting, currentIndex, questions.length, flagToggling, showPreSubmit]);
 
   // ---------- Flag toggle ----------
   async function toggleFlag() {
@@ -226,7 +240,12 @@ export function QuizActive({ user }: { user: PublicUser }) {
       });
       if (!res.ok) throw new Error("Failed to toggle flag");
       const data = await res.json();
-      setFlagged(data.flagged);
+      setFlaggedQuestionIds((previous) => {
+        const next = new Set(previous);
+        if (data.flagged) next.add(q.id);
+        else next.delete(q.id);
+        return next;
+      });
     } catch {
       // ignore
     } finally {
@@ -276,10 +295,10 @@ export function QuizActive({ user }: { user: PublicUser }) {
 
         // Generate contextual feedback message
         const newStreak = data.isCorrect ? streak + 1 : 0;
-        const isRecovery = streak === 0 && data.isCorrect;
-        const isFirstTry = currentIndex === 0 && data.isCorrect;
+        const isRecovery = streak === 0 && data.isCorrect === true;
+        const isFirstTry = currentIndex === 0 && data.isCorrect === true;
         const msg = getFeedbackMessage(
-          data.isCorrect,
+          data.isCorrect === true,
           newStreak,
           isRecovery,
           isFirstTry,
@@ -310,6 +329,10 @@ export function QuizActive({ user }: { user: PublicUser }) {
   }
 
   async function handleComplete() {
+    if (!attemptId) {
+      setError("This quiz session is no longer active.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -321,6 +344,9 @@ export function QuizActive({ user }: { user: PublicUser }) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error ?? "Failed to complete quiz");
       }
+      // Completion succeeded server-side. Remove stale local sessions before
+      // showing results, so reloading never offers an already-finished quiz.
+      clearSession();
       setView({ name: "quiz-results", attemptId });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to complete quiz");
@@ -377,16 +403,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
 
   // Sets for the navigator
   const answeredIds = new Set(Object.keys(answers));
-  const flaggedIds = new Set(
-    questions.filter((_, i) => {
-      // We don't track all flags in state, but we can show answered status
-      return false;
-    }).map((q) => q.id)
-  );
-  // Add the current question's flag to the set
-  if (flagged && question) {
-    flaggedIds.add(question.id);
-  }
+  const flaggedIds = new Set(questions.filter((q) => flaggedQuestionIds.has(q.id)).map((q) => q.id));
   const questionIds = questions.map((q) => q.id);
 
   return (
@@ -456,6 +473,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
                     : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
                 )}
                 title={flagged ? "Unflag (F)" : "Flag for review (F)"}
+                aria-label={flagged ? "Remove question flag" : "Flag question for review"}
               >
                 <Flag className={cn("size-4 transition-transform", flagged && "fill-current scale-110")} />
               </button>
@@ -691,31 +709,15 @@ export function QuizActive({ user }: { user: PublicUser }) {
         onJump={(i) => setCurrentIndex(i)}
       />
 
-      {/* Pre-submit review modal (exam mode only) */}
-      <AnimatePresence>
-        {showPreSubmit && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
-            onClick={() => setShowPreSubmit(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ ease: [0.22, 1, 0.36, 1] }}
-              className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-lg font-bold text-slate-900 mb-1">
-                Ready to submit?
-              </h2>
-              <p className="text-sm text-slate-500 mb-4">
-                You're about to finish this exam. Here's your summary:
-              </p>
-
+      {/* Radix handles dialog focus, Escape, focus trapping and return focus. */}
+      <Dialog open={showPreSubmit} onOpenChange={setShowPreSubmit}>
+        <DialogContent className="max-w-sm rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-slate-900">Ready to submit?</DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              You're about to finish this exam. Review your answers before submitting.
+            </DialogDescription>
+          </DialogHeader>
               {/* Summary stats */}
               <div className="grid grid-cols-3 gap-2 mb-4">
                 <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-center">
@@ -723,7 +725,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
                   <p className="text-[10px] text-emerald-600 uppercase tracking-wider">Answered</p>
                 </div>
                 <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-center">
-                  <p className="text-xl font-bold text-amber-700">{flagged ? 1 : 0}</p>
+                  <p className="text-xl font-bold text-amber-700">{flaggedIds.size}</p>
                   <p className="text-[10px] text-amber-600 uppercase tracking-wider">Flagged</p>
                 </div>
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-center">
@@ -763,18 +765,17 @@ export function QuizActive({ user }: { user: PublicUser }) {
                 </Button>
                 <Button
                   className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
+                  disabled={submitting}
                   onClick={() => {
                     setShowPreSubmit(false);
-                    handleComplete();
+                    void handleComplete();
                   }}
                 >
                   Submit exam
                 </Button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

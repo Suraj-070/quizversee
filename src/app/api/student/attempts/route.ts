@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     // Verify topic is active
     const topic = await db.topic.findFirst({
       where: { id: topicId, isActive: true },
-      select: { id: true },
+      select: { id: true, contentType: true },
     });
     if (!topic) {
       return NextResponse.json(
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
 
     // Count published questions
     const publishedCount = await db.question.count({
-      where: { topicId, status: "published" },
+      where: { topicId, status: "published", archivedAt: null, contentType: topic.contentType },
     });
     if (publishedCount === 0) {
       return NextResponse.json(
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
 
     // Pick N random published questions.
     const questionRows = await db.question.findMany({
-      where: { topicId, status: "published" },
+      where: { topicId, status: "published", archivedAt: null, contentType: topic.contentType },
       select: { id: true },
     });
     const shuffled = [...questionRows].sort(() => Math.random() - 0.5);
@@ -160,7 +160,7 @@ export async function POST(request: Request) {
 
     const questionsForClient = finalOrder.map((q) => {
       const ua = userAnswers.find((a) => a.questionId === q.id);
-      return { ...q, userAnswerId: ua?.id ?? "" };
+      return { ...q, explanation: null, userAnswerId: ua?.id ?? "" };
     });
 
     return NextResponse.json(
@@ -194,7 +194,9 @@ export async function POST(request: Request) {
     const publishedCount = await db.question.count({
       where: {
         status: "published",
-        topic: { subjectId, isActive: true },
+        archivedAt: null,
+        contentType: "curriculum",
+        topic: { subjectId, isActive: true, archivedAt: null, contentType: "curriculum" },
       },
     });
     if (publishedCount === 0) {
@@ -218,7 +220,9 @@ export async function POST(request: Request) {
     const questionRows = await db.question.findMany({
       where: {
         status: "published",
-        topic: { subjectId, isActive: true },
+        archivedAt: null,
+        contentType: "curriculum",
+        topic: { subjectId, isActive: true, archivedAt: null, contentType: "curriculum" },
       },
       select: { id: true },
     });
@@ -281,7 +285,7 @@ export async function POST(request: Request) {
 
     const questionsForClient = finalOrder.map((q) => {
       const ua = userAnswers.find((a) => a.questionId === q.id);
-      return { ...q, userAnswerId: ua?.id ?? "" };
+      return { ...q, explanation: null, userAnswerId: ua?.id ?? "" };
     });
 
     return NextResponse.json(
@@ -383,7 +387,7 @@ export async function POST(request: Request) {
       optionB: q.optionB,
       optionC: q.optionC,
       optionD: q.optionD,
-      explanation: q.explanation,
+      explanation: null,
       userAnswerId: ua?.id ?? "",
     };
   });
@@ -468,6 +472,14 @@ export async function GET(request: Request) {
       return NextResponse.json(
         { error: "Attempt not found" },
         { status: 404 }
+      );
+    }
+
+    // Results and review must never expose answer keys before completion.
+    if (!attempt.completedAt) {
+      return NextResponse.json(
+        { error: "Review is only available after completing this quiz" },
+        { status: 409 }
       );
     }
 

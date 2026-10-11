@@ -129,10 +129,6 @@ export const useQuizSessionStore = create<QuizSessionState>()(
 export function useHasActiveQuizSession() {
   const attemptId = useQuizSessionStore((s) => s.attemptId);
   const questions = useQuizSessionStore((s) => s.questions);
-  const answers = useQuizSessionStore((s) => s.answers);
-
-  // Active iff attemptId is set AND not all questions have been answered
-  if (!attemptId || questions.length === 0) return false;
-  const answeredCount = Object.keys(answers).length;
-  return answeredCount < questions.length;
+  // An all-answered quiz can still be awaiting the final submit action.
+  return !!attemptId && questions.length > 0;
 }

@@ -64,6 +64,7 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
   const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>("exam");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
@@ -91,17 +92,19 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
           publishedCount: number;
           topicCount: number;
           allowedCounts: AllowedCount[];
+          defaultCount: number | null;
+          defaultFeedbackMode: FeedbackMode;
+          smartPracticeEnabled: boolean;
         };
         if (cancelled) return;
         setSubject(data.subject);
         setPublishedCount(data.publishedCount);
         setTopicCount(data.topicCount);
         setAllowedCounts(data.allowedCounts);
-        // Pre-select the largest available count
+        // Prefer school default; always fall back to a working size.
         const available = data.allowedCounts.filter((c) => c.available);
-        if (available.length > 0) {
-          setSelectedCount(available[available.length - 1].count);
-        }
+        setSelectedCount(data.defaultCount ?? available[0]?.count ?? null);
+        setFeedbackMode(data.defaultFeedbackMode);
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : "Failed to load subject info");
@@ -118,7 +121,7 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
   async function handleStart() {
     if (!selectedCount || starting) return;
     setStarting(true);
-    setError(null);
+    setStartError(null);
     try {
       const res = await fetch("/api/student/attempts", {
         method: "POST",
@@ -153,7 +156,7 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
       startQuiz(data.attemptId, data.questions, feedbackMode);
       setView({ name: "quiz-active", attemptId: data.attemptId });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to start exam");
+      setStartError(e instanceof Error ? e.message : "Failed to start quiz");
     } finally {
       setStarting(false);
     }
@@ -247,7 +250,7 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
                   How many questions would you like?
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">
-                  Unavailable quantities are disabled.
+                  Choose one question for a quick check or a longer session. Unavailable quantities are disabled.
                 </p>
 
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -260,6 +263,19 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
                       onSelect={() => c.available && setSelectedCount(c.count)}
                     />
                   ))}
+                </div>
+                <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <label htmlFor="custom-quiz-count" className="min-w-0 flex-1 text-sm font-medium text-slate-800">
+                    Or enter any number <span className="block text-xs font-normal text-slate-500">From 1 to {publishedCount} available questions</span>
+                  </label>
+                  <input id="custom-quiz-count" type="number" min={1} max={publishedCount} step={1}
+                    value={selectedCount ?? ""}
+                    onChange={(event) => {
+                      const number = Number(event.target.value);
+                      setSelectedCount(event.target.value && Number.isInteger(number) && number >= 1 && number <= publishedCount ? number : null);
+                    }}
+                    className="h-10 w-24 rounded-lg border border-slate-300 bg-white px-3 text-center text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  />
                 </div>
               </div>
 
@@ -293,6 +309,8 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
                   />
                 </div>
               </div>
+
+              {startError && <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{startError}</div>}
 
               {/* Start button */}
               <div className="mt-8 flex justify-end">
@@ -340,6 +358,8 @@ function CountTile({
       type="button"
       onClick={onSelect}
       disabled={!available}
+      aria-pressed={selected}
+      aria-label={available ? `${count} ${count === 1 ? "question" : "questions"}` : `${count} questions unavailable`}
       className={cn(
         "relative rounded-xl border-2 px-4 py-5 text-center transition-all",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",
@@ -362,7 +382,7 @@ function CountTile({
           available ? "text-slate-500" : "text-slate-400"
         )}
       >
-        {available ? "questions" : "unavailable"}
+        {available ? (count === 1 ? "question" : "questions") : "unavailable"}
       </div>
       {!available && (
         <div className="absolute top-2 right-2">
@@ -394,6 +414,7 @@ function ModeTile({
     <button
       type="button"
       onClick={onSelect}
+      aria-pressed={selected}
       className={cn(
         "relative text-left rounded-xl border-2 p-4 transition-all",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",

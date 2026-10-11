@@ -95,7 +95,7 @@ export function StudentTopics({ user }: { user: PublicUser }) {
             {loading
               ? "Loading…"
               : subject?.class.name
-                ? `${subject.class.name} → Subject`
+                ? `${subject.class.name} · Curriculum`
                 : "Subject"}
           </p>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 mt-1">
@@ -116,9 +116,9 @@ export function StudentTopics({ user }: { user: PublicUser }) {
               variant="outline"
               size="sm"
               className="mt-3"
-              onClick={() => setView({ name: "student-home" })}
+              onClick={() => setView({ name: "my-learning" })}
             >
-              Back to classes
+              Back to My Learning
             </Button>
           </div>
         ) : !topics || topics.length === 0 ? (
@@ -130,9 +130,9 @@ export function StudentTopics({ user }: { user: PublicUser }) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.history.back()}
+                onClick={() => setView({ name: "my-learning" })}
               >
-                Back to subjects
+                Back to My Learning
               </Button>
             }
           />

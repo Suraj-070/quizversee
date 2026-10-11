@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   }
 
   const topics = await db.topic.findMany({
-    where: { subjectId, isActive: true },
+    where: { subjectId, isActive: true, archivedAt: null, contentType: "curriculum" },
     orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
     select: {
       id: true,
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
     topics.map(async (t) => {
       const [publishedQuestions, lastAttempt] = await Promise.all([
         db.question.count({
-          where: { topicId: t.id, status: "published" },
+          where: { topicId: t.id, status: "published", archivedAt: null, contentType: "curriculum" },
         }),
         db.quizAttempt.findFirst({
           where: {

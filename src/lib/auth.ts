@@ -63,7 +63,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = (user as { id: string }).id;
-        token.role = (user as { role: string }).role;
+        token.role = (user as unknown as { role: string }).role;
       }
       return token;
     },
@@ -75,10 +75,10 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  // Stable secret — uses env var if available, falls back to a hardcoded
-  // dev secret so login NEVER breaks even if .env gets wiped by the sandbox.
-  // In production, ALWAYS set NEXTAUTH_SECRET in your hosting env vars.
-  secret: process.env.NEXTAUTH_SECRET || "quizverse-dev-secret-stable-v1-do-not-change",
+  // Production must supply a unique NEXTAUTH_SECRET; never use a shared
+  // fallback secret on a deployed instance. Local development remains stable.
+  secret: process.env.NEXTAUTH_SECRET ||
+    (process.env.NODE_ENV !== "production" ? "quizverse-local-development-only" : undefined),
   // Don't hardcode NEXTAUTH_URL — let NextAuth auto-detect from request
   // headers. This works correctly in both dev (localhost:3000) and
   // production (your-hosted-domain.com) without env changes.

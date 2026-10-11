@@ -1,7 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
+
+type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
 
 type Tone = "active" | "inactive" | "published" | "draft" | "neutral";
 

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { FormField } from "@/components/admin/form-field";
 import type { PublicUser } from "@/types";
 import { StudentHeader } from "@/components/student/student-header";
+import { LearningPreferences } from "@/components/student/learning-preferences";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -197,6 +198,8 @@ export function StudentProfile({ user }: { user: PublicUser }) {
           <StatCard icon={TrendingUp} label="Avg Score" value={`${stats.avgScore}%`} color="emerald" />
           <StatCard icon={Award} label="Best Score" value={`${stats.bestScore}%`} color="amber" />
         </div>
+
+        <LearningPreferences />
 
         {/* Change password */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-card">

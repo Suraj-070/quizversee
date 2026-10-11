@@ -14,7 +14,7 @@ import { logAdminActivity, ADMIN_ACTIONS } from "@/lib/admin-activity";
  * Body:
  *   { rawJson: string (base64), filename: string, importAsDraft?: boolean }
  *
- * If importAsDraft=true (default false), questions are inserted with
+ * If importAsDraft=true (default true), questions are inserted with
  * status="draft" and an importBatchId stamp so they can be bulk-published
  * later from the Import Center.
  */
@@ -27,7 +27,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing rawJson" }, { status: 400 });
   }
 
-  const importAsDraft = Boolean(body.importAsDraft);
+  // Always default to review first, including direct API calls.
+  const importAsDraft = body.importAsDraft !== false;
   // Generate a stable batch identifier for this import run so admins can
   // later filter the Import Center by batch.
   const importBatchId = `json-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -63,6 +64,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  // Validate before creating a class, subject or topic.
+  if (typeof data?.class !== "string" || !data.class.trim() ||
+      typeof data?.subject !== "string" || !data.subject.trim() ||
+      typeof data?.topic !== "string" || !data.topic.trim() ||
+      !Array.isArray(data.questions) || data.questions.length === 0 || data.questions.length > 300) {
+    return NextResponse.json({ error: "Supply class, subject, topic and 1–300 questions" }, { status: 400 });
+  }
+  data.class = data.class.trim();
+  data.subject = data.subject.trim();
+  data.topic = data.topic.trim();
+
   // Find or create Class → Subject → Topic
   let klass = await db.class.findFirst({ where: { name: data.class, archivedAt: null } });
   if (!klass) {
@@ -85,8 +97,19 @@ export async function POST(request: Request) {
     });
   }
 
-  // Delete existing questions for this topic (so re-imports don't duplicate)
-  await db.question.deleteMany({ where: { topicId: topic.id } });
+  // NEVER delete or replace existing questions: that could orphan exam attempts,
+  // flags, mastery and student answers. Imports are append-only and idempotent
+  // for the same topic/question text.
+  if (topic.contentType !== "curriculum") {
+    return NextResponse.json({ error: "This topic belongs to supplementary practice, not My Learning" }, { status: 409 });
+  }
+  const stored = await db.question.findMany({
+    where: { topicId: topic.id, archivedAt: null },
+    select: { questionText: true },
+  });
+  const normalize = (value: string) => value.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
+  const seen = new Set(stored.map((question) => normalize(question.questionText)));
+  const totalBefore = stored.length;
 
   // Insert valid questions
   let imported = 0;
@@ -98,7 +121,7 @@ export async function POST(request: Request) {
     const q = data.questions[i];
 
     // Validate
-    if (!q.question?.trim() || !q.answer || !["A", "B", "C", "D"].includes(q.answer)) {
+    if (!q?.question?.trim() || !q.answer || !["A", "B", "C", "D"].includes(q.answer)) {
       failed++;
       failures.push({ index: i + 1, reason: "Missing question text or invalid answer" });
       continue;
@@ -106,6 +129,11 @@ export async function POST(request: Request) {
     if (!q.options?.A?.text || !q.options?.B?.text || !q.options?.C?.text || !q.options?.D?.text) {
       failed++;
       failures.push({ index: i + 1, reason: "Missing option text" });
+      continue;
+    }
+    const key = normalize(q.question);
+    if (seen.has(key)) {
+      skipped++;
       continue;
     }
 
@@ -120,6 +148,7 @@ export async function POST(request: Request) {
           optionD: q.options.D.text,
           correctOption: q.answer,
           explanation: q.explanation?.trim() || null,
+          contentType: "curriculum",
           // When importAsDraft is true, insert as draft so the admin can
           // review and bulk-publish from the Import Center. Otherwise
           // preserve the legacy behavior of publishing directly.
@@ -136,11 +165,14 @@ export async function POST(request: Request) {
         },
       });
       imported++;
+      seen.add(key);
     } catch (err) {
       failed++;
       failures.push({ index: i + 1, reason: "Database error during insert" });
     }
   }
+
+  const totalAfter = await db.question.count({ where: { topicId: topic.id, archivedAt: null } });
 
   // Record import history
   const imagesCount = data.questions.filter((q) => q.questionImage).length;
@@ -174,6 +206,8 @@ export async function POST(request: Request) {
     failed,
     skipped,
     imagesCount,
+    totalBefore,
+    totalAfter,
     failures,
     topicName: data.topic,
     importBatchId,

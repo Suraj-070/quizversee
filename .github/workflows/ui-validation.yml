@@ -1,0 +1,66 @@
+name: Quizverse UI validation
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - "prisma/schema.prisma"
+      - ".github/workflows/ui-validation.yml"
+  push:
+    branches:
+      - feat/uiux-student-foundation-20261011
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: TypeScript, lint and QAI tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: file:./ci.sqlite
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: oven-sh/setup-bun@v2
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Generate Prisma client without touching a database
+        run: npx prisma generate
+      - name: TypeScript
+        run: npx tsc --project tsconfig.ui-validation.json --noEmit
+      - name: ESLint
+        run: npm run lint
+      - name: Adaptive selector tests
+        run: node --test tests/qai-smart-selector.test.mjs
+      - name: Install Playwright test runner (CI only)
+        run: bun add --dev @playwright/test@1.56.1
+      - name: Install Chromium browser
+        run: bunx playwright install --with-deps chromium
+      - name: Browser smoke tests with mocked API data
+        run: bunx playwright test --config=playwright.ui.config.mjs
+      - name: Create disposable test database (never production)
+        env:
+          DATABASE_URL: file:./ui-smoke.sqlite
+        run: |
+          test "$CI" = "true"
+          bunx prisma db push --skip-generate
+          bun scripts/seed-ui-ci.mjs
+      - name: Live API integration tests against disposable SQLite
+        run: bunx playwright test --config=playwright.api.config.mjs
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-browser-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+

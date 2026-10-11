@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingUp, Award, Target, Loader2, ChevronRight,
+  TrendingUp, Award, Target, Loader2, ChevronRight, AlertTriangle,
 } from "lucide-react";
 import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
 import { StudentHeader } from "@/components/student/student-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type SubjectProgress = {
   subjectId: string; subjectName: string;
@@ -34,25 +35,28 @@ export function StudentProgress({ user }: { user: PublicUser }) {
   const setView = useViewStore((s) => s.setView);
   const [data, setData] = useState<ProgressData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
+      setError(null);
       try {
         const res = await fetch("/api/student/progress", { cache: "no-store" });
         if (!res.ok) throw new Error("Failed");
         const d = (await res.json()) as ProgressData;
         if (!cancelled) setData(d);
-      } catch {
-        if (!cancelled) setData(null);
+      } catch (reason) {
+        if (!cancelled) setError(reason instanceof Error ? reason.message : "Unable to load progress");
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [retry]);
 
   if (loading) {
     return (
@@ -62,6 +66,22 @@ export function StudentProgress({ user }: { user: PublicUser }) {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="size-5 animate-spin text-emerald-500" />
           </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        <StudentHeader user={user} />
+        <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-10">
+          <EmptyState
+            icon={AlertTriangle}
+            title="Could not load your progress"
+            description="Your saved quiz results have not been changed."
+            action={<Button variant="outline" size="sm" onClick={() => setRetry((value) => value + 1)}>Try again</Button>}
+          />
         </main>
       </div>
     );
@@ -173,5 +193,3 @@ function StatBox({ icon: Icon, label, value, color }: {
   );
 }
 
-// Need to import Button
-import { Button } from "@/components/ui/button";
