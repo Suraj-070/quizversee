@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth-guard";
 import { isLegacyAttempt } from "@/lib/qai-legacy-attempt.mjs";
+import { isRetryableTransactionError } from "@/lib/qai-retryable-transaction.mjs";
 import { canRevealSubmittedAnswer } from "@/lib/qai-answer-visibility.mjs";
 
 type Params = { params: Promise<{ id: string }> };
@@ -117,7 +118,7 @@ export async function PATCH(request: Request, { params }: Params) {
         return NextResponse.json({ error: "This answer was already submitted" }, { status: 409 });
       if (err instanceof AnswerMissing)
         return NextResponse.json({ error: "Answer not found or attempt already completed" }, { status: 404 });
-      if (err instanceof Prisma.PrismaClientKnownRequestError && ["P2034", "P2002"].includes(err.code) && retry < 2)
+      if ((isRetryableTransactionError(err) || (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002")) && retry < 2)
         continue;
       console.error("[answer] transactional submission failed", err);
       return NextResponse.json({ error: "Unable to record answer" }, { status: 500 });
