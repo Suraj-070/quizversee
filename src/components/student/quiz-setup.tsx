@@ -133,6 +133,7 @@ export function QuizSetup({ user }: { user: PublicUser }) {
         body: JSON.stringify({
           topicId,
           totalQuestions: selectedCount,
+          feedbackMode,
         }),
       });
       if (!res.ok) {
