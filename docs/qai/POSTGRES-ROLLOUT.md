@@ -58,3 +58,11 @@ The production database currently has only the prior `UserAnswer.submittedAt` mi
 Do not merge/deploy these routes against the production database until this migration is explicitly approved, applied, and verified, plus the local Supabase Prisma schema is reconciled.
 Default `immediate` preserves historical attempt compatibility.
 Run `npm run test:qai` again for the extra exam-mode tests, and check GitHub Actions for PostgreSQL integration test results.
+
+## Verified second Supabase migration — 2026-10-11
+- **APPLIED and verified**: `add_quiz_attempt_feedback_mode_for_qai` migration version `20261011044051` on existing Quizverse Supabase project.
+- `QuizAttempt.feedbackMode` is non-null `text`, with default `immediate` and DB check constraint permitting only `immediate` / `exam`.
+- 8 existing quiz attempts were retained and have `immediate` as their value. Historical feedback modes cannot be inferred from this default.
+- The earlier `UserAnswer.submittedAt` migration also remains in migration history.
+- **No deployment and no feature flag activation**. Staging branch still needs CI and authenticated route integration results before merging.
+- The proposal file `docs/qai/proposed-feedback-mode.postgres.sql` was an implementation record, but is now applied; do not run it manually again.
