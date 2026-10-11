@@ -46,11 +46,18 @@ export async function GET(request: Request) {
     .slice(0, 10);
 
   // 2. Most difficult / easiest questions (by correct rate)
-  const questionStats = await db.userAnswer.groupBy({
-    by: ["questionId"],
-    _count: true,
-    _sum: { isCorrect: true },
-  });
+  const [questionStats, correctStats] = await Promise.all([
+    db.userAnswer.groupBy({
+      by: ["questionId"],
+      _count: { _all: true },
+    }),
+    db.userAnswer.groupBy({
+      by: ["questionId"],
+      where: { isCorrect: true },
+      _count: { _all: true },
+    }),
+  ]);
+  const correctCountByQuestion = new Map(correctStats.map(stat => [stat.questionId, stat._count._all]));
 
   const questionIds = questionStats.map((q) => q.questionId);
   const questions = await db.question.findMany({
@@ -67,8 +74,8 @@ export async function GET(request: Request) {
   const questionAnalytics = questionStats
     .map((q) => {
       const question = questionMap.get(q.questionId);
-      const correct = q._sum.isCorrect ?? 0;
-      const total = q._count;
+      const correct = correctCountByQuestion.get(q.questionId) ?? 0;
+      const total = q._count._all;
       const rate = total > 0 ? Math.round((correct / total) * 100) : 0;
       return {
         questionId: q.questionId,
