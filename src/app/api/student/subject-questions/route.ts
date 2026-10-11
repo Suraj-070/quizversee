@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth-guard";
+import { quizCountChoices } from "@/lib/qai-quiz-counts.mjs";
 
 /**
  * GET /api/student/subject-questions?subjectId=<id>
@@ -56,30 +57,13 @@ export async function GET(request: Request) {
   const setting = await db.setting.findUnique({
     where: { key: "quiz_question_counts" },
   });
-  let allowedCounts: number[] = [1, 3, 5, 10];
-  if (setting) {
-    try {
-      const parsed = JSON.parse(setting.value);
-      if (Array.isArray(parsed)) {
-        allowedCounts = parsed
-          .filter((n): n is number => typeof n === "number" && n > 0)
-          .sort((a, b) => a - b);
-      }
-    } catch {
-      // fall back to default
-    }
+  let configuredCounts: unknown;
+  try {
+    configuredCounts = setting ? JSON.parse(setting.value) : undefined;
+  } catch {
+    configuredCounts = undefined;
   }
-
-  // Support one-question quizzes and small question banks automatically.
-  allowedCounts = [...new Set([1, publishedCount, ...allowedCounts])]
-    .filter((n) => n > 0)
-    .sort((a, b) => a - b);
-
-  // Build the availability map
-  const counts = allowedCounts.map((n) => ({
-    count: n,
-    available: n <= publishedCount,
-  }));
+  const counts = quizCountChoices(configuredCounts, publishedCount);
 
   const defaultModeSetting = await db.setting.findUnique({ where: { key: "default_feedback_mode" } });
   const defaultFeedbackMode = defaultModeSetting?.value === '"exam"' ? "exam" : "immediate";
