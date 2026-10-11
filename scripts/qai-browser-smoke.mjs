@@ -105,7 +105,8 @@ async function testBrowser(viewport, label, email) {
     await visible(page.getByText(/Browser pair:/));
     await checkWidth(page, label + " resumed quiz");
     await page.keyboard.press("2");
-    await page.getByRole("button", { name: /Finish quiz/ }).click();
+    await page.getByRole("button", { name: /Next question|Finish quiz/ }).click();
+    await visible(page.getByRole("heading", { name: "Ready to submit?" }));
     await page.getByRole("button", { name: "Submit exam" }).click();
     await visible(page.getByRole("heading", { name: "Quiz Complete" }));
     await page.locator("header button").first().click();
