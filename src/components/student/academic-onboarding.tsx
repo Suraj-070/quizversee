@@ -115,8 +115,7 @@ export function AcademicOnboarding({ user }: { user: PublicUser }) {
   }
 
   function handleContinue() {
-    setStep(4); // go to dashboard
-    window.location.reload(); // reload to pick up new academic profile
+    setView({ name: "student-home" });
   }
 
   return (
