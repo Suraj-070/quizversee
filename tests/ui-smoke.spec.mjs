@@ -199,12 +199,12 @@ test("mobile navigation and supplementary practice have no horizontal overflow",
 test("admin dashboard displays question-bank coverage and draft review", async ({ page }) => {
   await mockApi(page, "admin");
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Dashboard", level: 2 })).toBeVisible();
   await expect(page.getByText("Curriculum question coverage")).toBeVisible();
   await expect(page.getByText("24/40")).toBeVisible();
   await expect(page.getByText("Draft Questions")).toBeVisible();
   await page.getByRole("button", { name: "Manage questions" }).click();
-  await expect(page.getByRole("heading", { name: "Questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Questions", level: 2 })).toBeVisible();
 });
 
 test("exam submission has an accessible dialog that closes on Escape", async ({ page }) => {
