@@ -25,6 +25,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 export function StudentTopics({ user }: { user: PublicUser }) {
   const view = useViewStore((s) => s.view);
   const setView = useViewStore((s) => s.setView);
+  const goBack = useViewStore((s) => s.goBack);
 
   const subjectId =
     view.name === "student-topics" ? view.subjectId : "";
@@ -130,7 +131,7 @@ export function StudentTopics({ user }: { user: PublicUser }) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.history.back()}
+                onClick={goBack}
               >
                 Back to subjects
               </Button>
