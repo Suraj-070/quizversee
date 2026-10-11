@@ -1,5 +1,7 @@
--- PROPOSAL ONLY. NOT APPLIED TO SUPABASE.
--- Required before deploying server-enforced exam mode.
+-- HISTORICAL MIGRATION RECORD: APPLIED to Supabase on 2026-10-11.
+-- Migration: add_quiz_attempt_feedback_mode_for_qai (20261011044051).
+-- Do not run this migration a second time.
+-- Was required for server-enforced exam mode; deployment still pending.
 -- Existing attempts default to immediate for historical compatibility.
 ALTER TABLE public."QuizAttempt"
   ADD COLUMN IF NOT EXISTS "feedbackMode" TEXT NOT NULL DEFAULT 'immediate';
