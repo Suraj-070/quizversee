@@ -41,8 +41,8 @@ export async function PATCH(request: Request, { params }: Params) {
     try {
       const result = await db.$transaction(async (tx) => {
         // All submit/complete operations serialize on the same attempt lock.
-        const unlocked = await tx.$queryRaw<{ id: string; startedAt: Date }[]>`
-          SELECT "id", "startedAt" FROM "QuizAttempt"
+        const unlocked = await tx.$queryRaw<{ id: string; startedAt: Date; feedbackMode: string }[]>`
+          SELECT "id", "startedAt", "feedbackMode" FROM "QuizAttempt"
           WHERE "id" = ${attemptId} AND "userId" = ${user.id}
           AND "completedAt" IS NULL
           FOR UPDATE
@@ -103,11 +103,12 @@ export async function PATCH(request: Request, { params }: Params) {
             },
           });
         }
-        return { isCorrect, correctOption: answer.question.correctOption, explanation: answer.question.explanation };
+        return { feedbackMode: unlocked[0].feedbackMode, isCorrect, correctOption: answer.question.correctOption, explanation: answer.question.explanation };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10000 });
 
-      if (!reveal) return NextResponse.json({ recorded: true });
-      return NextResponse.json(result);
+      // Exam secrecy is enforced from the stored attempt mode, never the caller-supplied reveal flag.
+      if (result.feedbackMode === "exam" || !reveal) return NextResponse.json({ recorded: true });
+      return NextResponse.json({ isCorrect: result.isCorrect, correctOption: result.correctOption, explanation: result.explanation });
     } catch (err) {
       if (err instanceof LegacyAttempt)
         return NextResponse.json({ error: "This quiz was started before the answer upgrade. Please start a new quiz." }, { status: 409 });
