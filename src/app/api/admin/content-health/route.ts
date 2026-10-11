@@ -26,12 +26,19 @@ export async function GET() {
   });
 
   // 2. Get per-question stats from UserAnswer
-  const questionStats = await db.userAnswer.groupBy({
-    by: ["questionId"],
-    _count: true,
-    _sum: { isCorrect: true },
-    having: { _count: { _gte: 10 } },
-  });
+  const [rawQuestionStats, correctStats] = await Promise.all([
+    db.userAnswer.groupBy({
+      by: ["questionId"],
+      _count: { _all: true },
+    }),
+    db.userAnswer.groupBy({
+      by: ["questionId"],
+      where: { isCorrect: true },
+      _count: { _all: true },
+    }),
+  ]);
+  const questionStats = rawQuestionStats.filter(stat => stat._count._all >= 10);
+  const correctCountByQuestion = new Map(correctStats.map(stat => [stat.questionId, stat._count._all]));
 
   const questionIds = questionStats.map((q) => q.questionId);
   const questions = await db.question.findMany({
@@ -64,8 +71,8 @@ export async function GET() {
   for (const stat of questionStats) {
     const q = questionMap.get(stat.questionId);
     if (!q) continue;
-    const correct = stat._sum.isCorrect ?? 0;
-    const total = stat._count;
+    const correct = correctCountByQuestion.get(stat.questionId) ?? 0;
+    const total = stat._count._all;
     const rate = total > 0 ? Math.round((correct / total) * 100) : 0;
 
     if (rate < 30) {
