@@ -1,0 +1,41 @@
+name: Quizverse UI validation
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - "prisma/schema.prisma"
+      - ".github/workflows/ui-validation.yml"
+  push:
+    branches:
+      - feat/uiux-student-foundation-20261011
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: TypeScript, lint and QAI tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: file:./ci.sqlite
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate Prisma client without touching a database
+        run: npx prisma generate
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: ESLint
+        run: npm run lint
+      - name: Adaptive selector tests
+        run: node --test tests/qai-smart-selector.test.mjs
