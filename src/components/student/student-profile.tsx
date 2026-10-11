@@ -30,6 +30,12 @@ export function StudentProfile({ user }: { user: PublicUser }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
+  const [classes, setClasses] = useState<Array<{ id: string; name: string }>>([]);
+  const [subjectOptions, setSubjectOptions] = useState<Array<{ id: string; name: string }>>([]);
+  const [academicClassId, setAcademicClassId] = useState("");
+  const [subjectIds, setSubjectIds] = useState<string[]>([]);
+  const [loadingAcademic, setLoadingAcademic] = useState(true);
+  const [savingAcademic, setSavingAcademic] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,6 +58,75 @@ export function StudentProfile({ user }: { user: PublicUser }) {
     load();
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadAcademic() {
+      try {
+        const [profileRes, classesRes] = await Promise.all([
+          fetch("/api/student/academic-profile", { cache: "no-store" }),
+          fetch("/api/student/academic", { cache: "no-store" }),
+        ]);
+        if (!profileRes.ok || !classesRes.ok) throw new Error("Could not load academic choices");
+        const academic = await profileRes.json() as {
+          currentClassId: string | null;
+          subjects: Array<{ id: string }>;
+        };
+        const classData = await classesRes.json() as { classes: Array<{ id: string; name: string }> };
+        if (cancelled) return;
+        setClasses(classData.classes);
+        setAcademicClassId(academic.currentClassId ?? "");
+        setSubjectIds(academic.subjects.map((subject) => subject.id));
+      } catch {
+        if (!cancelled) toast.error("Could not load academic profile");
+      } finally {
+        if (!cancelled) setLoadingAcademic(false);
+      }
+    }
+    loadAcademic();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!academicClassId) {
+      setSubjectOptions([]);
+      return;
+    }
+    let cancelled = false;
+    async function loadSubjects() {
+      try {
+        const res = await fetch(`/api/student/subjects?classId=${encodeURIComponent(academicClassId)}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Could not load subjects");
+        const data = await res.json() as { subjects: Array<{ id: string; name: string }> };
+        if (!cancelled) setSubjectOptions(data.subjects);
+      } catch {
+        if (!cancelled) toast.error("Could not load subjects");
+      }
+    }
+    loadSubjects();
+    return () => { cancelled = true; };
+  }, [academicClassId]);
+
+  async function handleSaveAcademic() {
+    if (!academicClassId || savingAcademic) return;
+    setSavingAcademic(true);
+    try {
+      const res = await fetch("/api/student/academic-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ classId: academicClassId, subjectIds }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Could not save subjects");
+      }
+      toast.success("Class and subjects saved");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save academic profile");
+    } finally {
+      setSavingAcademic(false);
+    }
+  }
 
   async function handleSaveName() {
     if (!editName.trim() || savingName) return;
@@ -197,6 +272,63 @@ export function StudentProfile({ user }: { user: PublicUser }) {
           <StatCard icon={TrendingUp} label="Avg Score" value={`${stats.avgScore}%`} color="emerald" />
           <StatCard icon={Award} label="Best Score" value={`${stats.bestScore}%`} color="amber" />
         </div>
+
+        {/* Academic profile: persist the student's class and selected subjects. */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card mb-6">
+          <h2 className="text-lg font-semibold text-slate-900">My learning subjects</h2>
+          <p className="text-sm text-slate-500 mt-1 mb-4">
+            Change your class and choose which subjects appear in My Learning.
+          </p>
+          {loadingAcademic ? (
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <Loader2 className="size-4 animate-spin" /> Loading your subjects...
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="academic-class">Current class</Label>
+                <select
+                  id="academic-class"
+                  value={academicClassId}
+                  onChange={(e) => { setAcademicClassId(e.target.value); setSubjectIds([]); }}
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm"
+                >
+                  <option value="">Select your class</option>
+                  {classes.map((klass) => (
+                    <option key={klass.id} value={klass.id}>{klass.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-700 mb-2">Selected subjects</p>
+                {subjectOptions.length === 0 ? (
+                  <p className="text-sm text-slate-500">No subjects available for this class.</p>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {subjectOptions.map((subject) => (
+                      <label key={subject.id} className="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm cursor-pointer hover:bg-slate-50">
+                        <input
+                          type="checkbox"
+                          checked={subjectIds.includes(subject.id)}
+                          onChange={(e) => setSubjectIds((current) => e.target.checked
+                            ? [...current, subject.id]
+                            : current.filter((id) => id !== subject.id))}
+                          className="accent-emerald-600"
+                        />
+                        {subject.name}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Button onClick={handleSaveAcademic} disabled={!academicClassId || savingAcademic}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white">
+                {savingAcademic ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                Save learning subjects
+              </Button>
+            </div>
+          )}
+        </section>
 
         {/* Change password */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-card">
