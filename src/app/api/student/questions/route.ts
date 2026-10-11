@@ -88,9 +88,13 @@ export async function GET(request: Request) {
     available: n <= publishedCount,
   }));
 
+  const defaultModeSetting = await db.setting.findUnique({ where: { key: "default_feedback_mode" } });
+  const defaultFeedbackMode = defaultModeSetting?.value === '"exam"' ? "exam" : "immediate";
+
   return NextResponse.json({
     topic,
     publishedCount,
+    defaultFeedbackMode,
     allowedCounts: counts,
   });
 }
