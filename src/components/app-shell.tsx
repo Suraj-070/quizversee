@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { PublicUser } from "@/types";
 import { AuthScreen } from "@/components/auth/auth-screen";
 import { AcademicOnboarding } from "@/components/student/academic-onboarding";
@@ -22,7 +22,6 @@ import { QuizSetSetup } from "@/components/student/quiz-set-setup";
 import { StudentFlagged } from "@/components/student/student-flagged";
 import { StudentProgress } from "@/components/student/student-progress";
 import { StudentProfile } from "@/components/student/student-profile";
-import { useQuizSessionStore } from "@/stores/quiz-session-store";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { AdminClasses } from "@/components/admin/admin-classes";
@@ -64,33 +63,6 @@ export function AppShell() {
   const view = useViewStore((s) => s.view);
   const setView = useViewStore((s) => s.setView);
 
-  // Read the persisted quiz session ONCE (via a ref snapshot) so we can
-  // resume an in-progress quiz after a page refresh. Per PRD §37: refresh
-  // or accidental navigation must not corrupt completed attempts.
-  //
-  // IMPORTANT: we intentionally do NOT subscribe to live updates of the
-  // quiz session store here. If we did, the bootstrap effect would re-run
-  // every time the student answers a question — and once the last answer
-  // is recorded, "hasActiveSession" would flip to false, booting the
-  // student out of the quiz before they can click "See results".
-  //
-  // Instead, we take a single snapshot at mount time. Live quiz state is
-  // handled entirely by the QuizActive component.
-  const sessionSnapshot = useRef<{
-    attemptId: string | null;
-    questionCount: number;
-    answeredCount: number;
-  } | null>(null);
-  if (sessionSnapshot.current === null) {
-    // First render only — read the current store state without subscribing.
-    const state = useQuizSessionStore.getState();
-    sessionSnapshot.current = {
-      attemptId: state.attemptId,
-      questionCount: state.questions.length,
-      answeredCount: Object.keys(state.answers).length,
-    };
-  }
-
   useEffect(() => {
     let cancelled = false;
     async function bootstrap() {
@@ -106,18 +78,8 @@ export function AppShell() {
         if (!cancelled) {
           setUser(data.user);
           if (data.user) {
-            // If there's an active (in-progress) quiz session, resume it.
-            const snap = sessionSnapshot.current;
-            const hasActiveSession =
-              snap?.attemptId &&
-              snap.questionCount > 0 &&
-              snap.answeredCount < snap.questionCount;
-            if (hasActiveSession) {
-              setView({
-                name: "quiz-active",
-                attemptId: snap!.attemptId!,
-              });
-            } else if (
+            // Never force quiz navigation on reload; offer explicit resume on Home.
+            if (
               data.user.role === "user" &&
               !data.user.onboardingCompleted
             ) {
