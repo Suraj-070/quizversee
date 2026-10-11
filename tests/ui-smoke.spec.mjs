@@ -103,6 +103,7 @@ const fixture = {
     ] },
   ] },
   "/api/student/academic-profile": { currentClassId: "class-9", subjects: [{ id: "science-9" }] },
+  "/api/student/site-content": { heading: "Learning together", subtitle: "Keep practising a little every day.", footer: "Quizverse learning", contactEmail: "" },
   "/api/admin/settings": { settings: {
     quiz_question_counts: [1, 10, 20], quiz_default_count: 10,
     quiz_default_topic_feedback: "immediate", quiz_default_subject_feedback: "exam",
@@ -194,6 +195,7 @@ test("student dashboard and curriculum/external discovery work on desktop", asyn
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Welcome back, Test" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your subjects" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Learning together" })).toBeVisible();
   await page.locator("main").getByRole("button", { name: "My Learning", exact: true }).click();
   await expect(page.getByRole("heading", { name: "My Learning" })).toBeVisible();
   await expect(page.getByText("40 questions").first()).toBeVisible();

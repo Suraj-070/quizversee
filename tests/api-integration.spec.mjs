@@ -121,4 +121,11 @@ test("admin quiz settings update feeds the real student setup endpoint", async (
   expect(info.defaultCount).toBe(1);
   expect(info.defaultFeedbackMode).toBe("exam");
   expect(info.smartPracticeEnabled).toBe(false);
+  const savedCopy = await page.request.put("/api/admin/settings", {
+    data: { site_homepage_heading: "Learn together", site_homepage_subtitle: "A short daily quiz helps.", site_footer_text: "Quizverse Academy" },
+  });
+  expect(savedCopy.ok(), await savedCopy.text()).toBeTruthy();
+  const content = await page.request.get("/api/student/site-content");
+  expect(content.ok()).toBeTruthy();
+  expect(await content.json()).toMatchObject({ heading: "Learn together", footer: "Quizverse Academy" });
 });
