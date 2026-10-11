@@ -264,6 +264,19 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
                     />
                   ))}
                 </div>
+                <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <label htmlFor="custom-quiz-count" className="min-w-0 flex-1 text-sm font-medium text-slate-800">
+                    Or enter any number <span className="block text-xs font-normal text-slate-500">From 1 to {publishedCount} available questions</span>
+                  </label>
+                  <input id="custom-quiz-count" type="number" min={1} max={publishedCount} step={1}
+                    value={selectedCount ?? ""}
+                    onChange={(event) => {
+                      const number = Number(event.target.value);
+                      setSelectedCount(event.target.value && Number.isInteger(number) && number >= 1 && number <= publishedCount ? number : null);
+                    }}
+                    className="h-10 w-24 rounded-lg border border-slate-300 bg-white px-3 text-center text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  />
+                </div>
               </div>
 
               {/* Feedback mode selector */}

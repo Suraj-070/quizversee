@@ -35,6 +35,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
   const feedbackMode = useQuizSessionStore((s) => s.feedbackMode);
   const setCurrentIndex = useQuizSessionStore((s) => s.setCurrentIndex);
   const recordAnswer = useQuizSessionStore((s) => s.recordAnswer);
+  const clearSession = useQuizSessionStore((s) => s.clear);
 
   const [selectedOption, setSelectedOption] = useState<
     "A" | "B" | "C" | "D" | null
@@ -343,6 +344,9 @@ export function QuizActive({ user }: { user: PublicUser }) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error ?? "Failed to complete quiz");
       }
+      // Completion succeeded server-side. Remove stale local sessions before
+      // showing results, so reloading never offers an already-finished quiz.
+      clearSession();
       setView({ name: "quiz-results", attemptId });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to complete quiz");

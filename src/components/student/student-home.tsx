@@ -68,12 +68,32 @@ export function StudentHome({ user }: { user: PublicUser }) {
   const sessionAttemptId = useQuizSessionStore((s) => s.attemptId);
   const sessionQuestions = useQuizSessionStore((s) => s.questions);
   const sessionAnswers = useQuizSessionStore((s) => s.answers);
-  const hasUnfinishedQuiz =
-    sessionAttemptId &&
-    sessionQuestions.length > 0 &&
-    Object.keys(sessionAnswers).length < sessionQuestions.length;
+  const clearSession = useQuizSessionStore((s) => s.clear);
+  const [sessionVerified, setSessionVerified] = useState(false);
+  const hasUnfinishedQuiz = !!sessionAttemptId && sessionQuestions.length > 0 && sessionVerified;
   const answeredCount = Object.keys(sessionAnswers).length;
   const totalQuestions = sessionQuestions.length;
+
+  useEffect(() => {
+    let cancelled = false;
+    setSessionVerified(false);
+    if (!sessionAttemptId || sessionQuestions.length === 0) return;
+    fetch("/api/student/attempts/session?attemptId=" + encodeURIComponent(sessionAttemptId), { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) {
+          if (response.status === 404) return false;
+          throw new Error("Unable to verify quiz status");
+        }
+        return (await response.json() as { active: boolean }).active;
+      })
+      .then((active) => {
+        if (cancelled) return;
+        if (active) setSessionVerified(true);
+        else clearSession();
+      })
+      .catch(() => { /* Do not resume an unverified quiz or lose local progress. */ });
+    return () => { cancelled = true; };
+  }, [sessionAttemptId, sessionQuestions.length, clearSession]);
 
   useEffect(() => {
     let cancelled = false;
