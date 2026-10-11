@@ -16,6 +16,7 @@ const key = "browser-" + Date.now().toString(36);
 const password = "ci-only-test-password";
 const emails = [];
 let klass, browser;
+const otherEmail = key + "-other@example.test";
 
 async function visible(locator) { await locator.waitFor({ state: "visible", timeout: 30000 }); }
 async function checkWidth(page, screen) {
@@ -124,6 +125,18 @@ async function testBrowser(viewport, label, email) {
     await page.locator("header button").first().click();
     await visible(page.getByRole("heading", { name: "Your subjects" }));
     assert.equal(await page.getByRole("heading", { name: "Continue Quiz" }).count(), 0);
+
+    // Sign out and sign into another student on this browser: never leak
+    // earlier student's unfinished or completed question session state.
+    await page.locator('header button[title="Sign out"]').click();
+    await visible(page.getByText("Welcome back", { exact: true }));
+    await page.locator("#email").fill(otherEmail);
+    await page.locator("#password").fill(password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await visible(page.getByRole("heading", { name: "Ready to practice?" }));
+    assert.equal(await page.getByRole("heading", { name: "Continue Quiz" }).count(), 0);
+    assert.equal(await page.evaluate(() => window.localStorage.getItem("quizverse-quiz-session")), null);
+
     assert.deepEqual(pageErrors, [], label + " unhandled browser errors");
     console.log("PASS " + label + " desktop/mobile student journey including profile persistence and reload-safe resume");
   } catch (error) {
@@ -156,6 +169,11 @@ try {
     emails.push(email);
     await db.user.create({ data: { email, name: "Browser Student", passwordHash, role: "user" } });
   }
+  await db.user.create({
+    data: { email: otherEmail, name: "Other Student", passwordHash, role: "user",
+      onboardingCompleted: true, currentClassId: klass.id },
+  });
+  emails.push(otherEmail);
   browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
   await testBrowser({ width: 1280, height: 900 }, "desktop", emails[0]);
   await testBrowser({ width: 390, height: 844 }, "mobile", emails[1]);
