@@ -33,8 +33,8 @@ import { toast } from "sonner";
  */
 type ReviewAnswer = {
   id: string;
-  selectedOption: "A" | "B" | "C" | "D";
-  isCorrect: boolean;
+  selectedOption: "A" | "B" | "C" | "D" | null;
+  isCorrect: boolean | null;
   question: {
     id: string;
     questionText: string;
@@ -207,7 +207,9 @@ export function QuizReview({ user }: { user: PublicUser }) {
                   <div
                     className={cn(
                       "size-7 shrink-0 rounded-full flex items-center justify-center text-xs font-semibold",
-                      ans.isCorrect
+                      ans.isCorrect === null
+                        ? "bg-slate-100 text-slate-600"
+                        : ans.isCorrect
                         ? "bg-emerald-100 text-emerald-700"
                         : "bg-red-100 text-red-700"
                     )}
@@ -218,6 +220,12 @@ export function QuizReview({ user }: { user: PublicUser }) {
                     {ans.question.questionText}
                   </h3>
                 </div>
+
+                {ans.selectedOption === null && (
+                  <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                    Unanswered — no choice was submitted.
+                  </p>
+                )}
 
                 {/* Options list */}
                 <div className="space-y-2">
@@ -288,7 +296,7 @@ export function QuizReview({ user }: { user: PublicUser }) {
                 )}
 
                 {/* AI explanation button (only for wrong answers) */}
-                {!ans.isCorrect && (
+                {ans.isCorrect === false && ans.selectedOption !== null && (
                   <AIExplanationButton
                     questionId={ans.question.id}
                     selectedOption={ans.selectedOption}
