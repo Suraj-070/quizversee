@@ -279,7 +279,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
         const isRecovery = streak === 0 && data.isCorrect;
         const isFirstTry = currentIndex === 0 && data.isCorrect;
         const msg = getFeedbackMessage(
-          data.isCorrect,
+          data.isCorrect === true,
           newStreak,
           isRecovery,
           isFirstTry,
@@ -321,6 +321,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error ?? "Failed to complete quiz");
       }
+      if (!attemptId) throw new Error("Quiz session is missing an attempt ID");
       setView({ name: "quiz-results", attemptId });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to complete quiz");
