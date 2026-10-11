@@ -66,3 +66,9 @@ Run `npm run test:qai` again for the extra exam-mode tests, and check GitHub Act
 - The earlier `UserAnswer.submittedAt` migration also remains in migration history.
 - **No deployment and no feature flag activation**. Staging branch still needs CI and authenticated route integration results before merging.
 - The proposal file `docs/qai/proposed-feedback-mode.postgres.sql` was an implementation record, but is now applied; do not run it manually again.
+
+## Final verification follow-up
+- Disposable PostgreSQL test now persists and reads back `QuizAttempt.feedbackMode = 'exam'`, in addition to checking single-claim answer submission.
+- AI explanation authorization now allows completed historical wrong answers from before `QAI_ANSWER_ACTIVATION_AT`, where `submittedAt` cannot be retrospectively inferred; newer attempts must have a real `submittedAt`. This is **not** permission to expose answers from unfinished quizzes.
+- GitHub connector currently does not confirm a passing workflow run; check CI status before merging.
+- Owner's local `prisma/schema.postgres.prisma` is untracked and inaccessible remotely; compare/reconcile that file before merging the staged schema into `migrate/supabase`. Never replace it blindly.
