@@ -25,6 +25,8 @@ async function checkWidth(page, screen) {
 async function testBrowser(viewport, label, email) {
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
+  await fs.mkdir("/tmp/qai-browser-artifacts", { recursive: true });
+  const snapshot = async name => page.screenshot({ path: "/tmp/qai-browser-artifacts/" + label + "-" + name + ".png", fullPage: true });
   page.setDefaultTimeout(25000);
   const pageErrors = [];
   page.on("pageerror", e => pageErrors.push(e.message));
@@ -45,6 +47,7 @@ async function testBrowser(viewport, label, email) {
     await page.getByRole("button", { name: /Start Learning/ }).click();
     await visible(page.getByRole("heading", { name: "Your subjects" }));
     await checkWidth(page, label + " home");
+    await snapshot("home");
     await page.reload();
     await visible(page.getByRole("heading", { name: "Your subjects" }));
 
@@ -62,6 +65,7 @@ async function testBrowser(viewport, label, email) {
     await visible(page.getByRole("heading", { name: "My Profile" }));
     assert.equal(await page.getByRole("checkbox", { name: "Browser Maths" }).isChecked(), false);
     await checkWidth(page, label + " profile");
+    await snapshot("profile");
 
     await page.reload();
     await visible(page.getByRole("heading", { name: "Your subjects" }));
@@ -73,6 +77,7 @@ async function testBrowser(viewport, label, email) {
     await page.locator("#custom-question-count").fill("1");
     await page.getByRole("button", { name: /Exam mode/ }).click();
     await checkWidth(page, label + " one-question setup");
+    await snapshot("quiz-setup");
     await page.getByRole("button", { name: /Start Quiz \(1 question\)/ }).click();
     await visible(page.getByText("Browser single: choose B", { exact: true }));
     await page.keyboard.press("2");
@@ -81,6 +86,7 @@ async function testBrowser(viewport, label, email) {
     await page.getByRole("button", { name: "Submit exam" }).click();
     await visible(page.getByRole("heading", { name: "Quiz Complete" }));
     await checkWidth(page, label + " results");
+    await snapshot("quiz-results");
 
     // Return to Home, open a longer exam, then leave before finishing.
     await page.locator("header button").first().click();
@@ -104,6 +110,7 @@ async function testBrowser(viewport, label, email) {
     await page.getByRole("button", { name: "Continue", exact: true }).click();
     await visible(page.getByText(/Browser pair:/));
     await checkWidth(page, label + " resumed quiz");
+    await snapshot("resumed-quiz");
     await page.keyboard.press("2");
     await page.getByRole("button", { name: /Next question|Finish quiz/ }).click();
     await visible(page.getByRole("heading", { name: "Ready to submit?" }));
