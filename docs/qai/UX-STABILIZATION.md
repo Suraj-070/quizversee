@@ -22,6 +22,13 @@ Updated 2026-10-11. **Staging only: not merged, released, or deployed.**
 - [Green authenticated HTTP verification](https://github.com/Suraj-070/quizversee/actions/runs/38114415212) confirms test-student login, subject saving, one-question exam, answer secrecy, duplicate rejection, completion, cross-user attempt isolation, and profile subject replacement.
 - Quiz-set start now returns question/option images consistently with topic and subject quizzes.
 
+## Verified staging acceptance
+- Authenticated HTTP concurrency checks now cover simultaneous answer claim, double completion, and mastery exactly once, and have passed in disposable CI.
+- [Chromium desktop/mobile run 38115594829](https://github.com/Suraj-070/quizversee/actions/runs/38115594829) passed both full student journeys (onboarding, profile subject persistence, one-question quiz, refresh Home, resume, finish), with desktop/mobile screenshots.
+- Screenshots have been reviewed at 1280px and 390px. Navigation now resets scroll on screen changes; captures wait for animation completion.
+- Hard-coded demo-login shortcuts are no longer displayed on the sign-in page.
+- Additional logout/cross-account browser isolation and stable display-order checks have been added; **confirm the latest CI run** before sign-off.
+
 ## Still required before deployment
 1. Verify the **latest commit** passes both CI jobs including Next.js production build.
 2. Browser-based acceptance tests on a real isolated staging deployment, desktop and mobile:
@@ -34,9 +41,9 @@ Updated 2026-10-11. **Staging only: not merged, released, or deployed.**
    - Complete while skipping a question; review and results should say Unanswered / Skipped.
    - Admin changes presets and default feedback; student sees updated setup.
    - Test zero published questions, empty onboarding subjects, slow responses and errors.
-3. The authenticated HTTP smoke test now passes in disposable CI. Still required: true **concurrent HTTP submission/completion race tests**, and visual browser acceptance tests (including navigation and keyboard controls).
+3. Authenticated concurrent HTTP submissions and duplicate completion checks pass in disposable CI. Staging deployment on an independently hosted URL, production-style environment variables, broader accessibility, and manual keyboard/screen-reader review are still worthwhile release checks.
 4. Check accessibility: keyboard navigation, focus order, mobile widths, form validation, visible loading/errors, contrast and assistive labels.
-5. Resume question ordering can differ from initial randomized order because existing schema does not record original sequence; improving exact order would require an approved additive data change.
+5. Question ordering is now stable across start/resume, sorting each attempt by its persisted UserAnswer IDs. This requires no additional database field. Verify on the latest browser run.
 6. Confirm compatibility with the local `migrate/supabase` branch before merging. Do not overwrite untracked local files.
 
 **No changes were made to production application deployment, QAI activation flag, or existing Supabase data in this UX phase.**
