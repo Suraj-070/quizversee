@@ -39,3 +39,19 @@ jobs:
         run: npm run lint
       - name: Adaptive selector tests
         run: node --test tests/qai-smart-selector.test.mjs
+      - name: Install Playwright test runner (CI only)
+        run: bun add --dev @playwright/test@1.56.1
+      - name: Install Chromium browser
+        run: bunx playwright install --with-deps chromium
+      - name: Browser smoke tests with mocked API data
+        run: bunx playwright test --config=playwright.ui.config.mjs
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-browser-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
