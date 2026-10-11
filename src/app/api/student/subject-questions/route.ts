@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth-guard";
+import { normalizeQuizCounts, chooseQuizCount, parseStoredSetting, quizFeedbackSetting } from "@/lib/quiz-preferences";
 
 /**
  * GET /api/student/subject-questions?subjectId=<id>
@@ -54,34 +55,27 @@ export async function GET(request: Request) {
     },
   });
 
-  // Fetch the allowed-counts setting (defaults to [10] if missing)
-  const setting = await db.setting.findUnique({
-    where: { key: "quiz_question_counts" },
+  // A one-question quick practice is always available, even on a new or
+  // small topic. Admin settings control the additional selectable counts.
+  const settings = await db.setting.findMany({
+    where: { key: { in: ["quiz_question_counts", "quiz_default_count", "quiz_default_subject_feedback", "quiz_smart_practice_enabled"] } },
   });
-  let allowedCounts: number[] = [10];
-  if (setting) {
-    try {
-      const parsed = JSON.parse(setting.value);
-      if (Array.isArray(parsed)) {
-        allowedCounts = parsed
-          .filter((n): n is number => typeof n === "number" && n > 0)
-          .sort((a, b) => a - b);
-      }
-    } catch {
-      // fall back to default
-    }
-  }
-
-  // Build the availability map
-  const counts = allowedCounts.map((n) => ({
-    count: n,
-    available: n <= publishedCount,
-  }));
+  const values = new Map(settings.map((setting) => [setting.key, parseStoredSetting(setting.value)]));
+  const allowedCounts = normalizeQuizCounts(values.get("quiz_question_counts"));
+  const preferred = values.get("quiz_default_count");
+  const preferredCount = typeof preferred === "number" && allowedCounts.includes(preferred) ? preferred : 10;
+  const counts = allowedCounts.map((count) => ({ count, available: count <= publishedCount }));
+  const defaultCount = chooseQuizCount(counts.filter((option) => option.available).map((option) => option.count), preferredCount);
+  const defaultFeedbackMode = quizFeedbackSetting(values.get("quiz_default_subject_feedback"), "exam");
+  const smartPracticeEnabled = values.get("quiz_smart_practice_enabled") !== false;
 
   return NextResponse.json({
     subject,
     publishedCount,
     topicCount: subject._count.topics,
     allowedCounts: counts,
+    defaultCount,
+    defaultFeedbackMode,
+    smartPracticeEnabled,
   });
 }

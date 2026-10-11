@@ -20,6 +20,11 @@ export async function POST(request: Request) {
   const { user, error } = await requireUser();
   if (error) return error;
 
+  const smartSetting = await db.setting.findUnique({ where: { key: "quiz_smart_practice_enabled" } });
+  if (smartSetting?.value === "false") {
+    return NextResponse.json({ error: "Smart Practice is currently disabled by your school" }, { status: 403 });
+  }
+
   const body = await request.json().catch(() => null);
   const schema = z.object({
     topicId: z.string().min(1),

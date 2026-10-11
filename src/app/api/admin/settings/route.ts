@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-guard";
+import { normalizeQuizCounts } from "@/lib/quiz-preferences";
 
 /**
  * GET /api/admin/settings
@@ -25,8 +26,12 @@ export async function GET() {
 
 const UpdateSchema = z.object({
   quiz_question_counts: z
-    .array(z.number().int().positive())
+    .array(z.number().int().min(1).max(100)).min(1).max(20)
     .optional(),
+  quiz_default_count: z.number().int().min(1).max(100).optional(),
+  quiz_default_topic_feedback: z.enum(["immediate", "exam"]).optional(),
+  quiz_default_subject_feedback: z.enum(["immediate", "exam"]).optional(),
+  quiz_smart_practice_enabled: z.boolean().optional(),
   site_homepage_heading: z.string().max(200).optional(),
   site_homepage_subtitle: z.string().max(500).optional(),
   site_footer_text: z.string().max(200).optional(),
@@ -53,7 +58,18 @@ export async function PUT(request: Request) {
   // Update each setting key that was provided
   const updates: Array<[string, string]> = [];
   if (parsed.data.quiz_question_counts) {
-    updates.push(["quiz_question_counts", JSON.stringify(parsed.data.quiz_question_counts)]);
+    updates.push(["quiz_question_counts", JSON.stringify(normalizeQuizCounts(parsed.data.quiz_question_counts))]);
+  }
+  if (parsed.data.quiz_default_count !== undefined) {
+    const submittedCounts = parsed.data.quiz_question_counts;
+    if (submittedCounts && !normalizeQuizCounts(submittedCounts).includes(parsed.data.quiz_default_count)) {
+      return NextResponse.json({ error: "Default count must be an enabled question count" }, { status: 400 });
+    }
+    updates.push(["quiz_default_count", JSON.stringify(parsed.data.quiz_default_count)]);
+  }
+  for (const key of ["quiz_default_topic_feedback", "quiz_default_subject_feedback", "quiz_smart_practice_enabled"] as const) {
+    const value = parsed.data[key];
+    if (value !== undefined) updates.push([key, JSON.stringify(value)]);
   }
   if (parsed.data.site_homepage_heading !== undefined) {
     updates.push(["site_homepage_heading", JSON.stringify(parsed.data.site_homepage_heading)]);
