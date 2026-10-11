@@ -316,22 +316,7 @@ export function AcademicOnboarding({ user }: { user: PublicUser }) {
                     </Button>
                   </div>
 
-                  {/* Allow skipping if only 1 subject or none */}
-                  {subjects.length <= 1 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        // Auto-select all if only 1
-                        if (subjects.length === 1) {
-                          setSelectedSubjects(new Set([subjects[0].id]));
-                        }
-                        handleSave();
-                      }}
-                      className="mt-3 w-full text-center text-xs text-slate-400 hover:text-slate-600"
-                    >
-                      Skip — select later
-                    </button>
-                  )}
+
                 </>
               )}
             </motion.div>
