@@ -117,6 +117,11 @@ export function AppShell() {
     };
   }, [setView]);
 
+  // Switching views does not change the URL; reset scroll as a route would.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view]);
+
   // Keep the header's display name in sync with profile edits without a full-page reload.
   useEffect(() => {
     const onProfileUpdate = (event: Event) => {
