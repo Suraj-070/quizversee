@@ -40,3 +40,11 @@ This branch is **NOT deployed to production**. Source branch: `qai/answer-integr
 3. Verify previously completed attempt review works and in-progress GET never contains answer keys.
 4. Confirm deployment configuration and the activation cutoff; announce restarting previously unfinished attempts before enabling.
 5. Keep `QAI_SMART_PRACTICE_V1` off until those checks pass.
+
+## Low-friction GitHub verification (October 2026)
+The branch now contains `.github/workflows/qai-unit-tests.yml`, with two independent GitHub Actions jobs:
+- `unit-and-types`: install dependencies, generate Prisma types, run QAI unit tests and TypeScript checks.
+- `disposable-postgres`: launch an **ephemeral PostgreSQL 17 container inside GitHub Actions** using database `qai_test`, create schema there, and run the guarded database integration test. It has no Supabase URL or secrets.
+Check [Actions](https://github.com/Suraj-070/quizversee/actions) for a **green run** on branch `qai/answer-integrity-postgres`. Merely committing a workflow is not evidence the job passed.
+
+This removes the need for the owner to install Docker just for the primitive PostgreSQL test. It does **not** replace a full authenticated staging-server API concurrency test, nor resolve schema differences with the owner's unpushed local `migrate/supabase` branch. Do not deploy the staged PostgreSQL routes or enable QAI solely from a green CI run.
