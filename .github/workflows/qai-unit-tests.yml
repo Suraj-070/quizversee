@@ -26,6 +26,12 @@ jobs:
       - run: npx prisma generate
       - run: npm run test:qai
       - run: npx tsc --noEmit
+      - name: Build production Next.js bundle
+        env:
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: ci-only-secret-do-not-use-in-production
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build
 
   disposable-postgres:
     runs-on: ubuntu-latest
