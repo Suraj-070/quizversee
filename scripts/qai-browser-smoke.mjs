@@ -30,7 +30,7 @@ async function testBrowser(viewport, label, email) {
   page.on("pageerror", e => pageErrors.push(e.message));
   try {
     await page.goto(base);
-    await visible(page.getByRole("heading", { name: "Welcome back" }));
+    await visible(page.getByText("Welcome back", { exact: true }));
     await page.locator("#email").fill(email);
     await page.locator("#password").fill(password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
