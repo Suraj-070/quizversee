@@ -46,6 +46,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
   const [result, setResult] = useState<{
     attemptId: string;
     correctAnswers: number;
+    answeredCount: number;
     totalQuestions: number;
     scorePercentage: number;
     completedAt: string;
@@ -98,6 +99,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
             totalQuestions: number;
             scorePercentage: number;
             completedAt: string | null;
+            answers: Array<{ selectedOption: "A" | "B" | "C" | "D" | null }>;
             topic: {
               id: string;
               name: string;
@@ -128,6 +130,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
         setResult({
           attemptId: data.attempt.id,
           correctAnswers: data.attempt.correctAnswers,
+          answeredCount: data.attempt.answers.filter((answer) => answer.selectedOption !== null).length,
           totalQuestions: data.attempt.totalQuestions,
           scorePercentage: data.attempt.scorePercentage,
           completedAt: data.attempt.completedAt,
@@ -185,7 +188,8 @@ export function QuizResults({ user }: { user: PublicUser }) {
     );
   }
 
-  const incorrect = result.totalQuestions - result.correctAnswers;
+  const incorrect = Math.max(0, result.answeredCount - result.correctAnswers);
+  const unanswered = Math.max(0, result.totalQuestions - result.answeredCount);
   const scorePct = Math.round(result.scorePercentage);
   const isGoodScore = scorePct >= 70;
 
@@ -270,7 +274,7 @@ export function QuizResults({ user }: { user: PublicUser }) {
           </div>
 
           {/* Correct / Incorrect breakdown */}
-          <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className={cn("mt-6 grid gap-3", unanswered > 0 ? "grid-cols-3" : "grid-cols-2")}>
             <motion.div
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
@@ -301,6 +305,20 @@ export function QuizResults({ user }: { user: PublicUser }) {
               </div>
               <p className="mt-2 text-2xl font-bold text-red-700">{incorrect}</p>
             </motion.div>
+            {unanswered > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4"
+              >
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <ListChecks className="size-4 sm:size-5 text-slate-600" />
+                  <span className="text-xs sm:text-sm font-medium text-slate-700">Skipped</span>
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-700">{unanswered}</p>
+              </motion.div>
+            )}
           </div>
         </motion.div>
 
