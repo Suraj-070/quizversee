@@ -31,11 +31,14 @@ test("submittedAt is nullable on a fresh placeholder; duplicate claim succeeds o
     const question = await db.question.create({data:{topicId,questionText:uid,optionA:"A1",optionB:"B1",optionC:"C1",optionD:"D1",correctOption:"B",status:"draft"}});
     questionId=question.id;
     const user = await db.user.create({data:{email:uid+"@example.test",name:uid,passwordHash:"unused-integration-test"}});
-    const attempt=await db.quizAttempt.create({data:{userId:user.id,topicId,totalQuestions:1}});
+    const attempt=await db.quizAttempt.create({data:{userId:user.id,topicId,totalQuestions:1,feedbackMode:"exam"}});
     attemptId=attempt.id;
+    assert.equal(attempt.feedbackMode,"exam", "Attempt mode must be stored in PostgreSQL");
     const ua = await db.userAnswer.create({data:{userId:user.id,attemptId,questionId,selectedOption:"A",isCorrect:false}});
     userAnswerId=ua.id;
     assert.equal(ua.submittedAt,null);
+    const persistedMode = await db.quizAttempt.findUniqueOrThrow({where:{id:attemptId},select:{feedbackMode:true}});
+    assert.equal(persistedMode.feedbackMode,"exam");
     const now = new Date();
     const results=await Promise.all([
       db.userAnswer.updateMany({where:{id:userAnswerId,submittedAt:null},data:{submittedAt:now,selectedOption:"B",isCorrect:true}}),
