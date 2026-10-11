@@ -126,6 +126,7 @@ export function SubjectQuizSetup({ user }: { user: PublicUser }) {
         body: JSON.stringify({
           subjectId,
           totalQuestions: selectedCount,
+          feedbackMode,
         }),
       });
       if (!res.ok) {
