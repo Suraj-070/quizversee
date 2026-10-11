@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
-import { useViewStore } from "@/stores/view-store";
+import { useViewStore, type View } from "@/stores/view-store";
 import { cn } from "@/lib/utils";
 
 /**
