@@ -25,8 +25,8 @@ export async function GET() {
 
 const UpdateSchema = z.object({
   quiz_question_counts: z
-    .array(z.number().int().positive())
-    .optional(),
+    .array(z.number().int().min(1).max(1000)).min(1).optional(),
+  default_feedback_mode: z.enum(["immediate", "exam"]).optional(),
   site_homepage_heading: z.string().max(200).optional(),
   site_homepage_subtitle: z.string().max(500).optional(),
   site_footer_text: z.string().max(200).optional(),
@@ -54,6 +54,9 @@ export async function PUT(request: Request) {
   const updates: Array<[string, string]> = [];
   if (parsed.data.quiz_question_counts) {
     updates.push(["quiz_question_counts", JSON.stringify(parsed.data.quiz_question_counts)]);
+  }
+  if (parsed.data.default_feedback_mode !== undefined) {
+    updates.push(["default_feedback_mode", JSON.stringify(parsed.data.default_feedback_mode)]);
   }
   if (parsed.data.site_homepage_heading !== undefined) {
     updates.push(["site_homepage_heading", JSON.stringify(parsed.data.site_homepage_heading)]);
