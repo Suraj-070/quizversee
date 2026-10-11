@@ -258,7 +258,10 @@ export function AcademicOnboarding({ user }: { user: PublicUser }) {
                   <Loader2 className="size-6 animate-spin text-emerald-500" />
                 </div>
               ) : subjects.length === 0 ? (
-                <p className="text-sm text-center text-slate-600 py-8">{subjectsError ? "Unable to load subjects. Select your class again to retry." : "No subjects are available for this class yet."}</p>
+                <div className="text-center py-8 space-y-3">
+                  <p className="text-sm text-slate-600">{subjectsError ? "Unable to load subjects. Select your class again to retry." : "No subjects are available for this class yet."}</p>
+                  <Button variant="outline" onClick={() => setStep(1)}>Choose another class</Button>
+                </div>
               ) : (
                 <>
                   <div className="space-y-2">
