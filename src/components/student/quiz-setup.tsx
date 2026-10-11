@@ -95,11 +95,13 @@ export function QuizSetup({ user }: { user: PublicUser }) {
           topic: TopicInfo;
           publishedCount: number;
           allowedCounts: AllowedCount[];
+          defaultFeedbackMode?: FeedbackMode;
         };
         if (cancelled) return;
         setTopic(data.topic);
         setPublishedCount(data.publishedCount);
         setAllowedCounts(data.allowedCounts);
+        if (data.defaultFeedbackMode) setFeedbackMode(data.defaultFeedbackMode);
         // Pre-select the largest available count
         const available = data.allowedCounts.filter((c) => c.available);
         if (available.length > 0) {
