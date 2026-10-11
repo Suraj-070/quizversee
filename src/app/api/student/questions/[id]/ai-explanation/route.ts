@@ -31,6 +31,24 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
   }
 
+  // Students may request an AI explanation only after a completed
+  // attempt in which they genuinely submitted a wrong answer.
+  // Never accept an arbitrary supplied option as evidence of an attempt.
+  const reviewedAnswer = await db.userAnswer.findFirst({
+    where: {
+      userId: user.id,
+      questionId,
+      selectedOption,
+      isCorrect: false,
+      submittedAt: { not: null },
+      attempt: { userId: user.id, completedAt: { not: null } },
+    },
+    select: { id: true },
+  });
+  if (!reviewedAnswer) {
+    return NextResponse.json({ error: "Explanation is available after reviewing a completed incorrect answer" }, { status: 403 });
+  }
+
   // Fetch the question
   const question = await db.question.findUnique({
     where: { id: questionId },
