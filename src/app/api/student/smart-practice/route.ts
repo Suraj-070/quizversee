@@ -24,6 +24,7 @@ export async function POST(request: Request) {
   const schema = z.object({
     topicId: z.string().min(1),
     totalQuestions: z.number().int().positive(),
+    feedbackMode: z.enum(["immediate", "exam"]).optional().default("immediate"),
   });
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { topicId, totalQuestions } = parsed.data;
+  const { topicId, totalQuestions, feedbackMode } = parsed.data;
 
   // Verify topic is active
   const topic = await db.topic.findFirst({
@@ -169,6 +170,7 @@ export async function POST(request: Request) {
     const created = await tx.quizAttempt.create({
       data: {
         userId: user.id,
+        feedbackMode,
         topicId,
         totalQuestions: finalOrder.length,
         correctAnswers: 0,
