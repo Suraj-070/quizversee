@@ -91,7 +91,7 @@ export function QuizSetSetup({ user }: { user: PublicUser }) {
       const res = await fetch("/api/student/attempts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quizSetId }),
+        body: JSON.stringify({ quizSetId, feedbackMode: "immediate" }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
