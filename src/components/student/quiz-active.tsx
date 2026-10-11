@@ -300,6 +300,13 @@ export function QuizActive({ user }: { user: PublicUser }) {
 
   // ---------- Handle next / complete ----------
   function handleNext() {
+    // Recovery can reorder questions. Offer completion as soon as every
+    // question has a recorded answer, even if the last unanswered item
+    // isn't the final displayed index.
+    if (isExamMode && Object.keys(useQuizSessionStore.getState().answers).length >= totalQuestions) {
+      setShowPreSubmit(true);
+      return;
+    }
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
