@@ -48,3 +48,13 @@ The branch now contains `.github/workflows/qai-unit-tests.yml`, with two indepen
 Check [Actions](https://github.com/Suraj-070/quizversee/actions) for a **green run** on branch `qai/answer-integrity-postgres`. Merely committing a workflow is not evidence the job passed.
 
 This removes the need for the owner to install Docker just for the primitive PostgreSQL test. It does **not** replace a full authenticated staging-server API concurrency test, nor resolve schema differences with the owner's unpushed local `migrate/supabase` branch. Do not deploy the staged PostgreSQL routes or enable QAI solely from a green CI run.
+
+## Additional exam-mode protection (staged, NOT deployed)
+The old API trusted the client-provided `reveal` boolean; a student could request `reveal: true` during an exam.
+The staging schema now adds `QuizAttempt.feedbackMode` (default `immediate`) and every new attempt creation path saves its mode.
+The answer route reads the stored mode under the same row lock and refuses to return correctness, correct-option, or explanation when the attempt is an exam, regardless of `reveal`.
+This needs a **second, unapplied** additive migration: `docs/qai/proposed-feedback-mode.postgres.sql`.
+The production database currently has only the prior `UserAnswer.submittedAt` migration.
+Do not merge/deploy these routes against the production database until this migration is explicitly approved, applied, and verified, plus the local Supabase Prisma schema is reconciled.
+Default `immediate` preserves historical attempt compatibility.
+Run `npm run test:qai` again for the extra exam-mode tests, and check GitHub Actions for PostgreSQL integration test results.
