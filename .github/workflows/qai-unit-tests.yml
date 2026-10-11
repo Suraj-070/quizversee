@@ -168,10 +168,10 @@ jobs:
             cat /tmp/qai-browser-server.log
             exit 1
           fi
-      - name: Save failing browser screenshots
-        if: failure()
+      - name: Save browser screenshots for UI review
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: qai-browser-failures
+          name: qai-browser-snapshots
           path: /tmp/qai-browser-artifacts
           if-no-files-found: ignore
