@@ -22,9 +22,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      # Existing package-lock.json is not synchronized with package.json.
-      # Use npm install for CI verification until lockfile is regenerated in project branch.
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npx prisma generate
       - run: npm run test:qai
       - run: npx tsc --noEmit
@@ -56,9 +54,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      # Existing package-lock.json is not synchronized with package.json.
-      # Use npm install for CI verification until lockfile is regenerated in project branch.
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npx prisma generate
       - name: Prepare disposable CI database only
         run: npx prisma db push --skip-generate
