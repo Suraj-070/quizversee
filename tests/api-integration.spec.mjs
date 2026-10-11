@@ -129,3 +129,58 @@ test("admin quiz settings update feeds the real student setup endpoint", async (
   expect(content.ok()).toBeTruthy();
   expect(await content.json()).toMatchObject({ heading: "Learn together", footer: "Quizverse Academy" });
 });
+
+
+test("bulk curriculum imports append, skip duplicates and preserve existing questions", async ({ page }) => {
+  await login(page, "ci-admin@example.test");
+  await expect(page.getByRole("heading", { name: "Dashboard", level: 2 })).toBeVisible();
+  const existing = await page.request.get("/api/admin/questions?topicId=ci-cells");
+  expect(existing.ok()).toBeTruthy();
+  const before = (await existing.json()).total;
+
+  const json = JSON.stringify({
+    class: "Class 9",
+    subject: "Science",
+    topic: "Cells",
+    questions: [
+      { question: "The basic unit of life is?", options: {
+        A: { text: "Cell" }, B: { text: "Atom" }, C: { text: "Organ" }, D: { text: "Mineral" },
+      }, answer: "A", explanation: "Already in the database." },
+      { question: "What contains genetic information in most cells?", options: {
+        A: { text: "Nucleus" }, B: { text: "Ribosome" }, C: { text: "Wall" }, D: { text: "Membrane" },
+      }, answer: "A", explanation: "The nucleus contains DNA in eukaryotic cells." },
+      { question: "  What contains genetic information in most cells?  ", options: {
+        A: { text: "Nucleus" }, B: { text: "Ribosome" }, C: { text: "Wall" }, D: { text: "Membrane" },
+      }, answer: "A", explanation: "Repeated question." },
+    ],
+  });
+  const preview = await page.request.post("/api/admin/imports/preview", {
+    multipart: { file: { name: "class9-science-cells.json", mimeType: "application/json", buffer: Buffer.from(json) } },
+  });
+  expect(preview.ok(), await preview.text()).toBeTruthy();
+  const data = (await preview.json()).preview;
+  expect(data.validation.valid).toBe(3);
+
+  const confirm = await page.request.post("/api/admin/imports/confirm", {
+    data: { rawJson: data.rawJson, filename: data.filename, importAsDraft: true },
+  });
+  expect(confirm.ok(), await confirm.text()).toBeTruthy();
+  const result = await confirm.json();
+  expect(result.imported).toBe(1);
+  expect(result.skipped).toBe(2);
+  expect(result.failed).toBe(0);
+  expect(result.totalBefore).toBe(before);
+  expect(result.totalAfter).toBe(before + 1);
+  expect(result.status).toBe("draft");
+
+  const second = await page.request.post("/api/admin/imports/confirm", {
+    data: { rawJson: data.rawJson, filename: data.filename, importAsDraft: true },
+  });
+  expect(second.ok(), await second.text()).toBeTruthy();
+  const again = await second.json();
+  expect(again.imported).toBe(0);
+  expect(again.skipped).toBe(3);
+  expect(again.totalAfter).toBe(before + 1);
+  const after = await page.request.get("/api/admin/questions?topicId=ci-cells");
+  expect((await after.json()).total).toBe(before + 1);
+});

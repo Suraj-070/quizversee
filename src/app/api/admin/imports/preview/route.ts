@@ -51,9 +51,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON format" }, { status: 400 });
   }
 
-  if (!data.class || !data.subject || !data.topic || !Array.isArray(data.questions)) {
+  if (!data?.class || !data?.subject || !data?.topic || !Array.isArray(data.questions) || data.questions.length === 0 || data.questions.length > 300) {
     return NextResponse.json({
-      error: "JSON must have 'class', 'subject', 'topic', and 'questions' array",
+      error: "JSON must have 'class', 'subject', 'topic', and 1–300 questions",
     }, { status: 400 });
   }
 

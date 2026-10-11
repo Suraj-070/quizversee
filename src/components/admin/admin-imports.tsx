@@ -70,6 +70,8 @@ type ImportResult = {
   failed: number;
   skipped: number;
   imagesCount: number;
+  totalBefore?: number;
+  totalAfter?: number;
   failures: Array<{ index: number; reason: string }>;
   topicName: string;
   importBatchId?: string;
@@ -498,7 +500,7 @@ export function AdminImports() {
           </div>
           <h3 className="text-lg font-bold text-slate-900">Import Complete</h3>
           <p className="text-sm text-slate-600 mt-1">
-            {result.imported} questions imported to {result.topicName}
+            {result.imported} new questions saved to {result.topicName}
             {result.status === "draft" ? " (as draft)" : ""}
           </p>
           {result.importBatchId && (
@@ -508,6 +510,14 @@ export function AdminImports() {
           )}
           {result.failed > 0 && (
             <p className="text-sm text-red-600 mt-1">{result.failed} failed</p>
+          )}
+          {result.skipped > 0 && (
+            <p className="mt-1 text-sm text-amber-700">{result.skipped} duplicate(s) skipped — existing questions preserved</p>
+          )}
+          {typeof result.totalBefore === "number" && typeof result.totalAfter === "number" && (
+            <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+              Topic database total: {result.totalBefore} → {result.totalAfter} questions
+            </p>
           )}
           {result.imagesCount > 0 && (
             <p className="text-xs text-slate-500 mt-1">{result.imagesCount} image(s) processed</p>
