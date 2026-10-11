@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth-guard";
 import { isLegacyAttempt } from "@/lib/qai-legacy-attempt.mjs";
+import { isRetryableTransactionError } from "@/lib/qai-retryable-transaction.mjs";
 
 type Params = { params: Promise<{ id: string }> };
 class AttemptMissing extends Error {}
@@ -69,7 +70,7 @@ export async function POST(_req: Request, { params }: Params) {
         return NextResponse.json({ error: "This quiz was started before the answer upgrade. Please start a new quiz." }, { status: 409 });
       if (err instanceof AttemptMissing)
         return NextResponse.json({ error: "Attempt not found" }, { status: 404 });
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2034" && retry < 2)
+      if (isRetryableTransactionError(err) && retry < 2)
         continue;
       console.error("[complete] transactional completion failed", err);
       return NextResponse.json({ error: "Unable to complete attempt" }, { status: 500 });
