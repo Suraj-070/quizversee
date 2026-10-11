@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import type { PublicUser } from "@/types";
 import { AuthScreen } from "@/components/auth/auth-screen";
 import { AcademicOnboarding } from "@/components/student/academic-onboarding";
@@ -118,8 +118,8 @@ export function AppShell() {
   }, [setView]);
 
   // Switching views does not change the URL; reset scroll as a route would.
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  useLayoutEffect(() => {
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" });
   }, [view]);
 
   // Keep the header's display name in sync with profile edits without a full-page reload.
