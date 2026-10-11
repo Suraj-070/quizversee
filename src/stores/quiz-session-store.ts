@@ -1,23 +1,11 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 /**
- * Quiz session store — tracks the active quiz session state.
- *
- * Persisted to localStorage so that a page refresh mid-quiz doesn't lose
- * progress. On reload, the AppShell reads this and resumes the user
- * into the active quiz screen.
- *
- * Lifecycle:
- *   1. QuizSetup calls start() with attemptId + questions + feedbackMode
- *   2. QuizActive advances one question at a time via setCurrentIndex()
- *   3. Each answer is recorded via recordAnswer()
- *   4. On completion, complete() clears the session
- *
- * Per PRD §37: "Keep quiz session state organized so refreshing or
- * accidental navigation does not easily corrupt completed attempts."
+ * In-memory state for the currently open quiz.
+ * Unfinished attempts can be resumed through the authenticated server API,
+ * so question text, images and answer state are never persisted to localStorage.
  */
 
 export type QuizQuestionClient = {
@@ -85,8 +73,7 @@ type QuizSessionState = {
 };
 
 export const useQuizSessionStore = create<QuizSessionState>()(
-  persist(
-    (set) => ({
+  (set) => ({
       attemptId: null,
       questions: [],
       currentIndex: 0,
@@ -122,12 +109,7 @@ export const useQuizSessionStore = create<QuizSessionState>()(
           answers: {},
           feedbackMode: "immediate",
         }),
-    }),
-    {
-      name: "quizverse-quiz-session",
-      version: 2,
-    }
-  )
+    })
 );
 
 /**
