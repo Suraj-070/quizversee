@@ -65,3 +65,51 @@ jobs:
       - name: Prepare disposable CI database only
         run: npx prisma db push --skip-generate
       - run: npm run test:qai:postgres
+
+  authenticated-http-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: qai_runner
+          POSTGRES_PASSWORD: ephemeral_ci_only
+          POSTGRES_DB: qai_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U qai_runner -d qai_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://qai_runner:ephemeral_ci_only@localhost:5432/qai_test?schema=public
+      DIRECT_URL: postgresql://qai_runner:ephemeral_ci_only@localhost:5432/qai_test?schema=public
+      QAI_TEST_DISPOSABLE_DB: "YES"
+      QAI_ANSWER_ACTIVATION_AT: "2026-01-01T00:00:00.000Z"
+      NEXTAUTH_URL: http://127.0.0.1:3000
+      NEXTAUTH_SECRET: ci-only-ephemeral-secret-not-for-production
+      NEXT_TELEMETRY_DISABLED: "1"
+      QAI_HTTP_BASE_URL: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx prisma generate
+      - name: Prepare disposable HTTP smoke test DB only
+        run: npx prisma db push --skip-generate
+      - name: Exercise authenticated student APIs against disposable DB
+        run: |
+          npm run dev > /tmp/qai-http-server.log 2>&1 &
+          for i in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:3000/ > /dev/null; then break; fi
+            sleep 2
+          done
+          if ! node scripts/qai-http-smoke.mjs; then
+            cat /tmp/qai-http-server.log
+            exit 1
+          fi
