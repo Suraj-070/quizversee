@@ -83,7 +83,9 @@ export const useQuizSessionStore = create<QuizSessionState>()(
       start: (attemptId, questions, feedbackMode = "immediate") =>
         set({
           attemptId,
-          questions,
+          // Persisted answer IDs give every attempt one stable display order.
+          // It can be reconstructed on any device without another DB column.
+          questions: [...questions].sort((a, b) => a.userAnswerId.localeCompare(b.userAnswerId)),
           currentIndex: 0,
           answers: {},
           feedbackMode,
