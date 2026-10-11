@@ -20,3 +20,23 @@ test("source objects are not mutated by redaction",()=>{
   visibleAttemptAnswers(records,null);
   assert.equal(records[0].question.correctOption,"B");
 });
+
+test("completed post-rollout answers preserve unanswered status without affecting legacy reviews",()=>{
+  const result=visibleAttemptAnswers(records,new Date("2026-10-11T12:00:00Z"),{
+    startedAt:new Date("2026-10-11T10:00:00Z"),
+    activationAt:"2026-10-11T09:00:00Z",
+  });
+  assert.equal(result[0].selectedOption,null);
+  assert.equal(result[0].isCorrect,null);
+  assert.equal(result[0].question.correctOption,"B");
+  assert.equal(result[1].selectedOption,"B");
+  assert.equal(result[1].isCorrect,true);
+  assert.equal(records[0].selectedOption,"A");
+});
+test("completed pre-rollout records remain reviewable even without submittedAt",()=>{
+  const result=visibleAttemptAnswers(records,new Date("2026-10-11T08:00:00Z"),{
+    startedAt:new Date("2026-10-11T07:00:00Z"),
+    activationAt:"2026-10-11T09:00:00Z",
+  });
+  assert.deepEqual(result,records);
+});
