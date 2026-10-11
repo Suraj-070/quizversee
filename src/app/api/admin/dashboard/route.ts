@@ -18,8 +18,10 @@ export async function GET() {
     topics,
     questions,
     publishedQuestions,
+    draftQuestions,
     users,
     quizAttempts,
+    quizAttemptsToday,
     quizSets,
     publishedQuizSets,
   ] = await Promise.all([

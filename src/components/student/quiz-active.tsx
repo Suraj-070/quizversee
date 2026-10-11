@@ -45,7 +45,8 @@ export function QuizActive({ user }: { user: PublicUser }) {
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [flagged, setFlagged] = useState(false);
+  const [flaggedQuestionIds, setFlaggedQuestionIds] = useState<Set<string>>(new Set());
+  const flagged = !!questions[currentIndex] && flaggedQuestionIds.has(questions[currentIndex].id);
   const [flagToggling, setFlagToggling] = useState(false);
   const [streak, setStreak] = useState(0);
   const [wasOnStreak, setWasOnStreak] = useState(false);
@@ -99,13 +100,23 @@ export function QuizActive({ user }: { user: PublicUser }) {
     }
     setError(null);
 
-    // Fetch flag status
-    setFlagged(false);
-    fetch(`/api/student/questions/${q.id}/flag`)
-      .then((r) => r.json())
-      .then((d) => setFlagged(!!d.flagged))
-      .catch(() => {});
+    // Flags are loaded once for the session; avoid async per-question races.
   }, [currentIndex, questions, answers, isExamMode]);
+
+  // Load bookmarked question IDs so navigator and exam summary use all quiz flags.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/student/questions/flagged")
+      .then((res) => {
+        if (!res.ok) throw new Error("Unable to load flagged questions");
+        return res.json();
+      })
+      .then((data: { flags: Array<{ question: { id: string } }> }) => {
+        if (!cancelled) setFlaggedQuestionIds(new Set(data.flags.map((flag) => flag.question.id)));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   // ---------- Track streak from answers ----------
   useEffect(() => {
@@ -226,7 +237,12 @@ export function QuizActive({ user }: { user: PublicUser }) {
       });
       if (!res.ok) throw new Error("Failed to toggle flag");
       const data = await res.json();
-      setFlagged(data.flagged);
+      setFlaggedQuestionIds((previous) => {
+        const next = new Set(previous);
+        if (data.flagged) next.add(q.id);
+        else next.delete(q.id);
+        return next;
+      });
     } catch {
       // ignore
     } finally {
@@ -377,16 +393,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
 
   // Sets for the navigator
   const answeredIds = new Set(Object.keys(answers));
-  const flaggedIds = new Set(
-    questions.filter((_, i) => {
-      // We don't track all flags in state, but we can show answered status
-      return false;
-    }).map((q) => q.id)
-  );
-  // Add the current question's flag to the set
-  if (flagged && question) {
-    flaggedIds.add(question.id);
-  }
+  const flaggedIds = new Set(questions.filter((q) => flaggedQuestionIds.has(q.id)).map((q) => q.id));
   const questionIds = questions.map((q) => q.id);
 
   return (
@@ -456,6 +463,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
                     : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
                 )}
                 title={flagged ? "Unflag (F)" : "Flag for review (F)"}
+                aria-label={flagged ? "Remove question flag" : "Flag question for review"}
               >
                 <Flag className={cn("size-4 transition-transform", flagged && "fill-current scale-110")} />
               </button>
@@ -723,7 +731,7 @@ export function QuizActive({ user }: { user: PublicUser }) {
                   <p className="text-[10px] text-emerald-600 uppercase tracking-wider">Answered</p>
                 </div>
                 <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-center">
-                  <p className="text-xl font-bold text-amber-700">{flagged ? 1 : 0}</p>
+                  <p className="text-xl font-bold text-amber-700">{flaggedIds.size}</p>
                   <p className="text-[10px] text-amber-600 uppercase tracking-wider">Flagged</p>
                 </div>
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-center">

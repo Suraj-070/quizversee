@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Sparkles, GraduationCap, Loader2, AlertTriangle, ListChecks,
+  Sparkles, GraduationCap, BookOpen, Loader2, AlertTriangle, ListChecks,
   ChevronRight, Megaphone, Play, TrendingUp, Award, Target,
   Clock, X, AlertCircle,
 } from "lucide-react";
@@ -12,9 +12,17 @@ import type { PublicUser } from "@/types";
 import { useViewStore } from "@/stores/view-store";
 import { useQuizSessionStore } from "@/stores/quiz-session-store";
 import { StudentHeader } from "@/components/student/student-header";
-import { ClassCard, type StudentClass } from "@/components/student/class-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
+
+type HomeSubject = {
+  id: string;
+  name: string;
+  description: string | null;
+  class: { id: string; name: string };
+  topicCount: number;
+  questionCount: number;
+};
 
 type Announcement = {
   id: string; title: string; message: string; publishDate: string;
@@ -46,7 +54,8 @@ type WeakTopic = {
 
 export function StudentHome({ user }: { user: PublicUser }) {
   const setView = useViewStore((s) => s.setView);
-  const [classes, setClasses] = useState<StudentClass[] | null>(null);
+  const [subjects, setSubjects] = useState<HomeSubject[] | null>(null);
+  const [className, setClassName] = useState<string | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [progress, setProgress] = useState<ProgressStats | null>(null);
   const [recentlyPracticed, setRecentlyPracticed] = useState<RecentlyPracticed[]>([]);
@@ -72,17 +81,18 @@ export function StudentHome({ user }: { user: PublicUser }) {
       setLoading(true);
       setError(null);
       try {
-        const [classesRes, annRes, progressRes, weakRes] = await Promise.all([
-          fetch("/api/student/academic", { cache: "no-store" }),
+        const [subjectsRes, annRes, progressRes, weakRes] = await Promise.all([
+          fetch("/api/student/my-learning", { cache: "no-store" }),
           fetch("/api/student/announcements", { cache: "no-store" }),
           fetch("/api/student/progress", { cache: "no-store" }),
           fetch("/api/student/weak-topics", { cache: "no-store" }),
         ]);
 
-        if (!classesRes.ok) throw new Error("Failed to load classes");
-        const classesData = (await classesRes.json()) as { classes: StudentClass[] };
+        if (!subjectsRes.ok) throw new Error("Failed to load your subjects");
+        const subjectData = (await subjectsRes.json()) as { subjects: HomeSubject[]; className: string | null };
         if (cancelled) return;
-        setClasses(classesData.classes);
+        setSubjects(subjectData.subjects);
+        setClassName(subjectData.className);
 
         if (annRes.ok) {
           const annData = (await annRes.json()) as { announcements: Announcement[] };
@@ -106,7 +116,7 @@ export function StudentHome({ user }: { user: PublicUser }) {
         }
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Failed to load classes");
+        setError(e instanceof Error ? e.message : "Failed to load your subjects");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -123,13 +133,13 @@ export function StudentHome({ user }: { user: PublicUser }) {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <StudentHeader user={user} />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="text-center max-w-2xl mx-auto mb-12"
+          className="text-left max-w-3xl mb-8"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -138,15 +148,21 @@ export function StudentHome({ user }: { user: PublicUser }) {
             className="inline-flex items-center gap-2 rounded-full bg-emerald-100 text-emerald-700 px-3.5 py-1.5 text-xs font-medium mb-5"
           >
             <Sparkles className="size-3" />
-            Welcome, {user.name.split(" ")[0]}
+            {className ?? "Your learning space"}
           </motion.div>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">
-            Ready to practice?
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
+            Welcome back, {user.name.split(" ")[0]}
           </h1>
-          <p className="mt-4 text-lg text-slate-600 leading-relaxed">
-            Pick a class to start. Choose your subject, drill into a topic,
-            and we&apos;ll handle the rest.
+          <p className="mt-3 text-base text-slate-600 leading-relaxed">
+            Continue with your subjects, review what needs practice, or try something new.
           </p>
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setView({ name: "my-learning" })}>
+              <BookOpen className="size-4" /> My Learning
+            </Button>
+            <Button variant="outline" onClick={() => setView({ name: "extra-practice" })}>Extra Practice</Button>
+            <Button variant="ghost" onClick={() => setView({ name: "explore" })}>Explore</Button>
+          </div>
         </motion.div>
 
         {/* Announcements */}
@@ -215,6 +231,83 @@ export function StudentHome({ user }: { user: PublicUser }) {
               </Button>
             </div>
           </motion.div>
+        )}
+
+        {/* Content */}
+        {loading ? (
+          <SubjectsSkeleton />
+        ) : error ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+            <AlertTriangle className="size-6 text-red-500 mx-auto mb-2" />
+            <p className="text-sm font-medium text-red-700">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => window.location.reload()}
+            >
+              Try again
+            </Button>
+          </div>
+        ) : !subjects || subjects.length === 0 ? (
+          <EmptyState
+            icon={GraduationCap}
+            title="No curriculum subjects ready yet"
+            description="Check your selected subjects in Profile, or explore other practice content."
+            action={<Button variant="outline" size="sm" onClick={() => setView({ name: "student-profile" })}>View profile</Button>}
+          />
+        ) : (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {subjects.map((subject) => (
+                <button
+                  key={subject.id}
+                  type="button"
+                  onClick={() => setView({ name: "student-topics", classId: subject.class.id, subjectId: subject.id })}
+                  className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-card transition-colors hover:border-emerald-300 hover:bg-emerald-50/30 focus-visible:ring-2 focus-visible:ring-emerald-500"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><BookOpen className="size-5" /></span>
+                    <ChevronRight className="size-4 text-slate-400 transition-transform group-hover:translate-x-0.5" />
+                  </div>
+                  <h3 className="mt-4 font-semibold text-slate-900">{subject.name}</h3>
+                  <p className="mt-1 line-clamp-1 text-sm text-slate-500">{subject.description ?? subject.class.name}</p>
+                  <p className="mt-3 text-xs text-slate-600">{subject.topicCount} topics · {subject.questionCount} questions</p>
+                </button>
+              ))}
+            </div>
+
+            {/* Quiz sets link */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="mt-10"
+            >
+              <button
+                type="button"
+                onClick={() => setView({ name: "student-quiz-sets" })}
+                className="w-full rounded-2xl border border-slate-200/60 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-11 rounded-xl bg-gradient-to-br from-violet-400 to-fuchsia-500 text-white flex items-center justify-center shadow-sm shadow-violet-500/20">
+                      <ListChecks className="size-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-900">
+                        Browse quiz sets
+                      </h3>
+                      <p className="text-sm text-slate-500 mt-0.5">
+                        Pre-built collections curated by your instructor.
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="size-5 text-slate-300" />
+                </div>
+              </button>
+            </motion.div>
+          </>
         )}
 
         {/* Progress Summary */}
@@ -322,75 +415,6 @@ export function StudentHome({ user }: { user: PublicUser }) {
           </motion.div>
         )}
 
-        {/* Content */}
-        {loading ? (
-          <ClassesSkeleton />
-        ) : error ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-            <AlertTriangle className="size-6 text-red-500 mx-auto mb-2" />
-            <p className="text-sm font-medium text-red-700">{error}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => window.location.reload()}
-            >
-              Try again
-            </Button>
-          </div>
-        ) : !classes || classes.length === 0 ? (
-          <EmptyState
-            icon={GraduationCap}
-            title="No classes available yet"
-            description="Your administrator hasn't published any classes. Check back soon!"
-          />
-        ) : (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {classes.map((klass, idx) => (
-                <ClassCard
-                  key={klass.id}
-                  klass={klass}
-                  index={idx}
-                  onClick={() =>
-                    setView({ name: "student-subjects", classId: klass.id })
-                  }
-                />
-              ))}
-            </div>
-
-            {/* Quiz sets link */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-              className="mt-10"
-            >
-              <button
-                type="button"
-                onClick={() => setView({ name: "student-quiz-sets" })}
-                className="w-full rounded-2xl border border-slate-200/60 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="size-11 rounded-xl bg-gradient-to-br from-violet-400 to-fuchsia-500 text-white flex items-center justify-center shadow-sm shadow-violet-500/20">
-                      <ListChecks className="size-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-semibold text-slate-900">
-                        Browse quiz sets
-                      </h3>
-                      <p className="text-sm text-slate-500 mt-0.5">
-                        Pre-built collections curated by your instructor.
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="size-5 text-slate-300" />
-                </div>
-              </button>
-            </motion.div>
-          </>
-        )}
       </main>
 
       <footer className="border-t border-slate-200/60 py-6 mt-auto">
@@ -431,7 +455,7 @@ function ProgressCard({
   );
 }
 
-function ClassesSkeleton() {
+function SubjectsSkeleton() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 3 }).map((_, i) => (
@@ -451,7 +475,7 @@ function ClassesSkeleton() {
       ))}
       <div className="col-span-full flex items-center justify-center text-xs text-slate-400 gap-2">
         <Loader2 className="size-3 animate-spin" />
-        Loading available classes…
+        Loading your subjects…
       </div>
     </div>
   );

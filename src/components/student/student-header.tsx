@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/types";
-import { useViewStore } from "@/stores/view-store";
+import { useViewStore, type View } from "@/stores/view-store";
 import { cn } from "@/lib/utils";
 
 /**
@@ -60,6 +60,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
               size="icon"
               onClick={goBack}
               className="text-slate-500 hover:text-slate-700"
+              aria-label="Go back"
             >
               <ArrowLeft className="size-5" />
             </Button>
@@ -68,6 +69,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
             type="button"
             onClick={() => setView({ name: "student-home" })}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            aria-label="Go to Quizverse home"
           >
             <div className="size-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center">
               <GraduationCap className="size-4" />
@@ -80,6 +82,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
 
         {/* Center: Primary navigation (hidden on mobile) */}
         <nav className="hidden md:flex items-center gap-0.5">
+          <NavButton view="student-home" current={view.name} setView={setView} icon={Home} label="Home" show="md" />
           <NavButton view="my-learning" current={view.name} setView={setView} icon={BookOpen} label="My Learning" show="md" />
           <NavButton view="extra-practice" current={view.name} setView={setView} icon={Dumbbell} label="Practice" show="md" />
           <NavButton view="explore" current={view.name} setView={setView} icon={Compass} label="Explore" show="lg" />
@@ -87,18 +90,18 @@ export function StudentHeader({ user }: { user: PublicUser }) {
 
         {/* Right: Account + secondary */}
         <div className="flex items-center gap-0.5 shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setView({ name: "student-history" })} className="text-slate-500" title="History">
+          <Button variant="ghost" size="icon" onClick={() => setView({ name: "student-history" })} className="text-slate-500" title="History" aria-label="View quiz history">
             <History className="size-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setView({ name: "student-progress" })} className="text-slate-500" title="Progress">
+          <Button variant="ghost" size="icon" onClick={() => setView({ name: "student-progress" })} className="text-slate-500" title="Progress" aria-label="View learning progress">
             <TrendingUp className="size-4" />
           </Button>
           {user.role === "admin" && (
-            <Button variant="ghost" size="icon" onClick={() => setView({ name: "admin-dashboard" })} className="text-slate-500" title="Admin">
+            <Button variant="ghost" size="icon" onClick={() => setView({ name: "admin-dashboard" })} className="text-slate-500" title="Admin" aria-label="Open admin dashboard">
               <Settings className="size-4" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" onClick={() => setView({ name: "student-profile" })} className="text-slate-500" title="Profile">
+          <Button variant="ghost" size="icon" onClick={() => setView({ name: "student-profile" })} className="text-slate-500" title="Profile" aria-label="Open profile">
             <UserCircle className="size-4" />
           </Button>
           <div className="w-px h-5 bg-slate-200 mx-1" />
@@ -111,7 +114,7 @@ export function StudentHeader({ user }: { user: PublicUser }) {
               });
             }}
             className="text-slate-400 hover:text-red-500"
-            title="Sign out"
+            title="Sign out" aria-label="Sign out"
           >
             <LogOut className="size-4" />
           </Button>
@@ -142,6 +145,7 @@ function NavButton({ view, current, setView, icon: Icon, label, show }: {
     <button
       type="button"
       onClick={() => setView({ name: view as View["name"] } as View)}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
         "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
         isActive
@@ -166,6 +170,7 @@ function MobileNavButton({ view, current, setView, icon: Icon, label }: {
     <button
       type="button"
       onClick={() => setView({ name: view as View["name"] } as View)}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
         "flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors",
         isActive ? "text-emerald-600" : "text-slate-400"
